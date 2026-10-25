@@ -256,25 +256,36 @@
 - [ ] **Step 2:** For each arm, `/viva-study` a member study: baseline composite = that arm's composite, `runtime.default_emitter: xarray`, the arm's acceptance criteria (accuracy within `T`, overhead ratio bound, **framework `overhead_fraction` from Task 10b**, composability target; arm 6's accuracy criterion marked N/A). Record the Task-10b `RunTiming` (total/process/framework/overhead_fraction + top per-process) as a reported metric on each study.
 - [ ] **Step 3:** Run each study (`/viva-run` or the study's Simulate phase); confirm each emits the expected observables.
 - [ ] **Step 4:** Set each study's canonical verdict from its run (`/viva-biology-forward` / `viva-study` decide phase) so the roll-up is populated.
-- [ ] **Step 5: Verify** via `/viva-navigate decisions sbml-decomposition` that the discovery-engine frontier is non-empty and names a next action (proves the crank is wired).
-- [ ] **Step 6: Commit** (dashboard authoring commits to the workspace branch).
+- [ ] **Step 5: Wire each study's own visualizations** (from Task 12's suite) so EACH arm's study page shows ITS metrics — the species trajectory + that arm's performance panel (runtime, process-vs-framework overhead split, accuracy divergence, and the arm-specific figure: convergence-vs-interval for arm2/arm3, serial-vs-Ray speedup+scaling for arm5, scalar-vs-array overhead for arm4, coupling/composability callout for arm6). Metrics are visualized IN the studies, not just recorded as numbers.
+- [ ] **Step 6: Verify** via `/viva-navigate decisions sbml-decomposition` that the discovery-engine frontier is non-empty and names a next action (proves the crank is wired).
+- [ ] **Step 7: Commit** (dashboard authoring commits to the workspace branch).
 
 ---
 
-## Task 12: The 3-way tradeoff visualization
+## Task 12: The visualization suite (performance comparison + 3-way tradeoff), visualized in the studies
+
+**Expanded 2026-10-25 per user request** — "show the different runtime comparison and other performance metrics, as well as other desired metrics; I want these visualized in the studies." Task 12 is a SUITE of v2 Plotly Visualizations, not one figure, each rendering against the real xarray/zarr runs + the recorded metrics (accuracy, `RunTiming`, composability). Every figure is an interactive v2 Visualization in the package; the per-arm ones are wired into each arm's study (Task 11 Step 5), the comparative ones into the investigation report.
 
 **Files:**
-- Create: `viva_sbml_decomposition/visualizations/tradeoff.py` — a v2 decorated-function Visualization.
-- Test: `tests/test_tradeoff_viz.py`
+- Create: `viva_sbml_decomposition/visualizations/` — one module per figure (decorated v2 Visualizations) + a small shared metrics-assembler.
+- Test: `tests/test_tradeoff_viz.py` (+ per-figure data-assembly tests).
 
 **Interfaces:**
-- Consumes: the six studies' runs (accuracy results, timing ratios, composability scores, Task-10b `RunTiming` process-vs-framework split).
-- Produces: `tradeoff_map(...)` Visualization — accuracy-vs-speed scatter with composability encoded (size/color), arm 6 shown as a capability callout (not on the accuracy axis), + a decision table with a composability column and arm 6 accuracy cell "N/A". ALSO a per-arm **process-vs-framework-overhead breakdown** (stacked bar of process_s vs framework_s, or overhead_fraction per arm) so the performance story shows WHERE time goes, not just how much — the detailed metric the user asked for.
+- Consumes: the six studies' runs (trajectories), accuracy results (Task 3), timing ratios + per-process/framework split (Task 4 + Task 10b `RunTiming`), composability scores + `accuracy_exempt` flag (Task 10).
+- Produces the figure suite:
+  1. **Runtime comparison** across arms — absolute wall-clock per arm AND overhead ratio to monolithic (bar), so "different runtime comparison" is explicit. Includes arm5 serial-vs-Ray and arm4 scalar-vs-array as grouped bars.
+  2. **Process-vs-framework overhead breakdown** — per-arm stacked bar (process_s vs framework_s) + `overhead_fraction`, plus the top per-process contributors (from `timing_summary.per_process`) — WHERE time goes, not just how much.
+  3. **Accuracy divergence** — per-arm per-species RMSE / max_rel_err vs the monolithic reference (arms 1–5; arm 6 excluded via `accuracy_exempt`).
+  4. **Convergence curves** — arm2 and arm3 max_rel_err vs coupling interval (the splitting-error-shrinks story).
+  5. **Ensemble scaling** — arm5 serial vs Ray wall-clock + speedup vs n_instances.
+  6. **Composability scorecard** — per-arm substitutability / coupling_readiness / multiscale_fit (heatmap or grouped bar).
+  7. **3-way tradeoff map** — accuracy-vs-speed scatter with composability encoded (size/color); arm 6 as a capability callout OFF the accuracy axis (keyed on `accuracy_exempt`).
+  8. **Decision table** — use/avoid/why per decomposition pattern, with a composability column and arm 6 accuracy "N/A"; carries the multi-rate/mismatched-interval caveat (see ledger) as a dated note.
 
-- [ ] **Step 1: Write failing test** `test_tradeoff_data_excludes_arm6_from_accuracy`: the viz-data assembler places arms 1–5 on the accuracy axis and arm 6 only in the callout/table with accuracy `None` (Review Focus).
+- [ ] **Step 1: Write failing tests**: `test_tradeoff_data_excludes_arm6_from_accuracy` (assembler keys off `accuracy_exempt`: arms 1–5 on the accuracy axis, arm 6 only in callout/table); `test_runtime_comparison_has_all_arms`; `test_overhead_breakdown_sums_to_total` (process_s + framework_s ≈ total_s per arm).
 - [ ] **Step 2:** Run; expect FAIL.
-- [ ] **Step 3:** Implement via `/viva-viz` (v2 Visualization) rendering against the real xarray/zarr runs (mosaic-compose foundations pattern). Push for an informative interactive figure, not a default scatter.
-- [ ] **Step 4:** Run; expect PASS; confirm the figure renders in the dashboard.
+- [ ] **Step 3:** Implement each figure via `/viva-viz` (v2 Visualizations) against the real xarray/zarr runs (mosaic-compose foundations pattern). Push for informative, interactive figures — not default line/scatter. Register them in `workspace.yaml` `visualizations` and wire the per-arm ones to their study (Task 11 Step 5).
+- [ ] **Step 4:** Run; expect PASS; confirm every figure renders in the dashboard (study pages show their per-arm figures; investigation report shows the comparative ones).
 - [ ] **Step 5: Commit.**
 
 ---
