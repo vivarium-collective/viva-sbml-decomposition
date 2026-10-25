@@ -111,12 +111,15 @@ def _adenylates(p_pool):
     return atp, adp, amp
 
 
-def _rhs(_t, y):
-    """Native Teusink glycolysis RHS: d(14 settable species)/dt.
+def _fluxes(y):
+    """Every Teusink reaction rate (one float per reaction id) at state ``y``.
 
     ``y`` is ordered as :data:`SETTABLE`. Every expression below is a direct
     port of a reaction rate law in :data:`GLYCOLYSIS_ANTIMONY` (cytosol volume =
-    1, so dropped). This is the only place the kinetics live in arm 4.
+    1, so dropped). This is the only place the kinetics live in arm 4 / arm 6;
+    :func:`_assemble` turns these fluxes into species derivatives via the
+    stoichiometry in :data:`STOICH` (optionally restricted to a reaction subset,
+    which is how arm 6 integrates a single native submodel).
     """
     (GLCi, G6P, F6P, F16P, TRIO, BPG, P3G, P2G, PEP, PYR, ACE, Pp, NAD, NADH) = y
     ATP, ADP, AMP = _adenylates(Pp)
@@ -232,24 +235,83 @@ def _rhs(_t, y):
     )
     vATP = P["vATP_KATPASE"] * ATP
 
-    d = np.empty(14)
-    d[0] = vGLT - vGLK  # GLCi
-    d[1] = vGLK - vPGI - vGLYCO - 2.0 * vTreha  # G6P
-    d[2] = vPGI - vPFK  # F6P
-    d[3] = vPFK - vALD  # F16P
-    d[4] = 2.0 * vALD - vGAPDH - vG3PDH  # TRIO
-    d[5] = vGAPDH - vPGK  # BPG
-    d[6] = vPGK - vPGM  # P3G
-    d[7] = vPGM - vENO  # P2G
-    d[8] = vENO - vPYK  # PEP
-    d[9] = vPYK - vPDC  # PYR
-    d[10] = vPDC - 2.0 * vSUC - vADH  # ACE
-    d[11] = (
-        -vGLK - vGLYCO - vTreha - vPFK + vPGK + vPYK - 4.0 * vSUC - vATP
-    )  # P (high-energy phosphate pool)
-    d[12] = -vGAPDH - 3.0 * vSUC + vADH + vG3PDH  # NAD
-    d[13] = vGAPDH + 3.0 * vSUC - vADH - vG3PDH  # NADH
+    return {
+        "vGLT": vGLT, "vGLK": vGLK, "vPGI": vPGI, "vGLYCO": vGLYCO,
+        "vTreha": vTreha, "vPFK": vPFK, "vALD": vALD, "vGAPDH": vGAPDH,
+        "vPGK": vPGK, "vPGM": vPGM, "vENO": vENO, "vPYK": vPYK, "vPDC": vPDC,
+        "vSUC": vSUC, "vADH": vADH, "vG3PDH": vG3PDH, "vATP": vATP,
+    }
+
+
+# Stoichiometry: reaction id -> {settable species: coefficient}. A verbatim
+# transcription of the ``d[i] = ...`` assembly against the SBML reaction
+# definitions (cytosol volume = 1). :func:`_assemble` sums ``coeff * flux`` over
+# the reactions, so restricting the reaction set yields that submodel's partial
+# derivatives — exactly what arm 6's native lower-glycolysis node integrates.
+STOICH = {
+    "vGLT":   {"GLCi": 1.0},
+    "vGLK":   {"GLCi": -1.0, "G6P": 1.0, "P": -1.0},
+    "vPGI":   {"G6P": -1.0, "F6P": 1.0},
+    "vGLYCO": {"G6P": -1.0, "P": -1.0},
+    "vTreha": {"G6P": -2.0, "P": -1.0},
+    "vPFK":   {"F6P": -1.0, "F16P": 1.0, "P": -1.0},
+    "vALD":   {"F16P": -1.0, "TRIO": 2.0},
+    "vGAPDH": {"TRIO": -1.0, "BPG": 1.0, "NAD": -1.0, "NADH": 1.0},
+    "vPGK":   {"BPG": -1.0, "P3G": 1.0, "P": 1.0},
+    "vPGM":   {"P3G": -1.0, "P2G": 1.0},
+    "vENO":   {"P2G": -1.0, "PEP": 1.0},
+    "vPYK":   {"PEP": -1.0, "PYR": 1.0, "P": 1.0},
+    "vPDC":   {"PYR": -1.0, "ACE": 1.0},
+    "vSUC":   {"ACE": -2.0, "P": -4.0, "NAD": -3.0, "NADH": 3.0},
+    "vADH":   {"ACE": -1.0, "NAD": 1.0, "NADH": -1.0},
+    "vG3PDH": {"TRIO": -1.0, "NAD": 1.0, "NADH": -1.0},
+    "vATP":   {"P": -1.0},
+}
+
+# Fast index lookup for assembly (species name -> position in SETTABLE / y).
+_SETTABLE_POS = {s: i for i, s in enumerate(SETTABLE)}
+
+
+def _assemble(fluxes, active=None):
+    """Species derivatives d(SETTABLE)/dt from reaction fluxes via :data:`STOICH`.
+
+    ``active`` restricts the contributing reactions to a subset (``None`` = the
+    full network, reproducing the original monolithic RHS exactly).
+    """
+    d = np.zeros(len(SETTABLE))
+    for rxn, contribs in STOICH.items():
+        if active is not None and rxn not in active:
+            continue
+        v = fluxes[rxn]
+        for sp, coeff in contribs.items():
+            d[_SETTABLE_POS[sp]] += coeff * v
     return d
+
+
+def _rhs(_t, y):
+    """Native Teusink glycolysis RHS: d(14 settable species)/dt (full network)."""
+    return _assemble(_fluxes(y))
+
+
+def make_subset_rhs(reactions):
+    """RHS closure that integrates ONLY ``reactions`` (a native submodel's subset).
+
+    Shared adenylate pool and TPI split still derive from the full state ``y``
+    (the subset reads the same shared store), but only the listed reactions
+    contribute to the derivative — the native analogue of arm 3's reaction-subset
+    :class:`SubmodelProcess`.
+    """
+    active = set(reactions)
+    unknown = active - set(STOICH)
+    if unknown:
+        raise ValueError(f"unknown reactions {sorted(unknown)} (have {sorted(STOICH)})")
+    if not active:
+        raise ValueError("make_subset_rhs needs at least one reaction")
+
+    def rhs(_t, y):
+        return _assemble(_fluxes(y), active)
+
+    return rhs
 
 
 def initial_concentrations():
@@ -347,6 +409,65 @@ class NativeGlycolysisProcess(Process):
             arr = np.array([named[s] for s in SPECIES], dtype=float)
             return {"species": arr, "species_named": named}
         return {"species": named}
+
+
+class NativeSubmodelProcess(Process):
+    """One native-pbg reaction SUBMODEL as a bigraph process node (arm 6).
+
+    The native analogue of arm 3's :class:`SubmodelProcess`: it reads the shared
+    ``species`` store, integrates ONLY its ``reactions`` subset of the native
+    Teusink RHS over the coupling ``interval`` with scipy, and returns the
+    per-species **delta** it produced. The species leaf is ``map[float]`` (NOT
+    overwrite), so the delta reconciles additively through the bigraph apply path
+    with the *other* submodel node's delta — even though that other node is a
+    Tellurium/libroadrunner :class:`SubmodelProcess` and this one is hand-written
+    Python. That cross-engine, store-coupled composition is exactly what a single
+    monolithic libroadrunner model cannot express.
+    """
+
+    config_schema = {
+        "reactions": {"_type": "list[string]", "_default": []},
+        "absolute_tolerance": {"_type": "float", "_default": ABSOLUTE_TOLERANCE},
+        "relative_tolerance": {"_type": "float", "_default": RELATIVE_TOLERANCE},
+        "method": {"_type": "string", "_default": DEFAULT_METHOD},
+    }
+
+    def __init__(self, config=None, core=None):
+        super().__init__(config=config, core=core)
+        self._rhs = make_subset_rhs(self.config["reactions"])
+        self._init = initial_concentrations()
+
+    def inputs(self):
+        return {"species": "map[float]"}
+
+    def outputs(self):
+        # Plain map[float] (NOT overwrite): the update is an additive DELTA that
+        # reconciles by summation with the other submodel node's delta.
+        return {"species": "map[float]"}
+
+    def update(self, state, interval):
+        incoming = (state.get("species") if state else None) or {}
+        y0 = np.array(
+            [float(incoming[s]) if s in incoming else self._init[s] for s in SETTABLE],
+            dtype=float,
+        )
+        try:
+            sol = solve_ivp(
+                self._rhs,
+                (0.0, interval),
+                y0,
+                method=self.config["method"],
+                rtol=self.config["relative_tolerance"],
+                atol=self.config["absolute_tolerance"],
+            )
+            if not sol.success:
+                raise RuntimeError(sol.message)
+            y1 = sol.y[:, -1]
+        except (RuntimeError, FloatingPointError, ValueError):
+            # Left the sqrt domain / integration failed: write a non-finite delta
+            # so the arm surfaces as diverged instead of crashing the composite.
+            return {"species": {s: float("nan") for s in SETTABLE}}
+        return {"species": {s: float(y1[i]) - float(y0[i]) for i, s in enumerate(SETTABLE)}}
 
 
 def register_native_glycolysis(core=None):
