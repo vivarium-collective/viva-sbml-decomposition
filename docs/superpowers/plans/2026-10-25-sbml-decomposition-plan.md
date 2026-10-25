@@ -223,6 +223,26 @@
 
 ---
 
+## Task 10b: Composite timing instrumentation (process vs framework overhead)
+
+**Added 2026-10-25 per user request** ("report detailed performance metrics; process-bigraph's Composite reports process runtimes vs overhead time"). Coordinated with the optimize session on a shared metric.
+
+**Files:**
+- Modify: `viva_sbml_decomposition/composites/_run.py` (the shared `extract_run`) and/or `viva_sbml_decomposition/harness/timing.py`.
+- Test: `tests/test_timing_summary.py`
+
+**Interfaces:**
+- Consumes: `process_bigraph.composite.Composite.timing_summary() -> TimingSummary{total, process_time, framework_time, per_process}` (+ `fraction_in_processes()`); per-process detail needs `detail_timing` (emitter `detail` config contains `'timing'`).
+- Produces: a capture path that runs a composite and returns the trajectory AND a `RunTiming` record `{total_s, process_s, framework_s, overhead_fraction, per_process}`. Because it lives in the shared `extract_run`/run path, ALL six arms get the split with no per-arm rework. Consumed by Task 11 (study metrics) and Task 12 (figure).
+
+- [ ] **Step 1: Write failing tests**: `test_timing_summary_captured` — running an arm through the timed path yields `overhead_fraction` in [0,1], `process_s + framework_s ≈ total_s`, and a non-empty `per_process` when detail is on; `test_overhead_fraction_ordering` — a native/decomposed arm reports a HIGHER framework `overhead_fraction` than arm 1 monolithic (the expected direction — more scheduler cycles = more overhead), proving the metric discriminates arms.
+- [ ] **Step 2:** Run; expect FAIL.
+- [ ] **Step 3:** Implement: hold a reference to the `Composite` after `run()`, call `timing_summary()`, assemble `RunTiming`. Enable per-process detail via the DIRECT attribute `composite._profile_per_process = True` BEFORE `run()` (standardized with the optimize session for programmatic benches — no emitter dependency; the emitter `detail='timing'` path is the in-app equivalent, note it in a comment). Report ONE aggregate `framework_time` only — do NOT sub-bucket it in the shared schema (view/project/apply/realize/scheduling stay lumped; finer cProfile buckets are each suite's own drill-down, not shared). detail_timing perturbation is ~1.1% (optimize measured), so a single detail-ON run is acceptable for the headline too; still prefer headline `overhead_fraction` from a detail-OFF run + per_process from a detail-ON run for clean apples-to-apples. Under Ray (arm 5), per-process collapses to the `<batched>` key — record that honestly, don't fake per-process attribution.
+- [ ] **Step 4:** Run; expect PASS.
+- [ ] **Step 5: Commit.**
+
+---
+
 ## Task 11: Investigation + studies, wired for the discovery engine
 
 **Files:**
@@ -233,7 +253,7 @@
 - Produces: `investigations/sbml-decomposition/` with acceptance criteria (the tradeoff questions) and per-study canonical verdicts set so the discovery-engine roll-up is real.
 
 - [ ] **Step 1:** `/viva-investigation new sbml-decomposition` with the overview/question from the spec.
-- [ ] **Step 2:** For each arm, `/viva-study` a member study: baseline composite = that arm's composite, `runtime.default_emitter: xarray`, the arm's acceptance criteria (accuracy within `T`, overhead ratio bound, composability target; arm 6's accuracy criterion marked N/A).
+- [ ] **Step 2:** For each arm, `/viva-study` a member study: baseline composite = that arm's composite, `runtime.default_emitter: xarray`, the arm's acceptance criteria (accuracy within `T`, overhead ratio bound, **framework `overhead_fraction` from Task 10b**, composability target; arm 6's accuracy criterion marked N/A). Record the Task-10b `RunTiming` (total/process/framework/overhead_fraction + top per-process) as a reported metric on each study.
 - [ ] **Step 3:** Run each study (`/viva-run` or the study's Simulate phase); confirm each emits the expected observables.
 - [ ] **Step 4:** Set each study's canonical verdict from its run (`/viva-biology-forward` / `viva-study` decide phase) so the roll-up is populated.
 - [ ] **Step 5: Verify** via `/viva-navigate decisions sbml-decomposition` that the discovery-engine frontier is non-empty and names a next action (proves the crank is wired).
@@ -248,8 +268,8 @@
 - Test: `tests/test_tradeoff_viz.py`
 
 **Interfaces:**
-- Consumes: the six studies' runs (accuracy results, timing ratios, composability scores).
-- Produces: `tradeoff_map(...)` Visualization — accuracy-vs-speed scatter with composability encoded (size/color), arm 6 shown as a capability callout (not on the accuracy axis), + a decision table with a composability column and arm 6 accuracy cell "N/A".
+- Consumes: the six studies' runs (accuracy results, timing ratios, composability scores, Task-10b `RunTiming` process-vs-framework split).
+- Produces: `tradeoff_map(...)` Visualization — accuracy-vs-speed scatter with composability encoded (size/color), arm 6 shown as a capability callout (not on the accuracy axis), + a decision table with a composability column and arm 6 accuracy cell "N/A". ALSO a per-arm **process-vs-framework-overhead breakdown** (stacked bar of process_s vs framework_s, or overhead_fraction per arm) so the performance story shows WHERE time goes, not just how much — the detailed metric the user asked for.
 
 - [ ] **Step 1: Write failing test** `test_tradeoff_data_excludes_arm6_from_accuracy`: the viz-data assembler places arms 1–5 on the accuracy axis and arm 6 only in the callout/table with accuracy `None` (Review Focus).
 - [ ] **Step 2:** Run; expect FAIL.
