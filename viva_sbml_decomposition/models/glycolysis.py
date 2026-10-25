@@ -1,6 +1,9 @@
 """Teusink et al. 2000 yeast glycolysis (BioModels BIOMD0000000064) as Antimony.
 
 Monolithic accuracy reference for all decomposition arms.
+
+GLYCOLYSIS_ANTIMONY is verbatim tellurium.sbmlToAntimony output (verbose, with the
+public BioModels creator metadata); this is intentional, not stray.
 """
 
 GLYCOLYSIS_META = {
