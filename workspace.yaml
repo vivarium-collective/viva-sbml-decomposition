@@ -4,6 +4,14 @@ created: "2026-10-25"
 plugin_version: 0.4.16
 package_path: viva_sbml_decomposition
 
+# All arms here are single-generation ODE/reaction models (no cell division),
+# so one generation per run on the single-gen XArray write path. The workbench
+# default of 3 generations otherwise misclassifies them as multi-gen and falls
+# back to sqlite.
+runtime:
+  default_emitter: xarray
+  max_generations: 1
+
 # Directory layout. New workspaces group their research directories under a
 # tidy `workspace/` subtree (the dirs below); the hidden `.pbg/` machine state
 # stays at the root like `.git/`. Tooling (dashboard, lint, skills) resolves

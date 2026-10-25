@@ -17,6 +17,13 @@ dependencies = [
     "pypdf>=4.0",
     "matplotlib",
     "plotly",
+    # Real libroadrunner/CVODE SBML integration, wrapped as a process-bigraph
+    # Process (arms 1-3 + 5 + the coupling demo). Inline Antimony via
+    # make_tellurium_document(model=..., model_format="antimony").
+    "viva-tellurium",
+    # Parallel backend for the ensemble arm (arm 5) — real concurrent execution
+    # so a throughput speedup is actually measurable.
+    "ray",
     # Web-based workspace dashboard (server + templates + assets + lib helpers).
     # Extracted from viva-template as of v0.4.16; provides the `vivarium-workbench
     # serve` CLI invoked by scripts/serve.sh.
@@ -48,3 +55,4 @@ packages = ["viva_sbml_decomposition"]
 
 [tool.uv.sources]
 vivarium-workbench = { git = "https://github.com/vivarium-collective/vivarium-workbench.git", branch = "main" }
+viva-tellurium = { git = "https://github.com/vivarium-collective/viva-tellurium.git", branch = "main" }
