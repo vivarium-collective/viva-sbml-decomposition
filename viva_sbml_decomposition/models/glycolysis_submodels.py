@@ -41,15 +41,10 @@ LOWER_GLYCOLYSIS = [
     "vPDC", "vADH", "vG3PDH", "vSUC", "vATP",
 ]
 
-# The ordered biological partition consumed by arm 3. Order is the additive
-# reconciliation order (immaterial to the summed result, but fixed for
-# reproducibility).
+# The biological partition consumed by arm 3 — one entry per submodel process
+# node. Both submodels write to the shared boundary pool they cross (F16P, the
+# P/ATP/ADP/AMP energy pool, NAD/NADH), which reconciles additively.
 SUBMODELS = [
     ("upper_glycolysis", UPPER_GLYCOLYSIS),
     ("lower_glycolysis", LOWER_GLYCOLYSIS),
 ]
-
-# Metabolites written by BOTH submodels (the seam's shared boundary pool).
-# ATP/ADP/AMP are assignment-rule species derived from P; only P is settable,
-# but all are listed here as the biological boundary the seam crosses.
-SHARED_BOUNDARY_SPECIES = ["F16P", "P", "ATP", "ADP", "AMP", "NAD", "NADH"]

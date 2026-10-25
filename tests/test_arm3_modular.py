@@ -1,26 +1,31 @@
-"""Arm 3: modular submodels across a biological seam — convergence to arm 1.
+"""Arm 3: modular submodels as a GENUINE multi-process composite — convergence
+to the arm-1 reference.
 
 The SAME 17-species Teusink glycolysis model as arm 1, partitioned along the
-textbook **aldolase seam** into two biologically-meaningful submodels:
+textbook **aldolase seam** into two biologically-meaningful submodels, each its
+own process-bigraph node:
 
 * **upper glycolysis** — the preparatory / ATP-investment phase (glucose uptake
   through fructose-1,6-bisphosphate) plus the G6P storage sinks;
 * **lower glycolysis** — the payoff phase (F16P -> pyruvate/ethanol, ATP- and
   NADH-producing) plus fermentation and the ATPase.
 
-Each submodel is its own ``TelluriumProcess`` (one libroadrunner instance over
-its reaction subset). They share the boundary metabolites — F16P, the
-P/ATP/ADP/AMP energy pool, and NAD/NADH — through a common vivarium ``species``
-store, reconciled **additively** (each submodel's per-substep delta is summed).
+The two ``SubmodelProcess`` nodes share a single ``species`` store and couple
+only through it: each reads the shared state, integrates its reactions over the
+coupling interval, and writes its per-species **delta** back. Because the store's
+``map[float]`` applies numeric updates additively and sums deltas written to the
+same path, the two submodels reconcile **additively** through the bigraph apply
+path (a Jacobi / additive operator split — the mosaic-compose dFBA-coculture
+pattern). An ``EnergyStep`` node re-derives ATP/ADP/AMP from the reconciled pool.
 
 This seam cuts the strong phosphate/energy coupling that fed the sqrt ADP
 assignment rule, which made it *intractable* for arm 2's pure Lie split (the
 isolated sub-model left the sqrt domain and CVODE blew up for every interval).
-Arm 3 makes the same seam converge by sub-stepping: each coupling interval is
-advanced in ``n_substeps`` small additive steps, so neither submodel drifts the
-shared energy pool out of the sqrt domain before reconciliation. The residual
-is genuine first-order additive-splitting error that shrinks as the substep
-shrinks (verified below); it is NOT manufactured.
+Arm 3 makes the same seam converge by reconciling through the store frequently
+(small coupling interval), so neither submodel drifts the shared energy pool out
+of the sqrt domain before the other's delta lands. The residual is genuine
+first-order additive-splitting error that shrinks with the coupling interval
+(verified below); it is NOT manufactured.
 """
 import numpy as np
 import pytest
@@ -34,46 +39,43 @@ from viva_sbml_decomposition.harness.accuracy import compare_to_reference
 from viva_sbml_decomposition.models.glycolysis import GLYCOLYSIS_META
 from viva_sbml_decomposition.models.glycolysis_submodels import SUBMODELS
 
-# Shared coupling interval; the discriminating knob is the number of internal
-# additive sub-steps per interval (smaller substep -> smaller splitting error).
-COUPLING_INTERVAL = 0.1
-COARSE_SUBSTEPS = 50    # dt = 2.0e-3  -> ~0.47 max rel err (outside T)
-FINE_SUBSTEPS = 200     # dt = 5.0e-4  -> ~0.10 max rel err (within T)
+# The discriminating knob is the coupling interval = the scheduler step at which
+# both submodel nodes reconcile their deltas through the shared store. Smaller
+# interval -> smaller additive-splitting error.
+COARSE_INTERVAL = 0.002   # ~0.47 max rel err (outside T)
+FINE_INTERVAL = 0.0005    # ~0.10 max rel err (within T)
+CHEAP_INTERVAL = 0.005    # domain-safe, fast; for the round-trip / finiteness check
+DIVERGE_INTERVAL = 0.1    # one whole interval in isolation -> leaves the sqrt domain
 
-# Provisional tolerance for the fine substep, calibrated in the task-7 report.
-# The coarse substep sits OUTSIDE it so the bound discriminates. T is looser
-# than arm 2's 0.10 because additive (Jacobi) coupling across the STRONG energy
-# seam is fundamentally less accurate than arm 2's sequential split across the
-# WEAK storage seam — that difference is the scientific point of this arm.
+# Provisional tolerance for the fine interval, calibrated in the task-7 report.
+# Looser than arm 2's 0.10 because additive (Jacobi) coupling across the STRONG
+# energy seam is fundamentally less accurate than arm 2's sequential split across
+# the WEAK storage seam — that difference is the scientific point of this arm.
 TOLERANCE_T = 0.15
 
 
 def test_arm3_matches_reference_within_tolerance():
     ref_traj, ref_t = run_monolithic()
 
-    coarse_traj, coarse_t = run_modular(
-        coupling_interval=COUPLING_INTERVAL, n_substeps=COARSE_SUBSTEPS
-    )
-    fine_traj, fine_t = run_modular(
-        coupling_interval=COUPLING_INTERVAL, n_substeps=FINE_SUBSTEPS
-    )
+    coarse_traj, coarse_t = run_modular(coupling_interval=COARSE_INTERVAL)
+    fine_traj, fine_t = run_modular(coupling_interval=FINE_INTERVAL)
 
     coarse = compare_to_reference(ref_traj, ref_t, coarse_traj, coarse_t)
     fine = compare_to_reference(ref_traj, ref_t, fine_traj, fine_t)
 
     # Both configurations integrate to finite trajectories over the full span
-    # (the sub-stepping keeps the strong-coupling seam in the sqrt domain).
-    assert coarse.status == "ok", "coarse modular split diverged"
-    assert fine.status == "ok", "fine modular split diverged"
+    # (frequent store reconciliation keeps the strong-coupling seam in domain).
+    assert coarse.status == "ok", "coarse modular composite diverged"
+    assert fine.status == "ok", "fine modular composite diverged"
 
-    # Accuracy IMPROVES as the substep shrinks — the real signature of
-    # additive-splitting error vanishing with the substep.
+    # Accuracy IMPROVES as the coupling interval shrinks — the real signature of
+    # additive-splitting error vanishing with the reconciliation interval.
     assert fine.max_rel_err < coarse.max_rel_err, (
         f"fine {fine.max_rel_err:.4e} not better than coarse "
         f"{coarse.max_rel_err:.4e}"
     )
 
-    # The fine substep is within T; the coarse substep is outside it — so T
+    # The fine interval is within T; the coarse interval is outside it — so T
     # genuinely asserts something rather than passing vacuously.
     assert fine.max_rel_err < TOLERANCE_T, (
         f"fine {fine.max_rel_err:.4e} exceeds T={TOLERANCE_T}"
@@ -86,11 +88,11 @@ def test_arm3_matches_reference_within_tolerance():
 
 def test_arm3_pairs_full_species_set_by_name():
     names = GLYCOLYSIS_META["species"]
-    traj, t = run_modular(
-        coupling_interval=COUPLING_INTERVAL, n_substeps=COARSE_SUBSTEPS
-    )
+    traj, t = run_modular(coupling_interval=CHEAP_INTERVAL)
 
-    # The full 17-species set round-trips through the shared store by name.
+    # The full 17-species set round-trips through the shared store by name — the
+    # 14 settable species carried by the submodel nodes plus ATP/ADP/AMP derived
+    # by the EnergyStep node.
     assert set(traj) == set(names) and len(names) == 17
     assert t[0] == 0.0 and np.isclose(t[-1], GLYCOLYSIS_META["t_end"])
     for s in names:
@@ -104,6 +106,18 @@ def test_arm3_pairs_full_species_set_by_name():
         compare_to_reference(ref_traj, ref_t, dropped, t)
 
 
+def test_arm3_diverges_cleanly_out_of_domain():
+    # A whole coupling interval in isolation drives the shared phosphate pool out
+    # of the sqrt ADP-rule domain; CVODE fails. The SubmodelProcess guard converts
+    # that into a non-finite delta, so the composite runs to completion and the
+    # arm surfaces as *diverged* (status + inf) rather than crashing.
+    ref_traj, ref_t = run_monolithic()
+    traj, t = run_modular(coupling_interval=DIVERGE_INTERVAL)
+    result = compare_to_reference(ref_traj, ref_t, traj, t)
+    assert result.status == "diverged"
+    assert result.diverged and not np.isfinite(result.max_rel_err)
+
+
 def test_arm3_partition_is_a_biological_seam():
     # Two biologically-named submodels at the aldolase seam, each its own
     # non-empty reaction group; together they partition the network.
@@ -113,7 +127,16 @@ def test_arm3_partition_is_a_biological_seam():
         assert len(group) >= 1
 
 
-def test_arm3_generator_strips_emitter():
+def test_arm3_generator_is_multiprocess_through_a_shared_store():
     doc = glycolysis_modular()
-    assert "submodels" in doc
+
+    # A shared species store and SEPARATE process nodes per submodel — the
+    # multi-process decomposition, not one process doing internal reconciliation.
+    assert "species" in doc and isinstance(doc["species"], dict)
+    assert doc["upper_glycolysis"]["_type"] == "process"
+    assert doc["lower_glycolysis"]["_type"] == "process"
+    # Both submodels wire their species port to the one shared store.
+    assert doc["upper_glycolysis"]["outputs"]["species"] == ["species"]
+    assert doc["lower_glycolysis"]["outputs"]["species"] == ["species"]
+    # Emitter stripped for the workbench.
     assert not any(k == "emitter" or k.startswith("emitter_") for k in doc)
