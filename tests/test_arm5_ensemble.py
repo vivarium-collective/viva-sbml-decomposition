@@ -8,6 +8,7 @@ speedup — a serial fallback silently claiming a speedup is the failure mode
 these tests exist to prevent.
 """
 import math
+import os
 
 import numpy as np
 import pytest
@@ -38,6 +39,7 @@ def test_ensemble_runs_all_instances():
     n = 4
     results = glycolysis_ensemble(n_instances=n)
     assert len(results) == n
+    assert results.backend in ("ray", "serial")
     for res in results:
         assert set(res) == set(SPECIES) and len(SPECIES) == 17
         assert all(math.isfinite(float(v)) for v in res.values())
@@ -62,6 +64,19 @@ def test_ensemble_parallel_or_declares_serial():
     """HONESTY GATE. Either Ray delivers a real wall-clock speedup, or the
     result honestly declares a serial fallback with no speedup claim."""
     result = ensemble_speedup(n_instances=8)
+
+    # On a multicore host where Ray imports, a Ray regression must not pass
+    # silently via the serial-declared branch.
+    try:
+        import ray  # noqa: F401
+        have_ray = True
+    except ImportError:
+        have_ray = False
+    if (os.cpu_count() or 1) >= 4 and have_ray:
+        if not result.speedup_claimed:  # one retry against timing noise
+            result = ensemble_speedup(n_instances=8)
+        assert result.speedup_claimed is True, result
+        assert result.setup_excluded is True and result.setup_s is not None
 
     # The honesty invariant, whichever branch we land in.
     if result.speedup_claimed:

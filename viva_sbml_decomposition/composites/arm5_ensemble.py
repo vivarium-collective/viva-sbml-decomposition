@@ -25,6 +25,7 @@ from viva_sbml_decomposition.composites.arm1_monolithic import (
     DEFAULT_N_STEPS,
     run_arm as run_monolithic,
 )
+from viva_sbml_decomposition.harness.timing import time_run
 from viva_sbml_decomposition.models.glycolysis import GLYCOLYSIS_META
 
 DEFAULT_N_INSTANCES = 8
@@ -59,7 +60,7 @@ def _try_ray():
     """Return the ``ray`` module initialized with a modest cpu count, or None."""
     try:
         import ray
-    except Exception:
+    except ImportError:
         return None
     try:
         if not ray.is_initialized():
@@ -72,8 +73,25 @@ def _try_ray():
                 configure_logging=False,
             )
         return ray
-    except Exception:
+    except (ConnectionError, OSError, RuntimeError):
+        # Ray init/connection failure = availability problem -> serial fallback.
         return None
+
+
+def _dispatch_errors():
+    """Ray errors that mean the backend (not the model) failed."""
+    from ray.exceptions import RaySystemError
+
+    return (RaySystemError, ConnectionError)
+
+
+class EnsembleResults(list):
+    """List of per-instance final-state dicts, tagged with the backend that ran.
+
+    ``backend`` is ``"ray"`` (OS-process parallel) or ``"serial"`` (fallback).
+    """
+
+    backend: str = "serial"
 
 
 def glycolysis_ensemble(
@@ -81,33 +99,45 @@ def glycolysis_ensemble(
     n_instances: int = DEFAULT_N_INSTANCES,
     param_draws: Optional[Sequence[ParamDraw]] = None,
     n_steps: int = DEFAULT_N_STEPS,
-) -> List[dict]:
+) -> EnsembleResults:
     """Run ``n_instances`` monolithic glycolysis instances concurrently via Ray.
 
     Each instance is one arm-1 run, optionally perturbed by the matching entry
     of ``param_draws`` (a sequence of ``{param_id: value}`` or ``None``). Returns
-    a list of ``n_instances`` final-state dicts (17 species each). Falls back to a
-    serial loop (same results) when Ray is unavailable — correctness never
-    depends on the backend.
+    an :class:`EnsembleResults` list of ``n_instances`` final-state dicts (17
+    species each) whose ``.backend`` records what actually ran. Falls back to a
+    serial loop only when Ray is unavailable or its dispatch fails; a genuine
+    model/integrator error in an instance PROPAGATES (never masked).
+
+    ``core`` is accepted for interface symmetry but ignored: a core is not
+    picklable/shareable, so every instance (and Ray worker) builds its own.
     """
     draws = _draws(n_instances, param_draws)
     ray = _try_ray()
     if ray is not None:
         try:
             remote = ray.remote(_run_instance)
-            futures = [remote.remote(d, n_steps) for d in draws]
-            return ray.get(futures)
-        except Exception:
-            pass  # fall through to serial — results are identical
-    return [_run_instance(d, n_steps) for d in draws]
+            out = EnsembleResults(ray.get([remote.remote(d, n_steps) for d in draws]))
+            out.backend = "ray"
+            return out
+        except _dispatch_errors():
+            pass  # Ray backend failure -> serial; task (model) errors propagate
+    out = EnsembleResults(_run_instance(d, n_steps) for d in draws)
+    out.backend = "serial"
+    return out
 
 
 class EnsembleSpeedup(NamedTuple):
     """Timing outcome for an ensemble run.
 
-    ``parallel_s``/``serial_s``/``speedup`` are the documented first three fields.
-    ``backend`` and ``speedup_claimed`` carry the honesty verdict: a speedup is
-    claimed only when a real Ray batch beat the serial baseline on the clock.
+    ``parallel_s``/``serial_s``/``speedup`` are the documented first three fields
+    (medians from the shared ``time_run`` harness). ``backend`` and
+    ``speedup_claimed`` carry the honesty verdict: a speedup is claimed only when
+    a real Ray batch beat the serial baseline on the clock.
+
+    ``setup_s`` is the Ray init + worker warmup time (typically ~15-20 s). It is
+    EXCLUDED from ``parallel_s`` (``setup_excluded=True``): ``speedup`` is a
+    steady-state throughput figure and must not be read as including setup.
     """
 
     parallel_s: Optional[float]
@@ -117,9 +147,11 @@ class EnsembleSpeedup(NamedTuple):
     speedup_claimed: bool
     n_instances: int
     n_cpus: int
+    setup_s: Optional[float] = None
+    setup_excluded: bool = False
 
 
-def _serial_only(serial_s: float, n_instances: int) -> EnsembleSpeedup:
+def _serial_only(serial_s: float, n_instances: int, setup_s: Optional[float] = None) -> EnsembleSpeedup:
     return EnsembleSpeedup(
         parallel_s=None,
         serial_s=serial_s,
@@ -128,6 +160,8 @@ def _serial_only(serial_s: float, n_instances: int) -> EnsembleSpeedup:
         speedup_claimed=False,
         n_instances=n_instances,
         n_cpus=os.cpu_count() or 1,
+        setup_s=setup_s,
+        setup_excluded=False,
     )
 
 
@@ -136,37 +170,48 @@ def ensemble_speedup(
     *,
     n_steps: int = DEFAULT_N_STEPS,
     param_draws: Optional[Sequence[ParamDraw]] = None,
+    repeats: int = 3,
 ) -> EnsembleSpeedup:
     """Measure serial vs Ray-parallel wall-clock for ``n_instances`` instances.
 
-    Returns an :class:`EnsembleSpeedup`. The speedup is claimed (``backend=="ray"``,
-    ``speedup_claimed=True``, ``speedup>1``) ONLY when the warmed Ray batch
-    genuinely finished faster than the serial loop. Otherwise the result declares
-    a serial fallback and reports no speedup.
+    Both sides use the shared :func:`time_run` harness (median of ``repeats``,
+    one warmup). Ray init + worker warmup runs as the harness ``setup`` and is
+    reported as ``setup_s``, EXCLUDED from ``parallel_s``. The speedup is claimed
+    (``backend=="ray"``, ``speedup_claimed=True``, ``speedup>1``) ONLY when the
+    Ray batch genuinely finished faster than the serial loop. Otherwise the
+    result declares a serial fallback and reports no speedup. Model errors
+    propagate.
     """
     draws = _draws(n_instances, param_draws)
 
-    # Serial baseline (in-process warm): one untimed warmup, then timed loop.
-    _run_instance(draws[0], n_steps)
-    t0 = time.perf_counter()
-    for d in draws:
-        _run_instance(d, n_steps)
-    serial_s = time.perf_counter() - t0
+    serial = time_run(
+        lambda: [_run_instance(d, n_steps) for d in draws], repeats=repeats, warmup=True
+    )
+    serial_s = serial.median_s
 
-    ray = _try_ray()
-    if ray is None:
-        return _serial_only(serial_s, n_instances)
+    state = {}
+
+    def _ray_setup():
+        ray = _try_ray()
+        if ray is None:
+            return
+        remote = ray.remote(_run_instance)
+        ray.get([remote.remote(d, n_steps) for d in draws])  # warm workers
+        state["ray"], state["remote"] = ray, remote
+
+    def _ray_batch():
+        state["ray"].get([state["remote"].remote(d, n_steps) for d in draws])
 
     try:
-        remote = ray.remote(_run_instance)
-        # Warm the worker processes (pay the per-worker import cost) UNTIMED,
-        # so the timed batch measures steady-state parallel throughput.
-        ray.get([remote.remote(d, n_steps) for d in draws])
         t0 = time.perf_counter()
-        ray.get([remote.remote(d, n_steps) for d in draws])
-        parallel_s = time.perf_counter() - t0
-    except Exception:
+        _ray_setup()
+        setup_s = time.perf_counter() - t0
+        if "ray" not in state:
+            return _serial_only(serial_s, n_instances)
+        par = time_run(_ray_batch, repeats=repeats, warmup=False)
+    except _dispatch_errors():
         return _serial_only(serial_s, n_instances)
+    parallel_s = par.median_s
 
     speedup = serial_s / parallel_s if parallel_s > 0 else 0.0
     if parallel_s < serial_s and speedup > 1.0:
@@ -178,7 +223,8 @@ def ensemble_speedup(
             speedup_claimed=True,
             n_instances=n_instances,
             n_cpus=os.cpu_count() or 1,
+            setup_s=setup_s,
+            setup_excluded=True,
         )
-    # Ray ran but did not beat serial (e.g. single-core / contended host).
-    # Honest: declare serial fallback, report no speedup.
-    return _serial_only(serial_s, n_instances)
+    # Ray ran but did not beat serial: honest serial declaration, no speedup.
+    return _serial_only(serial_s, n_instances, setup_s=setup_s)
