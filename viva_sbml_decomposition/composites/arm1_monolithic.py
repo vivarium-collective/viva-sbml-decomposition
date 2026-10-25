@@ -35,17 +35,23 @@ def glycolysis_monolithic(core=None):
     )
 
 
-def run_arm(core=None, n_steps: int = DEFAULT_N_STEPS):
+def run_arm(core=None, n_steps: int = DEFAULT_N_STEPS, parameter_overrides=None):
     """Run arm 1 locally through process-bigraph; return ``(traj, t)``.
 
     Uses the *unstripped* document (library RAM emitter) so the history can be
     read back. ``traj`` is ``{species: ndarray}`` over ``GLYCOLYSIS_META["species"]``,
     ``t`` the aligned 1-D time array (n_steps + 1 points, t=0..t_end).
+
+    ``parameter_overrides`` (optional ``{param_id: value}``) perturbs the model's
+    rate constants for this instance; ``None`` reproduces the accuracy reference.
     """
     if core is None:
         core = allocate_core()
     register_tellurium(core)
     doc = make_tellurium_document(
-        model=GLYCOLYSIS_ANTIMONY, model_format="antimony", interval=_interval(n_steps)
+        model=GLYCOLYSIS_ANTIMONY,
+        model_format="antimony",
+        interval=_interval(n_steps),
+        parameter_overrides=parameter_overrides,
     )
     return extract_run(doc, core, GLYCOLYSIS_META["t_end"], GLYCOLYSIS_META["species"])
