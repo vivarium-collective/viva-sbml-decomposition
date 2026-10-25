@@ -1,8 +1,7 @@
 """Arm 1: the monolithic Tellurium composite (accuracy reference) + run_arm."""
 from __future__ import annotations
 
-import numpy as np
-from process_bigraph import Composite, allocate_core
+from process_bigraph import allocate_core
 from process_bigraph.composite_generator import composite_generator
 from viva_tellurium import make_tellurium_document
 from viva_tellurium.composites import register_tellurium
@@ -10,6 +9,7 @@ from viva_tellurium.composites import register_tellurium
 from viva_sbml_decomposition.models.glycolysis import GLYCOLYSIS_ANTIMONY, GLYCOLYSIS_META
 
 from ._emit import strip_emitter
+from ._run import extract_run
 
 DEFAULT_N_STEPS = 300
 
@@ -48,12 +48,4 @@ def run_arm(core=None, n_steps: int = DEFAULT_N_STEPS):
     doc = make_tellurium_document(
         model=GLYCOLYSIS_ANTIMONY, model_format="antimony", interval=_interval(n_steps)
     )
-    comp = Composite({"state": doc}, core=core)
-    comp.run(GLYCOLYSIS_META["t_end"])
-    rows = comp.state["emitter"]["instance"].history
-    t = np.array([r["time"] for r in rows], dtype=float)
-    traj = {
-        s: np.array([r["species"][s] for r in rows], dtype=float)
-        for s in GLYCOLYSIS_META["species"]
-    }
-    return traj, t
+    return extract_run(doc, core, GLYCOLYSIS_META["t_end"], GLYCOLYSIS_META["species"])
