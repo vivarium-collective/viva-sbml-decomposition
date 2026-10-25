@@ -20,15 +20,21 @@ reconcile by summation through the bigraph apply path. An
 :class:`~viva_sbml_decomposition.composites.arm3_modular.EnergyStep` re-derives
 ATP/ADP/AMP from the reconciled phosphate pool each step, exactly as in arm 3.
 
-**Why the monolith can't express this.** A single libroadrunner model is one
-integrator over one SBML document; you cannot have CVODE advance half of its
-reactions while a hand-written scipy process advances the other half and have the
-two meet in a shared state each tick. The composition only exists *because* the
-model was decomposed into store-coupled nodes — which is the whole composability
-point. Mixing engines changes the numerics, so arm 6 has **no monolithic
-reference** and is deliberately kept OFF the accuracy axis (see
-:mod:`viva_sbml_decomposition.harness.composability`); the tests assert only that
-it builds, runs, and emits finite, sensible output.
+**Why the monolith can't express this (a STRUCTURAL claim, not a numeric one).**
+A single libroadrunner model is one integrator over one SBML document; you cannot
+have CVODE advance half of its reactions while a hand-written scipy process
+advances the other half and have the two meet in a shared state each tick. The
+composition only exists *because* the model was decomposed into store-coupled
+nodes — which is the whole composability point, and is impossible for the monolith
+*regardless of the numbers*. It is NOT that mixing engines changes the physics:
+arm 6 solves the SAME ODEs as arm 1 and reproduces arm 3 (the matching
+additive-split decomposition) to ~1e-7 at the same coupling interval
+(``tests/test_arm6_coupling.py``). Arm 6 is kept OFF the accuracy axis because it
+is the composability EXISTENCE PROOF, not an accuracy result — it has no dedicated
+monolithic accuracy benchmark of its own (see
+:mod:`viva_sbml_decomposition.harness.composability`). The tests assert that it
+builds, runs, emits finite sensible output, AND reproduces the additive-split
+reference (which catches a broken reaction partition).
 
 **Coupling interval.** The aldolase seam cuts the strong phosphate/energy
 coupling feeding the sqrt ADP assignment rule (arm 3's caveat). As in arm 3, the
@@ -158,8 +164,10 @@ def _build_document(coupling_interval):
         "process (hand-ported Teusink RHS + scipy) while upper glycolysis stays a "
         "Tellurium/libroadrunner submodel — two different simulation engines sharing "
         "one species store and reconciling additively. A composition a single "
-        "monolithic SBML/libroadrunner model structurally cannot express; it has no "
-        "monolithic accuracy reference by construction."
+        "monolithic SBML/libroadrunner model structurally cannot express (it solves "
+        "the same ODEs, reproducing arm 3 to ~1e-7; the impossibility is structural, "
+        "not numeric), and which is kept off the accuracy axis as the composability "
+        "existence proof."
     ),
     parameters={
         "coupling_interval": {
@@ -186,8 +194,9 @@ def run_arm(core=None, coupling_interval=DEFAULT_COUPLING_INTERVAL):
     Uses the *unstripped* document (library RAM emitter) so the history can be
     read back. ``traj`` is ``{species: ndarray}`` over ``GLYCOLYSIS_META["species"]``,
     ``t`` the aligned 1-D time array (t=0..t_end in steps of ``coupling_interval``).
-    Arm 6 has no monolithic reference — the output is validated for finiteness and
-    sensibility, not matched against arm 1.
+    Arm 6 is kept off the accuracy axis (it is the composability existence proof,
+    not an accuracy result); its output is validated for finiteness/sensibility and
+    for reproducing the matching additive-split decomposition (arm 3) to ~1e-7.
     """
     if core is None:
         core = allocate_core()

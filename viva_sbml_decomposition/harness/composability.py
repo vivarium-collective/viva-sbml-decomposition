@@ -52,11 +52,18 @@ composite (other time scales, other state representations, other processes)?
 Accuracy exemption
 ------------------
 
-Every arm except arm 6 has a monolithic reference (arm 1) and so carries a
-measured accuracy elsewhere; its ``accuracy_exempt`` is ``False``. Arm 6 mixes
-engines, which changes the numerics, so it has NO monolithic reference by
-construction: its record carries ``accuracy=None`` and ``accuracy_exempt=True``,
-the flag the Task-12 figure consumes to keep arm 6 OFF the accuracy axis.
+``accuracy_exempt`` is the real distinguishing flag the Task-12 figure keys off
+to decide which arms appear on the accuracy axis. It is ``True`` ONLY for arm 6
+and ``False`` for arms 1-5. Arms 1-5 each have a monolithic reference (arm 1) and
+so carry a measured accuracy; arm 6 is the composability EXISTENCE PROOF and has
+no dedicated accuracy benchmark of its own, so it is kept off the accuracy axis by
+design. (The exemption is NOT because arm 6's numbers differ — it solves the same
+ODEs and reproduces arm 3 to ~1e-7; see ``arm6_coupling``.)
+
+The ``accuracy`` field here is a **placeholder** (``None`` for every arm): this
+module scores composability only. The real per-arm accuracy numbers come from the
+accuracy harness on an actual run (Task 11/12), keyed on ``accuracy_exempt`` to
+skip arm 6.
 """
 from __future__ import annotations
 
@@ -85,10 +92,13 @@ class ComposabilityScore:
     """A rubric judgment for one arm, plus its accuracy-axis eligibility.
 
     ``substitutability`` / ``coupling_readiness`` / ``multiscale_fit`` are each a
-    :class:`Level` (0..3). ``accuracy`` is the arm's accuracy-axis value: ``None``
-    marks the arm accuracy-exempt (no monolithic reference), which ``accuracy_exempt``
-    mirrors as an explicit boolean for the Task-12 viz assembler. ``rationale`` is
-    the written justification tying the scores to the documented criteria.
+    :class:`Level` (0..3). ``accuracy_exempt`` is the distinguishing flag the
+    Task-12 viz assembler keys off: ``True`` only for arm 6 (the composability
+    existence proof, kept off the accuracy axis), ``False`` for arms 1-5. The
+    ``accuracy`` field is a placeholder (``None`` here for every arm) — this module
+    scores composability only; real accuracy comes from the accuracy harness on a
+    run (Task 11/12). ``rationale`` is the written justification tying the scores
+    to the documented criteria.
     """
 
     arm_id: str
@@ -184,8 +194,12 @@ _RUBRIC = {
             "different engine (native pbg) while the other stays Tellurium, and the "
             "two reconcile through the shared store — a substitution AND a "
             "cross-engine coupling both demonstrated, the maximum of the axis. "
-            "Mixing engines changes the numerics, so it has no monolithic reference "
-            "and is accuracy-exempt (kept off the accuracy axis)."
+            "The impossibility for the monolith is STRUCTURAL (you cannot mix a "
+            "hand-written process and an SBML submodel in one libroadrunner "
+            "integrator), not numeric — arm 6 solves the same ODEs and reproduces "
+            "arm 3 to ~1e-7. It is accuracy-exempt because it is the composability "
+            "existence proof with no dedicated accuracy benchmark, not because its "
+            "numbers differ."
         ),
     ),
 }

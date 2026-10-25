@@ -112,14 +112,14 @@ def _adenylates(p_pool):
 
 
 def _fluxes(y):
-    """Every Teusink reaction rate (one float per reaction id) at state ``y``.
+    """Every Teusink reaction rate at state ``y`` as an array in :data:`REACTIONS` order.
 
     ``y`` is ordered as :data:`SETTABLE`. Every expression below is a direct
     port of a reaction rate law in :data:`GLYCOLYSIS_ANTIMONY` (cytosol volume =
     1, so dropped). This is the only place the kinetics live in arm 4 / arm 6;
     :func:`_assemble` turns these fluxes into species derivatives via the
-    stoichiometry in :data:`STOICH` (optionally restricted to a reaction subset,
-    which is how arm 6 integrates a single native submodel).
+    precomputed stoichiometry matrix :data:`_STOICH_MATRIX` (optionally restricted
+    to a reaction subset, which is how arm 6 integrates a single native submodel).
     """
     (GLCi, G6P, F6P, F16P, TRIO, BPG, P3G, P2G, PEP, PYR, ACE, Pp, NAD, NADH) = y
     ATP, ADP, AMP = _adenylates(Pp)
@@ -235,18 +235,23 @@ def _fluxes(y):
     )
     vATP = P["vATP_KATPASE"] * ATP
 
-    return {
-        "vGLT": vGLT, "vGLK": vGLK, "vPGI": vPGI, "vGLYCO": vGLYCO,
-        "vTreha": vTreha, "vPFK": vPFK, "vALD": vALD, "vGAPDH": vGAPDH,
-        "vPGK": vPGK, "vPGM": vPGM, "vENO": vENO, "vPYK": vPYK, "vPDC": vPDC,
-        "vSUC": vSUC, "vADH": vADH, "vG3PDH": vG3PDH, "vATP": vATP,
-    }
+    return np.array(
+        [vGLT, vGLK, vPGI, vGLYCO, vTreha, vPFK, vALD, vGAPDH,
+         vPGK, vPGM, vENO, vPYK, vPDC, vSUC, vADH, vG3PDH, vATP],
+        dtype=float,
+    )
 
+
+# Reaction order of the :func:`_fluxes` array (must match the array literal above).
+REACTIONS = [
+    "vGLT", "vGLK", "vPGI", "vGLYCO", "vTreha", "vPFK", "vALD", "vGAPDH",
+    "vPGK", "vPGM", "vENO", "vPYK", "vPDC", "vSUC", "vADH", "vG3PDH", "vATP",
+]
 
 # Stoichiometry: reaction id -> {settable species: coefficient}. A verbatim
-# transcription of the ``d[i] = ...`` assembly against the SBML reaction
-# definitions (cytosol volume = 1). :func:`_assemble` sums ``coeff * flux`` over
-# the reactions, so restricting the reaction set yields that submodel's partial
+# transcription of the original explicit ``d[i] = ...`` assembly against the SBML
+# reaction definitions (cytosol volume = 1), used to build the dense stoichiometry
+# matrix below. Restricting the reaction set yields that submodel's partial
 # derivatives — exactly what arm 6's native lower-glycolysis node integrates.
 STOICH = {
     "vGLT":   {"GLCi": 1.0},
@@ -267,30 +272,30 @@ STOICH = {
     "vG3PDH": {"TRIO": -1.0, "NAD": 1.0, "NADH": -1.0},
     "vATP":   {"P": -1.0},
 }
+assert set(REACTIONS) == set(STOICH), "REACTIONS order out of sync with STOICH"
 
-# Fast index lookup for assembly (species name -> position in SETTABLE / y).
 _SETTABLE_POS = {s: i for i, s in enumerate(SETTABLE)}
+_REACTION_POS = {r: j for j, r in enumerate(REACTIONS)}
+
+# Dense stoichiometry matrix S (n_settable x n_reactions), columns in REACTIONS
+# order. The full RHS is the single matmul ``S @ fluxes`` (vectorized, BLAS — as
+# fast as the original explicit ``d[i]=...`` assembly and the same summation
+# order), and a reaction SUBSET is ``S[:, cols] @ fluxes[cols]`` (precomputed
+# once per submodel, so the per-call path stays a pure matmul — no Python loop).
+_STOICH_MATRIX = np.zeros((len(SETTABLE), len(REACTIONS)), dtype=float)
+for _j, _rxn in enumerate(REACTIONS):
+    for _sp, _coeff in STOICH[_rxn].items():
+        _STOICH_MATRIX[_SETTABLE_POS[_sp], _j] = _coeff
 
 
-def _assemble(fluxes, active=None):
-    """Species derivatives d(SETTABLE)/dt from reaction fluxes via :data:`STOICH`.
-
-    ``active`` restricts the contributing reactions to a subset (``None`` = the
-    full network, reproducing the original monolithic RHS exactly).
-    """
-    d = np.zeros(len(SETTABLE))
-    for rxn, contribs in STOICH.items():
-        if active is not None and rxn not in active:
-            continue
-        v = fluxes[rxn]
-        for sp, coeff in contribs.items():
-            d[_SETTABLE_POS[sp]] += coeff * v
-    return d
+def _assemble(flux_vector):
+    """Species derivatives d(SETTABLE)/dt from the full :func:`_fluxes` array."""
+    return _STOICH_MATRIX @ flux_vector
 
 
 def _rhs(_t, y):
     """Native Teusink glycolysis RHS: d(14 settable species)/dt (full network)."""
-    return _assemble(_fluxes(y))
+    return _STOICH_MATRIX @ _fluxes(y)
 
 
 def make_subset_rhs(reactions):
@@ -299,7 +304,8 @@ def make_subset_rhs(reactions):
     Shared adenylate pool and TPI split still derive from the full state ``y``
     (the subset reads the same shared store), but only the listed reactions
     contribute to the derivative — the native analogue of arm 3's reaction-subset
-    :class:`SubmodelProcess`.
+    :class:`SubmodelProcess`. The column slice is precomputed once, so each call
+    is a single matmul over the subset's fluxes (no per-call Python loop).
     """
     active = set(reactions)
     unknown = active - set(STOICH)
@@ -308,8 +314,11 @@ def make_subset_rhs(reactions):
     if not active:
         raise ValueError("make_subset_rhs needs at least one reaction")
 
+    cols = np.array([j for j, r in enumerate(REACTIONS) if r in active], dtype=int)
+    sub_matrix = _STOICH_MATRIX[:, cols]
+
     def rhs(_t, y):
-        return _assemble(_fluxes(y), active)
+        return sub_matrix @ _fluxes(y)[cols]
 
     return rhs
 
