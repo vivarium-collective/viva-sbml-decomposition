@@ -47,3 +47,37 @@ def overhead_ratio(arm_median: float, monolithic_median: float) -> float:
     if monolithic_median <= 0:
         raise ValueError("monolithic_median must be > 0")
     return arm_median / monolithic_median
+
+
+@dataclass
+class RunTiming:
+    """Process-vs-framework split of one composite run (process-bigraph timing_summary).
+
+    ``framework_s`` is ONE lumped aggregate (view/project/apply/scheduling are not
+    sub-bucketed). ``per_process`` maps process path -> seconds; empty unless
+    per-process detail was on. Under Ray it collapses to a synthetic
+    ``("<batched>", "<RuntimeClass>")`` key (recorded as-is, not faked).
+    """
+
+    total_s: float
+    process_s: float
+    framework_s: float
+    overhead_fraction: float
+    per_process: dict = field(default_factory=dict)
+
+    def top(self, n: int = 5):
+        return sorted(self.per_process.items(), key=lambda kv: kv[1], reverse=True)[:n]
+
+
+def run_timing_from_composite(comp) -> RunTiming:
+    """Read ``comp.timing_summary()`` (call AFTER ``comp.run``)."""
+    s = comp.timing_summary()
+    total = float(s.total)
+    framework = float(s.framework_time)
+    return RunTiming(
+        total_s=total,
+        process_s=float(s.process_time),
+        framework_s=framework,
+        overhead_fraction=(framework / total) if total > 0 else 0.0,
+        per_process=dict(s.per_process),
+    )
