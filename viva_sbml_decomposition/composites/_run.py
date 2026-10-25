@@ -1,6 +1,8 @@
 """Shared run/extract helper: run a built document and read its RAM-emitter history."""
 from __future__ import annotations
 
+import copy
+
 import numpy as np
 from process_bigraph import Composite
 
@@ -50,8 +52,6 @@ def extract_run_timed(doc, core, t_end, species, *, emitter_node="emitter",
     deep copy of ``doc``: the headline total/process/framework/overhead_fraction come
     from that clean run, ``per_process`` from the detail-ON run. Costs 2x runtime.
     """
-    import copy
-
     clean = None
     if detail and clean_headline:
         c0 = Composite({"state": copy.deepcopy(doc)}, core=core)

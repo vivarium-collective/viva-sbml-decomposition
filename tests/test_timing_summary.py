@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import math
 
+import numpy as np
+
 import pytest
 
 from viva_sbml_decomposition.composites import arm3_modular, arm4_native
@@ -14,6 +16,11 @@ from viva_sbml_decomposition.models.glycolysis import GLYCOLYSIS_META
 from viva_tellurium import make_tellurium_document  # noqa: E402
 from viva_tellurium.composites import register_tellurium  # noqa: E402
 from process_bigraph import allocate_core  # noqa: E402
+
+def _assert_converged(traj):
+    """Honesty guard: a diverged run must fail, never yield a timing."""
+    assert all(np.all(np.isfinite(v)) for v in traj.values()), "run diverged (non-finite)"
+
 
 SP, T_END = GLYCOLYSIS_META["species"], GLYCOLYSIS_META["t_end"]
 
@@ -34,6 +41,7 @@ def _arm4(leaf="scalar", n_steps=200):
 
 def test_timing_summary_captured():
     traj, t, rt = _arm1()
+    _assert_converged(traj)
     assert set(traj) == set(SP)
     assert 0.0 <= rt.overhead_fraction <= 1.0
     assert math.isclose(rt.process_s + rt.framework_s, rt.total_s, rel_tol=1e-6, abs_tol=1e-6)
@@ -46,25 +54,24 @@ def test_overhead_fraction_ordering():
     """Metric discriminates arms. Measured finding (contradicts the naive expectation
     that decomposed arms carry a higher fraction): ``overhead_fraction`` is
     framework/total, so the monolithic arm (a very cheap CVODE call per cycle) has
-    the HIGHEST fraction (~0.3); arm 4 (python RHS + LSODA, process-heavy) ~0.02 and
-    arm 3 ~0.05. Absolute framework seconds at equal cycle count were NOT reliably
-    higher for arm 3, so only the discrimination and the monolithic-highest ordering
-    are asserted.
+    the HIGHEST fraction (~0.3); arm 4 (python RHS + LSODA, process-heavy) ~0.02.
+    Arm 3 is excluded: it only converges at coupling_interval ~0.0005 (slow), and
+    timing a diverged run is meaningless.
     """
     n = 200
-    _, _, mono = _arm1(n_steps=n)
-    core = allocate_core()
-    arm3_modular.register_modular_submodels(core)
-    _, _, mod = extract_run_timed(arm3_modular._build_document(T_END / n), core, T_END, SP)
-    _, _, nat = _arm4(n_steps=n)
-    assert mono.overhead_fraction > mod.overhead_fraction
+    traj1, _, mono = _arm1(n_steps=n)
+    traj4, _, nat = _arm4(n_steps=n)
+    _assert_converged(traj1)
+    _assert_converged(traj4)
     assert mono.overhead_fraction > nat.overhead_fraction
-    fr = [mono.overhead_fraction, mod.overhead_fraction, nat.overhead_fraction]
-    assert max(fr) / min(fr) > 2.0                      # fraction clearly separates arms
+    assert mono.overhead_fraction / nat.overhead_fraction > 2.0
 
 
 def test_arm4_scalar_vs_array_capturable():
-    s, a = _arm4("scalar")[2], _arm4("array")[2]
+    ts, _, s = _arm4("scalar")
+    ta, _, a = _arm4("array")
+    _assert_converged(ts)
+    _assert_converged(ta)
     for rt in (s, a):
         assert 0.0 <= rt.overhead_fraction <= 1.0 and rt.per_process
     print(f"arm4 overhead_fraction scalar={s.overhead_fraction:.3f} array={a.overhead_fraction:.3f}")
