@@ -76,7 +76,7 @@ jobs:
           source .venv/bin/activate
           bash scripts/publish_dashboard.sh \
             reports/published/dashboard \
-            "/${{ github.event.repository.name }}/dashboard" \
+            "/${{ github.event.repository.name }}/workbench" \
             "${{ github.server_url }}/${{ github.repository }}"
 
       - name: Publish to gh-pages
@@ -97,9 +97,9 @@ jobs:
             git worktree add --detach /tmp/ghp
             ( cd /tmp/ghp && git checkout --orphan gh-pages && git rm -rf . >/dev/null 2>&1 || true )
           fi
-          rm -rf /tmp/ghp/dashboard
-          mkdir -p /tmp/ghp/dashboard
-          cp -R reports/published/dashboard/. /tmp/ghp/dashboard/
+          rm -rf /tmp/ghp/workbench
+          mkdir -p /tmp/ghp/workbench
+          cp -R reports/published/dashboard/. /tmp/ghp/workbench/
           touch /tmp/ghp/.nojekyll
           cd /tmp/ghp
           git add -A
@@ -108,7 +108,7 @@ jobs:
           else
             git commit -m "gh-pages: republish read-only dashboard (automated, ${GITHUB_SHA::7})"
             git push origin gh-pages
-            echo "published read-only dashboard to gh-pages:dashboard/"
+            echo "published read-only dashboard to gh-pages:workbench/"
           fi
 
       - name: Feature the live dashboard in README
