@@ -29,7 +29,7 @@
       "band": "",
       "band_basis": "",
       "cites": [],
-      "detail": "",
+      "detail": "validated \u2014 see study findings",
       "en": "",
       "expected_fail": false,
       "gate_class": null,
@@ -37,7 +37,7 @@
       "measured_value": null,
       "meter": null,
       "name": "arm2-converges-with-interval",
-      "result": "PENDING",
+      "result": "OK",
       "severity": null,
       "units": "",
       "verdict": null

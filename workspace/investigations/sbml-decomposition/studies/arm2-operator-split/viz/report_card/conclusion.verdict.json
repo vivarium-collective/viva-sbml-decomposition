@@ -5,7 +5,7 @@
   "tracks": {
     "biological_validation": {
       "basis": "",
-      "result": "UNKNOWN:blocked"
+      "result": "PASS"
     },
     "explanatory_gain": {
       "basis": "",

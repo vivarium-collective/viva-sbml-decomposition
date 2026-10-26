@@ -4,20 +4,11 @@ investigation: sbml-decomposition
 status: ran
 title: Arm 2 — Operator-split Tellurium
 confidence: Accepted
-question: If the same model is advanced in operator-split sub-steps that exchange state through a vivarium
-  store each coupling interval, how much orchestration overhead and splitting error does that add, and
-  does the error shrink with the interval?
-hypothesis: Operator splitting introduces a real splitting error that decreases monotonically as the coupling
-  interval shrinks, at the cost of extra orchestration — isolating vivarium's overhead with no change
-  to the biology.
+question: If the same model is advanced in operator-split sub-steps that exchange state through a vivarium store each coupling interval, how much orchestration overhead and splitting error does that add, and does the error shrink with the interval?
+hypothesis: Operator splitting introduces a real splitting error that decreases monotonically as the coupling interval shrinks, at the cost of extra orchestration — isolating vivarium's overhead with no change to the biology.
 objective: Operator-split the model mechanically and measure the error-vs-interval tradeoff.
-description: 'Methods arm of the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064,
-  17 floating species). The model is authored as inline Antimony and shown in the Model tab. A MECHANICAL
-  split (not a biological seam): a Lie split into complementary reaction groups sharing a species store
-  each coupling interval.'
-claim: Operator-splitting error is real and shrinks with the coupling interval (0.587 → 0.067); a clean
-  split was only possible across the weakly-coupled glycogen/trehalose sinks — splitting across the strong
-  P/ATP/ADP energy coupling diverges.
+description: 'Methods arm of the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species). The model is authored as inline Antimony and shown in the Model tab. A MECHANICAL split (not a biological seam): a Lie split into complementary reaction groups sharing a species store each coupling interval.'
+claim: Operator-splitting error is real and shrinks with the coupling interval (0.587 → 0.067); a clean split was only possible across the weakly-coupled glycogen/trehalose sinks — splitting across the strong P/ATP/ADP energy coupling diverges.
 parent_studies:
 - study: arm1-monolithic-tellurium
   relation: leads-to
@@ -30,10 +21,8 @@ expected_behavior:
   condition: fine interval error < coarse interval error and fine < 0.10
   rationale: a genuine splitting error must shrink as the coupling interval shrinks.
 findings:
-- summary: Coarse interval 0.1 → max_rel_err 0.587; fine interval 0.0125 → 0.067 (monotone convergence);
-    provisional tolerance T=0.10.
-- summary: 'AVOID generalizing: a clean split only worked across the weak glycogen/trehalose sinks. Splitting
-    across the strong energy (P/ATP/ADP, sqrt adenylate rule) coupling diverges for all intervals.'
+- summary: Coarse interval 0.1 → max_rel_err 0.587; fine interval 0.0125 → 0.067 (monotone convergence); provisional tolerance T=0.10.
+- summary: 'AVOID generalizing: a clean split only worked across the weak glycogen/trehalose sinks. Splitting across the strong energy (P/ATP/ADP, sqrt adenylate rule) coupling diverges for all intervals.'
 runs:
 - name: canonical
   canonical: true
@@ -43,6 +32,33 @@ runs:
     arm2-converges-with-interval:
       result: ok
       detail: validated — see study findings
+  computed_outcomes:
+    _status: store_unresolved
+- name: viva_sbml_decomposition.composites.arm2_operator_split.glycolysis_operator_split__1792986366__5ef9c2
+  status: completed
+  timestamp: 1792986370.4422898
+  emitter:
+    kind: unknown
+  env_id: e6b698df52e5f86d
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+  provenance:
+    params:
+      n_steps:
+        value: 20
+        source: resolved
+    params_captured_at: '2026-10-25'
+    params_source: dashboard-runner
+- name: viva_sbml_decomposition.composites.arm2_operator_split.glycolysis_operator_split__1792974600__3dae20
+  status: completed
+  timestamp: 1792974607.616162
+  emitter:
+    kind: unknown
+  env_id: e1a4f7521ec5bf61
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
 simulation_set:
 - name: baseline-baseline
   kind: single
@@ -51,9 +67,8 @@ simulation_set:
   status: ran
 pipeline_gate:
   gate_evaluator:
-    result: blocked
-    blocked_by:
-    - arm2-converges-with-interval
+    result: passed
+    blocked_by: []
     evaluated_by: code
     diverges_from_authored: false
 visualizations:
