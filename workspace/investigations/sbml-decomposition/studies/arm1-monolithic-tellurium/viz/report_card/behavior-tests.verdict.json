@@ -1,0 +1,46 @@
+{
+  "count_split": {
+    "acceptance_criteria": {
+      "fail": 0,
+      "pass": 0,
+      "total": 0
+    },
+    "committed_rerunnable": 0,
+    "expected_fail": {
+      "behaved": 0,
+      "total": 0
+    },
+    "label": "pins: 0/0; acceptance: 0/0; narrated: 1",
+    "narrated": 1,
+    "regression_pins": {
+      "fail": 0,
+      "pass": 0,
+      "total": 0
+    },
+    "unclassified": 0
+  },
+  "n_fail": 0,
+  "n_pass": 0,
+  "n_total": 1,
+  "overall": "drift",
+  "schema": "behavior_test_card/v1",
+  "tests": [
+    {
+      "band": "",
+      "band_basis": "",
+      "cites": [],
+      "detail": "",
+      "en": "",
+      "expected_fail": false,
+      "gate_class": null,
+      "margin": null,
+      "measured_value": null,
+      "meter": null,
+      "name": "arm1-matches-direct-libroadrunner",
+      "result": "PENDING",
+      "severity": null,
+      "units": "",
+      "verdict": null
+    }
+  ]
+}

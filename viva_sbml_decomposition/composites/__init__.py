@@ -1,0 +1,13 @@
+"""Decomposition-spectrum composites.
+
+Importing this package registers every arm's ``@composite_generator`` (the
+decorators fire on import) so the workbench discovers them. Arm 5 is an ensemble
+*runner* (``glycolysis_ensemble`` returns per-instance results), not a single
+composite document, so it exposes no generator here.
+"""
+from . import arm1_monolithic  # noqa: F401  glycolysis_monolithic
+from . import arm2_operator_split  # noqa: F401  glycolysis_operator_split
+from . import arm3_modular  # noqa: F401  glycolysis_modular
+from . import arm4_native  # noqa: F401  glycolysis_native_scalar / _array
+from . import arm5_ensemble  # noqa: F401  glycolysis_ensemble (runner, no generator)
+from . import arm6_coupling  # noqa: F401  glycolysis_coupled

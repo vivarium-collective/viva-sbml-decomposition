@@ -1,0 +1,42 @@
+schema_version: 3
+name: arm6-coupling-demo
+investigation: sbml-decomposition
+status: ran
+title: Arm 6 — Cross-engine coupling demonstration
+confidence: Accepted
+question: Can a single composite run part of the model in libroadrunner and part as a native process,
+  sharing one store — a composition a monolithic SBML model structurally cannot express?
+hypothesis: A hybrid composite (upper glycolysis in Tellurium, lower glycolysis native) sharing one species
+  store runs through process-bigraph and reproduces the biological-seam result — demonstrating the composability
+  payoff a monolith can never match.
+objective: Demonstrate a cross-engine composition impossible for a monolith — the existence proof for
+  the composability axis.
+description: Methods arm of the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064,
+  17 floating species). The model is authored as inline Antimony and shown in the Model tab. Arm 6 swaps
+  arm 3's lower-glycolysis submodel for the native-pbg process while upper stays libroadrunner, both sharing
+  one store. This is the composability existence proof; it has no monolithic reference (accuracy-exempt).
+claim: A single composite runs HALF in libroadrunner and HALF native, sharing one store — structurally
+  impossible for a monolith — and reproduces the biological-seam arm to 3.2e-7. This is the composability
+  payoff, not a numeric result.
+parent_studies:
+- study: arm3-modular-submodels
+  relation: leads-to
+- study: arm4-native-pbg
+  relation: supports
+baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.arm6_coupling.glycolysis_coupled
+expected_behavior:
+- name: arm6-cross-engine-composition-runs
+  observable: a two-engine composite running through process-bigraph
+  condition: builds, runs, emits the full 17-species set with finite output; accuracy-exempt (no monolithic
+    reference)
+  rationale: the value is the structural capability, demonstrated by a working cross-engine composite,
+    not a trajectory match.
+findings:
+- summary: 'Hybrid composite: upper glycolysis (Tellurium SubmodelProcess) + lower glycolysis (NativeSubmodelProcess)
+    share one species store, reconciling additively — a composition a single libroadrunner model cannot
+    express.'
+- summary: Reproduces arm 3 (same ODEs, different engine) to max_rel_err 3.2e-7; the monolith-impossibility
+    is STRUCTURAL, not numeric. Accuracy-exempt in the 3-way figure.
+runs: []

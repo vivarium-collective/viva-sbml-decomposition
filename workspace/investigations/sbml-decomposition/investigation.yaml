@@ -1,0 +1,190 @@
+# sbml-decomposition/investigation.yaml — schema v2
+schema_version: 2
+name: sbml-decomposition
+title: "SBML in Tellurium vs process-bigraph decomposition — a speed × accuracy × composability tradeoff"
+created: '2026-10-25'
+status: running
+
+# All arms are single-generation ODE/reaction models → xarray single-gen path.
+runtime:
+  default_emitter: xarray
+
+# This investigation primarily evaluates a METHOD (how to implement an SBML model
+# under vivarium), not a biological model or hypothesis.
+object_of_evaluation: method
+
+question: |
+  When you have a biochemical model available as SBML, when should you run it
+  monolithically in Tellurium (libroadrunner/CVODE), and when is it worth
+  decomposing it into vivarium / process-bigraph sub-processes? What does each
+  point on that spectrum cost in performance and accuracy, and what does
+  decomposition buy that a monolith structurally cannot provide?
+
+hypothesis: |
+  Along the spectrum monolithic Tellurium → operator-split → modular submodels →
+  fully-native process-bigraph, performance and accuracy degrade monotonically
+  (the monolith is fastest and the numerical reference), while composability —
+  substitutability, store-coupling, cross-engine and multi-scale wiring — rises.
+  No point dominates on all three axes, so the right choice is governed by whether
+  the composability a decomposition buys is worth its quantified speed/accuracy cost
+  for the task at hand.
+
+lead: |
+  A methods comparison, not a biology result. One curated SBML metabolic model
+  (Teusink glycolysis, BioModels BIOMD0000000064, 17 floating species) is run along
+  a spectrum of implementations under one workspace, each measured on the same three
+  axes. The deliverable is a decision guide: which decomposition patterns to use,
+  which to avoid, and why.
+
+executive:
+  what_is_this: |
+    A head-to-head of six ways to run the SAME SBML model — from a single
+    libroadrunner/CVODE integration to a fully hand-written process-bigraph network —
+    measured on speed, accuracy (vs the monolithic reference), and composability.
+  verdict: |
+    Decomposition is never free on speed or accuracy, but the monolith cannot be
+    composed. Monolithic Tellurium is the fastest and the numerical reference; every
+    decomposition adds orchestration overhead and operator-splitting error that
+    shrinks as the coupling interval shrinks. The payoff is strictly on the
+    composability axis: only the decomposed arms can substitute a submodel, couple
+    through a shared store, or mix engines (arm 6 runs half libroadrunner / half
+    native in one composite — a thing a single SBML model structurally cannot do).
+    The ensemble arm is the one place vivarium wins on wall-clock (7.5× via Ray on
+    16 cores), because libroadrunner does not release the GIL so only OS-process
+    parallelism helps.
+  verdict_status: in-progress
+  decisions_needed:
+  - question: "Promote the Teusink-glycolysis vertical slice to the oscillator + signaling-cascade models?"
+    context: "The harness + six arm types are proven on one model; models 2-3 are repetitions driven by the discovery-engine frontier."
+
+  computed_verdict_status: in-progress
+  computed_acceptance:
+    criteria:
+    - study: arm1-monolithic-tellurium
+      behavior: arm1-matches-direct-libroadrunner
+      result: in-progress
+    - study: arm2-operator-split
+      behavior: arm2-converges-with-interval
+      result: in-progress
+    - study: arm3-modular-submodels
+      behavior: arm3-matches-reference-within-tolerance
+      result: in-progress
+    - study: arm4-native-pbg
+      behavior: arm4-matches-reference-high-fidelity
+      result: in-progress
+    - study: arm5-ensemble-ray
+      behavior: arm5-real-parallel-speedup
+      result: in-progress
+    - study: arm6-coupling-demo
+      behavior: arm6-cross-engine-composition-runs
+      result: in-progress
+    unmet:
+    - study: arm1-monolithic-tellurium
+      behavior: arm1-matches-direct-libroadrunner
+      result: in-progress
+    - study: arm2-operator-split
+      behavior: arm2-converges-with-interval
+      result: in-progress
+    - study: arm3-modular-submodels
+      behavior: arm3-matches-reference-within-tolerance
+      result: in-progress
+    - study: arm4-native-pbg
+      behavior: arm4-matches-reference-high-fidelity
+      result: in-progress
+    - study: arm5-ensemble-ray
+      behavior: arm5-real-parallel-speedup
+      result: in-progress
+    - study: arm6-coupling-demo
+      behavior: arm6-cross-engine-composition-runs
+      result: in-progress
+    diverges_from_authored: false
+scientific_argument:
+  main_claim: |
+    On the implementation spectrum for an SBML model, speed and accuracy are best at
+    the monolithic pole and composability is best at the decomposed pole; the choice
+    is a tradeoff with no dominating point, and the quantified costs make the decision
+    rule explicit.
+  evidence_for:
+  - "Monolithic Tellurium (arm 1) is the accuracy reference and matches direct libroadrunner to ~1e-6 on a shared time grid."
+  - "Operator-split (arm 2) and modular (arm 3) both show real operator-splitting error that shrinks monotonically with the coupling interval (arm 2: 0.587→0.067; arm 3: 0.468→0.100), confirming the error is controllable but non-zero."
+  - "Fully-native process-bigraph (arm 4) reproduces the reference to ~1e-7 with a hand-ported RHS — the far pole is achievable at high fidelity but hand-written."
+  - "Arm 6 runs a cross-engine hybrid (upper glycolysis in libroadrunner, lower glycolysis native) sharing one store — a composition a monolith cannot express — and reproduces arm 3 to 3.2e-7."
+  - "The ensemble arm (arm 5) achieves a real 7.5× speedup via Ray OS processes on 16 cores."
+  evidence_against:
+  - "overhead_fraction (framework share of wall-clock) is HIGHEST for the monolith (~0.32) and lowest for the decomposed/native arms (~0.02-0.05) — a cheap process makes the framework look expensive, so 'framework share' is NOT the decomposition cost. The decomposition cost is the wall-clock ratio to monolithic plus absolute framework seconds."
+  - "At 17 species the scalar-dict vs numpy-array leaf choice is perf-irrelevant (arm 4 variants indistinguishable); the scalar-dict penalty is linear in element count and only bites at 100s-1000s of species."
+  key_figures:
+  - "3-way tradeoff map (speed × accuracy × composability)"
+  - "Per-arm process-vs-framework overhead breakdown"
+  - "arm2/arm3 convergence vs coupling interval"
+  - "arm5 ensemble serial-vs-Ray scaling"
+  caveats:
+  - "Single model (Teusink glycolysis) so far; generalization to a stiff oscillator and a modular signaling cascade is the next increment."
+  - "A clean operator split (arm 2) was only possible across the weakly-coupled glycogen/trehalose sinks; splitting across the strong P/ATP/ADP energy coupling diverges — do not generalize arm 2's splitting error to arbitrary decompositions."
+  - "Mismatched-interval decompositions carry an O(P^2) multi-rate scheduler cost in pb ≤1.10.x; process-bigraph PR #270 (unmerged as of 2026-10-25) reduces it to ~O(P log P). Our arms use equal intervals, the cheap regime. Prefer equal coupling intervals today."
+
+biological_story: |
+  The vehicle is yeast glycolysis (Teusink et al. 2000), a 17-species kinetic model
+  with a stiff phosphate/energy coupling and a square-root adenylate assignment rule.
+  It is not studied here for its biology — it is a well-characterized, moderately stiff
+  reaction network that exercises the numerical and structural stressors a decomposition
+  has to survive.
+
+  Read the arms as a spectrum. Arm 1 hands the whole SBML model to libroadrunner/CVODE
+  in one piece — fast, exact, opaque. Arm 2 keeps the same model but advances it in
+  operator-split sub-steps that exchange state through a vivarium store each coupling
+  interval; this is a mechanical split, and it reveals that splitting across the strong
+  energy coupling diverges while a weak-seam split converges. Arm 3 cuts the model along
+  a genuine biological seam (upper vs lower glycolysis at the aldolase/F16P boundary)
+  into two coupled process nodes that reconcile additively through the real
+  process-bigraph apply path — the first point where the model is genuinely composable.
+  Arm 4 discards libroadrunner entirely and integrates a hand-written native RHS, the
+  far pole of composability. Arm 5 fans the monolith out into a parameter ensemble on a
+  real parallel backend. Arm 6 is the punchline: a single composite running half in
+  libroadrunner and half in native Python, sharing one species store — the capability a
+  monolith can never offer.
+
+at_a_glance:
+- {study: arm1-monolithic-tellurium, role: "monolithic SBML in libroadrunner/CVODE — the speed + accuracy reference"}
+- {study: arm2-operator-split, role: "same model, operator-split sub-steps through a store — isolates orchestration overhead + splitting error (mechanical split)"}
+- {study: arm3-modular-submodels, role: "biological upper/lower seam as two coupled process nodes sharing a store — genuine composability"}
+- {study: arm4-native-pbg, role: "fully native process-bigraph RHS, no libroadrunner — the far pole, high fidelity + max substitutability"}
+- {study: arm5-ensemble-ray, role: "parameter ensemble of monoliths on Ray — the one arm where vivarium wins on wall-clock"}
+- {study: arm6-coupling-demo, role: "cross-engine hybrid (Tellurium + native in one composite) — the composability existence proof a monolith cannot match"}
+
+how_to_read: |
+  Start with arm 1 (the reference), then read arms 2→4 as increasing decomposition
+  (watch accuracy degrade and composability rise), then arm 5 (the parallel win) and
+  arm 6 (the capability proof). The 3-way tradeoff figure and the decision table are
+  the deliverable.
+
+glossary:
+- {term: "operator splitting", definition: "advancing subsets of a system separately over an interval then composing — introduces a splitting error that shrinks with the interval"}
+- {term: "overhead_fraction", definition: "framework time / total wall-clock from Composite.timing_summary(); the SHARE of time outside process invoke(), not the decomposition cost"}
+- {term: "composability", definition: "the ability to substitute a submodel, couple through a shared store, mix engines, or wire across scales — what decomposition buys"}
+
+competing_frameworks:
+- name: "monolith-always"
+  prediction: "running the whole SBML model in Tellurium is always the right choice"
+  discriminated_by: "arm 6 — a cross-engine composition the monolith structurally cannot express; and arm 5 — the ensemble wall-clock win"
+- name: "decompose-always"
+  prediction: "process-bigraph decomposition is free / always worth it"
+  discriminated_by: "arms 2-4 — the measured, non-zero speed + accuracy cost of every decomposition vs the monolithic reference"
+
+studies:
+- arm1-monolithic-tellurium
+- arm2-operator-split
+- arm3-modular-submodels
+- arm4-native-pbg
+- arm5-ensemble-ray
+- arm6-coupling-demo
+
+expert_docs: []
+
+acceptance_criteria:
+- {study: arm1-monolithic-tellurium, behavior: arm1-matches-direct-libroadrunner}
+- {study: arm2-operator-split, behavior: arm2-converges-with-interval}
+- {study: arm3-modular-submodels, behavior: arm3-matches-reference-within-tolerance}
+- {study: arm4-native-pbg, behavior: arm4-matches-reference-high-fidelity}
+- {study: arm5-ensemble-ray, behavior: arm5-real-parallel-speedup}
+- {study: arm6-coupling-demo, behavior: arm6-cross-engine-composition-runs}

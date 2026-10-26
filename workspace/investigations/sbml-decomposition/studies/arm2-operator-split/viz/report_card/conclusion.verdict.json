@@ -1,0 +1,19 @@
+{
+  "insight": "Coarse interval 0.1 \u2192 max_rel_err 0.587; fine interval 0.0125 \u2192 0.067 (monotone convergence); provisional tolerance T=0.10.",
+  "overall": "drift",
+  "schema": "conclusion_card/v1",
+  "tracks": {
+    "biological_validation": {
+      "basis": "",
+      "result": "UNKNOWN:blocked"
+    },
+    "explanatory_gain": {
+      "basis": "",
+      "result": "PARTIAL"
+    },
+    "regression_compatibility": {
+      "basis": "",
+      "result": "PASS"
+    }
+  }
+}
