@@ -155,6 +155,9 @@ caveats:
 - The ABM here is WELL-MIXED (no spatial grid); spatial/heterogeneous ABMs are even further from an ODE
   reduction, so this is the FAVOURABLE case for SBML and still breaks at small N.
 visualizations:
+- name: abm_extinction
+  address: local:ABMExtinction
+  config: {}
 - name: abm_meanfield
   address: local:ABMMeanField
   config: {}

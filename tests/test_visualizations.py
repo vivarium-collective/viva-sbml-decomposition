@@ -113,7 +113,7 @@ def test_standalone_report_embeds_all_figures(tmp_path):
     from viva_sbml_decomposition.visualizations.report import build_report, _FIGURES
     out = build_report(str(tmp_path / "report.html"))
     html = open(out).read()
-    assert html.count("Plotly.newPlot") == len(_FIGURES) == 12
+    assert html.count("Plotly.newPlot") == len(_FIGURES) == 13
     # narrative + decision content present
     assert "Verdict" in html and "composab" in html.lower()
 

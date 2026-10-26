@@ -18,6 +18,7 @@ import yaml
 from process_bigraph import allocate_core
 
 from .abm_meanfield import ABMMeanField
+from .abm_extinction import ABMExtinction
 from .accuracy_divergence import AccuracyDivergence
 from .composability_scorecard import ComposabilityScorecard
 from .convergence_curves import ConvergenceCurves
@@ -47,6 +48,7 @@ _FIGURES = [
     ("Composability scorecard", ComposabilityScorecard),
     ("The 3-way tradeoff map (speed × accuracy × composability)", TradeoffMap),
     ("Adversarial arm — can an ABM even be an SBML model? (only in the large-population limit)", ABMMeanField),
+    ("Extinction the mean-field ODE can never show (the SBML-applicability limit)", ABMExtinction),
     ("Decision guide", DecisionTable),
 ]
 
@@ -90,6 +92,7 @@ _STUDY_FIGURES = {
         ("The strain curve — monolithic compile explodes, decomposition stays cheap", MultiorganScaling),
         ("Composability — why decomposition is the way out at scale", ComposabilityScorecard)],
     "arm9-abm-meanfield": [
+        ("Extinction the mean-field ODE can never show (the SBML-applicability limit)", ABMExtinction),
         ("The ABM vs its mean-field ODE reduction — valid at large N, breaks at small N", ABMMeanField),
         ("Where arm 9 sits on the 3-way tradeoff", TradeoffMap)],
 }
