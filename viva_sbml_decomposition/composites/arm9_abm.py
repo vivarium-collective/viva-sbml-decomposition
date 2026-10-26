@@ -142,7 +142,14 @@ def _build_abm_document(scale: int, n_points: int, seed: int) -> dict:
     methods=["Gillespie exact SSA (direct method)", "native Python/numpy"],
 )
 def predator_prey_abm(core=None, scale: int = LARGE_SCALE, seed: int = -1):
-    """Stochastic LV ABM composite (emitter stripped for the workbench)."""
+    """Stochastic LV ABM composite (emitter stripped for the workbench).
+
+    ``seed=-1`` (the default) draws a fresh OS-entropy RNG per instance, so a
+    workbench run is a NEW random realisation each time (appropriate for an
+    interactive single-trajectory demo); pass a non-negative ``seed`` to make a
+    composite run reproducible. The reproducible ensemble statistics that back
+    the study finding come from :func:`abm_ensemble`, which is always seeded.
+    """
     return strip_emitter(_build_abm_document(scale, N_POINTS, seed))
 
 

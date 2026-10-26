@@ -64,22 +64,47 @@ SMALL_SCALE = 8
 T_END = 12.0          # ~2 natural periods
 N_POINTS = 240        # emitted grid resolution for the trajectory
 
+# Numerical safety cap on prey count, as a multiple of the scale K. It bounds
+# ONE unbounded regime: once predators go extinct (Y=0) the prey become a pure
+# birth process (rate r*X) with no predation to check them, so prey grow without
+# limit. The cap stops that runaway (and the ensuing event explosion) at a prey
+# density of POP_CAP_DENSITY; it is well above the deterministic LV orbit's peak
+# (~1.8 in density units), so it NEVER triggers while both species coexist — it
+# only marks "predators extinct, prey escaped". A capped run is held at the cap
+# for the remainder of the grid.
+POP_CAP_DENSITY = 25.0
+
 
 @dataclass
 class EnsembleResult:
     """Ensemble summary over ``n_runs`` SSA trajectories at one population scale.
 
-    ``mean``/``variance`` are (2, n_points) arrays over [prey, predator] on the
-    shared time grid ``t`` (NaN rows, i.e. extinct runs, excluded pointwise).
-    ``extinct_fraction`` is the fraction of runs that hit an absorbing state
-    (prey or predator count 0) before ``t_end`` — a quantity the ODE can NEVER
-    exhibit. ``scale`` is K; ``mean_density`` = mean / K for ODE comparison.
+    ``mean``/``variance`` are (2, n_points+1) arrays over [prey, predator] on the
+    shared time grid ``t``, taken over ALL ``n_runs`` (including runs that went
+    extinct or hit the prey cap — those are held at their terminal state, which
+    is their honest contribution to the ensemble; nothing is dropped).
+
+    Extinction is reported as TWO distinct fractions, because only prey
+    extinction is truly absorbing while predator extinction leaves prey to grow:
+
+    * ``predator_extinct_fraction`` — share of runs in which the PREDATORS died
+      out (``Pred`` reached 0) at any point. This is the Lotka-Volterra collapse
+      the neutrally-stable ODE can NEVER show (the ODE orbits forever), so it is
+      the honest "the ODE misses this" metric.
+    * ``total_extinct_fraction`` — share in which BOTH species reached 0 (prey
+      extinction is absorbing and the predators then starve to 0).
+    * ``prey_extinct_fraction`` — share in which the PREY reached 0 (reported for
+      completeness; a prey-extinct run becomes total-extinct).
+
+    ``scale`` is K; ``mean_density`` = mean / K for comparison to the ODE density.
     """
 
     t: np.ndarray
     mean: np.ndarray
     variance: np.ndarray
-    extinct_fraction: float
+    predator_extinct_fraction: float
+    total_extinct_fraction: float
+    prey_extinct_fraction: float
     scale: int
     n_runs: int
 
@@ -92,60 +117,80 @@ def simulate_abm(scale, t_end=T_END, n_points=N_POINTS, rng=None,
                  x0_density=X0_DENSITY, y0_density=Y0_DENSITY):
     """One exact-SSA (Gillespie direct method) Lotka-Volterra trajectory.
 
-    Returns ``(t, counts, extinct)``: ``t`` the uniform output grid
-    (``n_points + 1`` points, 0..t_end), ``counts`` a (2, n_points+1) integer
-    array of [prey, predator] sampled onto that grid (last value held across
-    gaps, as a jump process is piecewise-constant), and ``extinct`` True if
-    either population reached 0 before ``t_end`` (the run is then held at its
-    absorbing state for the remainder of the grid).
+    Returns ``(t, counts, status)``. ``t`` is the uniform output grid
+    (``n_points + 1`` points, 0..t_end); ``counts`` a (2, n_points+1) integer
+    array of [prey, predator] sampled onto that grid. A jump process is constant
+    between events, so each grid point records the state that HELD over the
+    waiting interval containing it (the PRE-event state) — not the post-event
+    state. ``status`` is a dict of booleans: ``prey_extinct``, ``predator_extinct``,
+    ``total_extinct``, ``capped``.
+
+    No state is frozen on predator-only extinction: when ``Pred`` hits 0 the prey
+    keep reproducing (pure birth ``r*X``), exactly as the real process does, until
+    the prey cap (:data:`POP_CAP_DENSITY` * scale) bounds the runaway. Only prey
+    extinction (``Prey`` = 0) is genuinely absorbing — the predators then starve
+    to 0 — and the SSA runs that decay out naturally (``a0`` -> 0).
     """
     if rng is None:
         rng = np.random.default_rng()
     r, a, b, m = R_PREY_BIRTH, A_PREDATION, B_PRED_BIRTH, M_PRED_DEATH
     x = int(round(scale * x0_density))
     y = int(round(scale * y0_density))
+    cap = int(np.ceil(POP_CAP_DENSITY * scale))
 
     grid = np.linspace(0.0, t_end, n_points + 1)
     counts = np.empty((2, n_points + 1), dtype=float)
     t = 0.0
     gi = 0
-    extinct = False
+    prey_extinct = x <= 0
+    predator_extinct = y <= 0
+    capped = False
     while gi <= n_points:
-        # Sample every grid point we have now passed (piecewise-constant hold).
-        while gi <= n_points and grid[gi] <= t:
-            counts[0, gi] = x
-            counts[1, gi] = y
-            gi += 1
-        if gi > n_points:
-            break
-        if x <= 0 or y <= 0:
-            # Absorbing state: hold the remaining grid at the current counts.
-            extinct = True
-            counts[0, gi:] = x
-            counts[1, gi:] = y
-            break
-        p_birth_prey = r * x
+        p_birth_prey = r * x if x < cap else 0.0  # cap halts the pure-birth runaway
         p_predation = (a / scale) * x * y
         p_birth_pred = (b / scale) * x * y
         p_death_pred = m * y
         a0 = p_birth_prey + p_predation + p_birth_pred + p_death_pred
         if a0 <= 0.0:
-            extinct = True
+            # No event can fire (both extinct, or prey pinned at the cap with no
+            # predators): hold the current state across the rest of the grid.
             counts[0, gi:] = x
             counts[1, gi:] = y
             break
         tau = rng.exponential(1.0 / a0)
-        t += tau
+        t_next = t + tau
+        # Record every grid point inside [t, t_next) with the current PRE-event
+        # state (the state that held over this waiting interval).
+        while gi <= n_points and grid[gi] < t_next:
+            counts[0, gi] = x
+            counts[1, gi] = y
+            gi += 1
+        if gi > n_points:
+            break
+        # Apply the event at t_next.
         u = rng.random() * a0
         if u < p_birth_prey:
             x += 1
+            if x >= cap:
+                capped = True
         elif u < p_birth_prey + p_predation:
             x -= 1
         elif u < p_birth_prey + p_predation + p_birth_pred:
             y += 1
         else:
             y -= 1
-    return grid, counts, extinct
+        t = t_next
+        if x <= 0:
+            prey_extinct = True
+        if y <= 0:
+            predator_extinct = True
+    status = {
+        "prey_extinct": bool(prey_extinct),
+        "predator_extinct": bool(predator_extinct),
+        "total_extinct": bool(prey_extinct and predator_extinct),
+        "capped": bool(capped),
+    }
+    return grid, counts, status
 
 
 def abm_ensemble(n_runs, scale, t_end=T_END, n_points=N_POINTS, seed=0,
@@ -154,29 +199,31 @@ def abm_ensemble(n_runs, scale, t_end=T_END, n_points=N_POINTS, seed=0,
 
     Seed-controlled (one child RNG per run from a ``SeedSequence``) so the
     ensemble statistics are reproducible. The ensemble mean/variance are taken
-    over ALL runs (extinct runs included — they are held at their absorbing
-    state, which is the honest ensemble behaviour); ``extinct_fraction`` reports
-    the share that went extinct so the discreteness/absorption effect is
-    quantified rather than hidden.
+    over ALL runs (extinct and capped runs included — held at their terminal
+    state, the honest ensemble behaviour); the predator / total / prey extinction
+    fractions quantify the discreteness/absorption effects the ODE cannot show.
     """
     children = np.random.SeedSequence(seed).spawn(n_runs)
     t = None
     stacks = []
-    n_extinct = 0
+    n_pred = n_total = n_prey = 0
     for child in children:
         rng = np.random.default_rng(child)
-        grid, counts, extinct = simulate_abm(
+        grid, counts, status = simulate_abm(
             scale, t_end=t_end, n_points=n_points, rng=rng,
             x0_density=x0_density, y0_density=y0_density)
         t = grid
         stacks.append(counts)
-        n_extinct += int(extinct)
+        n_pred += int(status["predator_extinct"])
+        n_total += int(status["total_extinct"])
+        n_prey += int(status["prey_extinct"])
     arr = np.stack(stacks, axis=0)  # (n_runs, 2, n_points+1)
-    mean = arr.mean(axis=0)
-    variance = arr.var(axis=0)
     return EnsembleResult(
-        t=t, mean=mean, variance=variance,
-        extinct_fraction=n_extinct / n_runs, scale=int(scale), n_runs=int(n_runs))
+        t=t, mean=arr.mean(axis=0), variance=arr.var(axis=0),
+        predator_extinct_fraction=n_pred / n_runs,
+        total_extinct_fraction=n_total / n_runs,
+        prey_extinct_fraction=n_prey / n_runs,
+        scale=int(scale), n_runs=int(n_runs))
 
 
 class PredatorPreyABMProcess(Process):
@@ -211,11 +258,13 @@ class PredatorPreyABMProcess(Process):
     def _step_interval(self, x, y, interval):
         r, a, b, m = R_PREY_BIRTH, A_PREDATION, B_PRED_BIRTH, M_PRED_DEATH
         scale = self._scale
+        cap = int(np.ceil(POP_CAP_DENSITY * scale))
         t = 0.0
         while True:
-            if x <= 0 or y <= 0:
-                break
-            p_birth_prey = r * x
+            # Predator-only extinction (y=0) is NOT absorbing: prey keep breeding
+            # (pure birth r*X) until the cap. Only a0=0 (both extinct, or prey
+            # pinned at the cap with no predators) ends the stepping.
+            p_birth_prey = r * x if x < cap else 0.0
             p_predation = (a / scale) * x * y
             p_birth_pred = (b / scale) * x * y
             p_death_pred = m * y
