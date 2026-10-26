@@ -10,6 +10,7 @@ FIGS = [
     ("accuracy_divergence", "AccuracyDivergence"),
     ("convergence_curves", "ConvergenceCurves"),
     ("ensemble_scaling", "EnsembleScaling"),
+    ("multirate_scaling", "MultirateScaling"),
     ("composability_scorecard", "ComposabilityScorecard"),
     ("tradeoff_map", "TradeoffMap"),
     ("species_dynamics", "SpeciesDynamics"),
@@ -111,7 +112,7 @@ def test_standalone_report_embeds_all_figures(tmp_path):
     from viva_sbml_decomposition.visualizations.report import build_report, _FIGURES
     out = build_report(str(tmp_path / "report.html"))
     html = open(out).read()
-    assert html.count("Plotly.newPlot") == len(_FIGURES) == 9
+    assert html.count("Plotly.newPlot") == len(_FIGURES) == 10
     # narrative + decision content present
     assert "Verdict" in html and "composab" in html.lower()
 
@@ -120,7 +121,7 @@ def test_per_study_reports_embed_hero_figures():
     """Each member study gets a committed report page with its hero figures + the model."""
     from viva_sbml_decomposition.visualizations.report import build_study_reports, _STUDY_FIGURES
     paths = build_study_reports()
-    assert len(paths) == len(_STUDY_FIGURES) == 6
+    assert len(paths) == len(_STUDY_FIGURES) == 7
     for p in paths:
         html = open(p).read()
         assert "Plotly.newPlot" in html          # at least one interactive figure

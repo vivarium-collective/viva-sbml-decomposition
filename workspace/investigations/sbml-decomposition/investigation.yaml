@@ -213,6 +213,10 @@ at_a_glance:
 - study: arm6-coupling-demo
   role: cross-engine hybrid (Tellurium + native in one composite) — the composability existence proof
     a monolith cannot match
+- study: arm7-multirate
+  role: genuinely multi-rate composite (N independent monoliths, geometric intervals) — exercises +
+    measures the process-bigraph event-heap scheduler from PR-270 (O(P log P) vs the stock scan's
+    O(P^2)), bit-identical results, the one arm that stress-tests the scheduler instead of the biology
 how_to_read: 'Start with arm 1 (the reference), then read arms 2→4 as increasing decomposition
 
   (watch accuracy degrade and composability rise), then arm 5 (the parallel win) and
@@ -248,6 +252,7 @@ studies:
 - arm4-native-pbg
 - arm5-ensemble-ray
 - arm6-coupling-demo
+- arm7-multirate
 expert_docs: []
 acceptance_criteria:
 - study: arm1-monolithic-tellurium
@@ -262,6 +267,8 @@ acceptance_criteria:
   behavior: arm5-real-parallel-speedup
 - study: arm6-coupling-demo
   behavior: arm6-cross-engine-composition-runs
+- study: arm7-multirate
+  behavior: arm7-heap-beats-scan-at-scale
 adversarial_coverage_skip: true
 adversarial_coverage_skip_reason: 'Methods tradeoff investigation, not a discovery study with biological
   negative controls. The adversarial content is integral and documented as the ''avoid'' findings: a mechanical

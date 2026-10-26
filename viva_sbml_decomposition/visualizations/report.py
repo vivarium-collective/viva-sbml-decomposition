@@ -22,6 +22,7 @@ from .composability_scorecard import ComposabilityScorecard
 from .convergence_curves import ConvergenceCurves
 from .decision_table import DecisionTable
 from .ensemble_scaling import EnsembleScaling
+from .multirate_scaling import MultirateScaling
 from .overhead_breakdown import OverheadBreakdown
 from .runtime_comparison import RuntimeComparison
 from .species_dynamics import SpeciesDynamics
@@ -39,6 +40,7 @@ _FIGURES = [
     ("Accuracy divergence from the monolithic reference", AccuracyDivergence),
     ("Operator-split / modular convergence vs coupling interval", ConvergenceCurves),
     ("Ensemble — serial vs Ray throughput", EnsembleScaling),
+    ("Multi-rate scheduler — event-heap (#270) vs stock scan", MultirateScaling),
     ("Composability scorecard", ComposabilityScorecard),
     ("The 3-way tradeoff map (speed × accuracy × composability)", TradeoffMap),
     ("Decision guide", DecisionTable),
@@ -77,6 +79,9 @@ _STUDY_FIGURES = {
         ("Composability — the cross-engine arm tops the axis", ComposabilityScorecard),
         ("The 3-way tradeoff (arm 6 off the accuracy axis)", TradeoffMap),
         ("Decision guide", DecisionTable)],
+    "arm7-multirate": [
+        ("Event-heap scheduler (#270) vs stock scan on a many-rate composite", MultirateScaling),
+        ("Runtime — framework share per arm (context)", RuntimeComparison)],
 }
 
 
