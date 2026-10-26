@@ -41,19 +41,21 @@ ARMS = [
 ]
 
 
-def _timed(doc, core):
-    traj, t, rt = extract_run_timed(doc, core, T_END, SP, detail=True)
+def _timed(doc, core, species_order=None):
+    traj, t, rt = extract_run_timed(doc, core, T_END, SP, detail=True,
+                                    species_order=species_order)
     return traj, t, rt
 
 
 def collect_metrics() -> dict:
     # --- arm 1: the reference (measured live) ---
-    from viva_tellurium import make_tellurium_document
+    # Arm 1 now runs with bulk-binding (bulk_species=True, Array species port):
+    # measure the SAME bulk document run_arm uses so the overhead reflects it.
     ref_traj, ref_t = arm1_monolithic.run_arm(n_steps=300)
     c1b = allocate_core(); register_tellurium(c1b)
-    _, _, rt1 = _timed(make_tellurium_document(
-        model=arm1_monolithic.GLYCOLYSIS_ANTIMONY,
-        model_format="antimony", interval=arm1_monolithic._interval(300)), c1b)
+    _, _, rt1 = _timed(
+        arm1_monolithic._build_document(arm1_monolithic._interval(300)), c1b,
+        species_order=list(arm1_monolithic._species_order()))
 
     # --- arm 2: operator-split, fine interval (measured live) ---
     c2 = allocate_core(); arm2_operator_split.register_operator_split(c2)
