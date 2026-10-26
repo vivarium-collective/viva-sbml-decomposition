@@ -24,6 +24,8 @@ dependencies = [
     # Parallel backend for the ensemble arm (arm 5) — real concurrent execution
     # so a throughput speedup is actually measurable.
     "ray",
+    # Second SBML engine (COPASI) for the cross-engine arms.
+    "basico",
     # Web-based workspace dashboard (server + templates + assets + lib helpers).
     # Extracted from viva-template as of v0.4.16; provides the `vivarium-workbench
     # serve` CLI invoked by scripts/serve.sh.
