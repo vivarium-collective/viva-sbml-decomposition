@@ -11,9 +11,9 @@ hypothesis: Additive (Jacobi) coupling introduces a real splitting error that de
 objective: Split the model mechanically and measure the error-vs-interval tradeoff. (additive coupling, not a sequential Lie split).
 description: 'Methods study of the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species). The model is authored as inline Antimony and shown in the Model tab. A MECHANICAL
   split (not a biological seam): the reactions are partitioned into complementary groups in two Tellurium process nodes that share one species store and reconcile ADDITIVELY (Jacobi: both groups advance
-  from the same state each coupling interval and their deltas sum). Note: the predecessor arm used a sequential Lie split; the generic reaction_split composite (seam=mechanical) is additive, so the headline
+  from the same state each coupling interval and their deltas sum). Note: the predecessor study used a sequential Lie split; the generic reaction_split composite (seam=mechanical) is additive, so the headline
   numbers below were measured on the earlier Lie split and are to be re-measured on re-run. The convergence-with-interval conclusion is unchanged.'
-claim: Operator-splitting error is real and shrinks with the coupling interval (0.587 → 0.067); a clean split was only possible across the weakly-coupled glycogen/trehalose sinks — splitting across the
+claim: Mechanical-split (additive-coupling) error is real and shrinks with the coupling interval (0.587 → 0.067); a clean split was only possible across the weakly-coupled glycogen/trehalose sinks — splitting across the
   strong P/ATP/ADP energy coupling diverges.
 parent_studies:
 - study: sbml-in-tellurium
@@ -34,7 +34,7 @@ expected_behavior:
 findings:
 - summary: Coarse interval 0.1 → max_rel_err 0.587; fine interval 0.0125 → 0.067 (monotone convergence); provisional tolerance T=0.10.
 - summary: 'AVOID generalizing: a clean split only worked across the weak glycogen/trehalose sinks. Splitting across the strong energy (P/ATP/ADP, sqrt adenylate rule) coupling diverges for all intervals.'
-- summary: 'Reframe: the generic reaction_split(seam=mechanical) composite couples additively (Jacobi), not by a sequential Lie split as in the original arm; accuracy cost still shrinks with the coupling
+- summary: 'Reframe: the generic reaction_split(seam=mechanical) composite couples additively (Jacobi), not by a sequential Lie split as in the original study; accuracy cost still shrinks with the coupling
     interval (the convergence behavior test is unchanged). The 0.587 -> 0.067 numbers predate this and are pending re-measurement.'
 cites: null
 calibration_anchor: null
@@ -67,7 +67,7 @@ behavior_tests:
     op: threshold
     detail: < 0.10
   units: relative error
-  description: Operator-splitting error at the fine interval must be bounded. Measured 0.067 → PASS.
+  description: Mechanical-split error at the fine interval must be bounded. Measured 0.067 → PASS.
   requires_simulation: true
 - name: converges-with-interval
   classification: accuracy

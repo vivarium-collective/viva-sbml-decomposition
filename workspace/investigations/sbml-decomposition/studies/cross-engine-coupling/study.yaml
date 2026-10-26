@@ -9,7 +9,7 @@ question: Can one composite run part of the model in one engine and part in anot
 hypothesis: A hybrid composite (upper glycolysis in Tellurium, lower glycolysis in COPASI or the native process) sharing one species store runs through process-bigraph and reproduces the biological-seam
   result - the engine at either side of the seam is a drop-in, the composability payoff a monolith can never match.
 objective: Demonstrate cross-engine composition impossible for a monolith, and that engines are swappable at a seam - the existence proof for the composability axis.
-description: 'Methods arm of the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species). The model is authored as inline Antimony and shown in the Model tab. cross-engine-coupling
+description: 'Study in the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species). The model is authored as inline Antimony and shown in the Model tab. cross-engine-coupling
   swaps biological-modular-seam''s lower-glycolysis submodel for the native-pbg process while upper stays libroadrunner, both sharing one store. This is the composability existence proof; it has no monolithic
   reference (accuracy-exempt). The generic reaction_split composite makes the engine a parameter of each side of the seam: the baseline couples Tellurium (upper) with COPASI (lower); the native-lower variant
   couples Tellurium with the hand-ported native process. Both reproduce the biological-modular-seam study.'

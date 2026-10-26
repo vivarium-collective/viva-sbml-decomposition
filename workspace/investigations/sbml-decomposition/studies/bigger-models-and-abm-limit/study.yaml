@@ -71,7 +71,7 @@ expected_behavior:
 findings:
 - summary: '[scale] STRONG RESULT — the monolithic libroadrunner BUILD (compile) strains superlinearly: measured medians 0.20 s at 97 species, 1.76 s at 385, 5.54 s at 769, 18.5 s at 1537 species — ~94x
     the build cost for ~16x the reactions (~O(N^1.64)). The dense-CVODE integration blows up alongside it (0.0023 s -> 0.058 s -> 0.395 s -> 2.56 s). Both halves of the monolithic cost grow superlinearly;
-    this is the real, well-measured strain point and the arm''s headline.'
+    this is the real, well-measured strain point and this study''s headline.'
 - summary: '[scale] HONEST NEGATIVE — decomposition does NOT build "several-fold faster by hundreds of species". The decomposed build is N separate libroadrunner setups: SLOWER than the single monolithic
     compile up to ~100 species (97 sp: 0.34 s vs 0.20 s, 1.7x slower), roughly at PARITY by 385 species (1.40 vs 1.76 s), and a clear win only at ~1500 species (7.75 vs 18.5 s, 2.4x). The build crossover
     is at the hundreds-of-species scale, not before.'
@@ -110,7 +110,7 @@ caveats:
 - The monolithic build superlinearity is the one strong, well-measured result; the broader "decompose it and it scales better" narrative is NOT supported by the measurements and is deliberately not claimed.
 - Decomposition is SLOWER end-to-end at every N measured (through N=128); the decomposed run past N=128 is unmeasured, so no end-to-end crossover is claimed — only a structural build-vs-run trade is characterised.
 - The speed crossover regime (large N, where the end-to-end gap narrows) and the acceptable-accuracy regime (small N / fine interval) do not co-occur at a fixed coupling interval; accuracy at N=128 is 0.31.
-- The mean-field ODE IS a faithful SBML reduction at large population — the arm is not an argument against SBML, but a quantification of the limit (large N, well-mixed, deterministic) in which the reduction
+- The mean-field ODE IS a faithful SBML reduction at large population — this study is not an argument against SBML, but a quantification of the limit (large N, well-mixed, deterministic) in which the reduction
   is valid.
 - The specific extinction fractions (0% at K=400; 86.5% predator / 51.0% total at K=8) are for this Lotka-Volterra parameterisation and horizon (~2 periods); the qualitative result (valid at large N, collapse-dominated
   at small N) is the Kurtz/van-Kampen limit and is parameterisation-independent, but the exact crossover scale is model-specific.

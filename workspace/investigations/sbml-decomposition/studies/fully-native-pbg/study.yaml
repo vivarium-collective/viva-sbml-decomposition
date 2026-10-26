@@ -8,7 +8,7 @@ question: Can the glycolysis ODE network be reimplemented as native process-bigr
   numpy-array) matter for performance at this scale?
 hypothesis: A hand-ported native RHS integrated by scipy matches the reference to high fidelity; at 17 species the scalar-dict vs numpy-array leaf choice is perf-irrelevant.
 objective: Reimplement the network natively (the far pole of composability) and test leaf-representation sensitivity.
-description: Methods arm of the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species). The model is authored as inline Antimony and shown in the Model tab. The 17
+description: Study in the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species). The model is authored as inline Antimony and shown in the Model tab. The 17
   Teusink rate laws + the 3 sqrt assignment rules are hand-ported to pure Python/numpy and integrated with scipy LSODA — no libroadrunner at runtime. Built in two leaf variants (scalar-dict and numpy-array).
   Realised by the generic native_composite (model=glycolysis).
 claim: A fully native process-bigraph implementation reaches reference fidelity (~1e-7); at 17 species the scalar-dict-vs-array leaf choice is perf-irrelevant (only bites at 100s-1000s of species).

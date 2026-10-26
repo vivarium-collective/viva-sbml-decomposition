@@ -5,11 +5,11 @@ status: ran
 title: Monolithic Tellurium (reference)
 confidence: Accepted
 question: Does the whole SBML model, integrated in one libroadrunner/CVODE call through a single TelluriumProcess, reproduce the model's reference trajectory, and what is its performance baseline?
-hypothesis: A single TelluriumProcess matches direct libroadrunner to near machine tolerance and is the fastest arm; it defines the accuracy and speed reference for every other arm.
+hypothesis: A single TelluriumProcess matches direct libroadrunner to near machine tolerance and is the fastest approach; it defines the accuracy and speed reference for every other study.
 objective: Run the whole model monolithically and establish it as the speed + accuracy reference.
-description: Methods arm of the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species). The model is authored as inline Antimony and shown in the Model tab. sbml-in-tellurium
+description: Study in the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species). The model is authored as inline Antimony and shown in the Model tab. sbml-in-tellurium
   hands the entire model to libroadrunner/CVODE in one piece — fast, numerically exact, but opaque and uncomposable. Realised by the generic engine_monolithic composite (model=glycolysis, engine=tellurium).
-claim: Monolithic Tellurium reproduces the reference to ~1e-6 and is the fastest arm — the speed + accuracy reference.
+claim: Monolithic Tellurium reproduces the reference to ~1e-6 and is the fastest approach — the speed + accuracy reference.
 parent_studies: []
 baseline:
 - name: baseline
@@ -24,7 +24,7 @@ expected_behavior:
   rationale: sbml-in-tellurium IS libroadrunner, so it must match near-exactly to serve as the reference.
 findings:
 - summary: Matches direct libroadrunner to max_rel_err ~1e-6 on a shared grid (rtol 1e-6, atol 1e-9).
-- summary: 'overhead_fraction ~0.32 (highest of all arms): the single CVODE call is so cheap that framework time dominates its share — framework SHARE is largest for the cheapest process, not the most decomposed.'
+- summary: 'overhead_fraction ~0.32 (highest of all studies): the single CVODE call is so cheap that framework time dominates its share — framework SHARE is largest for the cheapest process, not the most decomposed.'
 - summary: Bulk-port binding (viva-tellurium bulk_species + Array species leaf, libroadrunner bulk C API) makes sbml-in-tellurium ~12% faster wall-clock, BIT-IDENTICAL (max abs trajectory diff 0.0). The
     win lands in total runtime, not overhead_fraction (which stays ~0.32) — a real speedup that doesn't move the framework SHARE, reinforcing that share != cost.
 cites: null

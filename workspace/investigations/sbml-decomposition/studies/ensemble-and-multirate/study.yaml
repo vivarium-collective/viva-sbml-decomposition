@@ -14,7 +14,7 @@ description: 'Methods study of the SBML-decomposition investigation on Teusink g
   (intervals unset): N monolithic Tellurium instances run concurrently via Ray OS processes with parameter draws. MULTI-RATE (intervals=geometric): N independent monolithic instances, each advanced on a
   different geometrically-spaced interval, run under scheduler=scan (stock O(P^2) tick loop) and scheduler=heap (#270 event-heap, O(P log P)); the instances share no store and are uncoupled, so there is
   no splitting error and only the scheduler changes.'
-claim: 'A Ray ensemble of monoliths gives a real 7.5x wall-clock speedup on 16 cores — the one arm where vivarium wins on speed; libroadrunner does NOT release the GIL, so in-process threads cannot (they
+claim: 'A Ray ensemble of monoliths gives a real 7.5x wall-clock speedup on 16 cores — the one study where vivarium wins on speed; libroadrunner does NOT release the GIL, so in-process threads cannot (they
   backfire). Separately, process-bigraph #270''s event-heap scheduler is bit-identical to the stock scan loop (same math, different tick order) and its wall-clock advantage grows monotonically with P on
   a genuinely multi-rate composite — measured 0.98x at P=4 (heap bookkeeping with nothing to gain), crossing over near P~50-64, to 1.64x at P=256 on real libroadrunner/CVODE instances. The per-process CVODE
   integration dominates the per-tick scan until P reaches the low hundreds, so the multiplier is modest at the P a unit test can afford; it is reported as measured, and the regime where it grows large (hundreds-to-thousands
@@ -42,7 +42,7 @@ expected_behavior:
 - name: ray-ensemble-real-parallel-speedup
   observable: serial vs Ray wall-clock
   condition: speedup > 1 on a multi-core host via Ray OS processes, or an explicit serial-fallback declaring no speedup
-  rationale: the ensemble arm must show a genuine parallel win, not a mislabeled serial loop.
+  rationale: the ensemble study must show a genuine parallel win, not a mislabeled serial loop.
 - name: heap-beats-scan-at-scale
   observable: scan (stock O(P^2)) vs heap (#270 O(P log P)) run wall-clock, and their speedup, vs the instance count P
   condition: scan and heap produce bit-identical final state at every P (same math, different scheduler); the heap/scan speedup rises monotonically with P and exceeds 1 at the largest measured P (heap faster)
@@ -53,7 +53,7 @@ findings:
     for this CVODE-wrapping work.'
 - summary: '[multi-rate/heap] Scan and heap are bit-identical at every measured P — multirate_scaling records a per-N bit_identical flag (np.array_equal of the two schedulers'' final state across every
     instance store), True at each of P=4..256, and a dedicated test asserts it across the measured Ns (not just the small-N case). #270 changes only the order in which due processes are popped, never the
-    math. The multi-rate composite is uncoupled (independent monoliths, empty inputs), so there is no operator-splitting divergence to confound the timing.'
+    math. The multi-rate composite is uncoupled (independent monoliths, empty inputs), so there is no split-coupling divergence to confound the timing.'
 - summary: '[multi-rate/heap] Measured scan vs heap run() wall-clock (median of 3, construction excluded), geometric intervals i_fast=H/(3P)..i_slow=3H, H=20: P=4 scan=0.0082s heap=0.0083s (0.98x); P=16
     0.0468s / 0.0492s (0.95x); P=64 0.419s / 0.371s (1.13x); P=128 1.555s / 1.280s (1.22x); P=256 6.598s / 4.019s (1.64x). The heap/scan speedup rises monotonically with P and crosses over near P~50-64.'
 - summary: '[multi-rate/heap] Honesty: heap is ~5% SLOWER at tiny P (P=4,16) — the event-heap bookkeeping has nothing to gain when the per-tick scan is trivially short — exactly #270''s documented single-rate
@@ -98,7 +98,7 @@ behavior_tests:
     op: threshold
     detail: '>= 2.0'
   units: speedup ratio
-  description: The ensemble arm must show a genuine parallel win on OS processes. Measured 7.52× → PASS.
+  description: The ensemble study must show a genuine parallel win on OS processes. Measured 7.52× → PASS.
   requires_simulation: true
 - name: gil-bound-needs-processes
   classification: efficiency
