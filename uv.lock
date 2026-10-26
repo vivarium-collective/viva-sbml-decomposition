@@ -3857,9 +3857,10 @@ evaluator = [
 [[package]]
 name = "viva-tellurium"
 version = "0.1.2"
-source = { git = "https://github.com/vivarium-collective/viva-tellurium.git?branch=main#047e703968f37d106e9bc7f429bc05d804be60fe" }
+source = { git = "https://github.com/vivarium-collective/viva-tellurium.git?branch=main#164c67038d6fecc0195eb70fb6585ad17a4d0259" }
 dependencies = [
     { name = "bigraph-schema" },
+    { name = "libroadrunner" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "process-bigraph" },
