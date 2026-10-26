@@ -56,5 +56,5 @@ class DecisionTable(PlotlyVisualization):
                            "font": {"size": 12}}}
         return {"data": [trace], "layout": layout(
             "Decision table: which arm when",
-            "speed x accuracy x composability, all from measured metrics",
+            "speed x accuracy x composability (arm1/2/4/6 measured live; arm3/arm5 from their studies)",
             margin={"l": 20, "r": 20, "t": 80, "b": 20}, height=560)}

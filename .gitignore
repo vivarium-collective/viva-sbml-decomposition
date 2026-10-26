@@ -33,3 +33,10 @@ workspace/reports/assets/*
 .superpowers/brainstorm/
 # Scratch TODO list agents keep per-workspace; not tracked content.
 todo.md
+
+# Per-study run artifacts (regenerable; nested under studies/<slug>/)
+**/runs.db
+**/runs.db-wal
+**/runs.db-shm
+workspace/investigations/*/studies/*/sims/
+workspace/investigations/*/studies/*/viz/report_card/

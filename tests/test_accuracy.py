@@ -24,6 +24,9 @@ def test_resamples_onto_common_grid():
     r = compare_to_reference(traj, t, arm, t2)
     assert np.isfinite(r.max_rel_err)
     assert all(np.isfinite(v) for v in r.per_species_rmse.values())
+    # The arm is an interpolation of the reference onto a coarser grid, so the
+    # error must be small-but-nonzero — bound it so a wrong resample can't pass.
+    assert 0.0 < r.max_rel_err < 0.1
 
 
 @pytest.mark.parametrize("bad", [np.nan, np.inf])
