@@ -201,3 +201,12 @@ def test_explicit_seam_and_errors():
         build_document("glycolysis", {"upper": ["vGLT"], "lower": ["vGLT"]})
     with pytest.raises(ValueError):
         build_document("glycolysis", "nope")
+
+
+@pytest.mark.slow
+def test_tellurium_copasi_reproduces_tellurium_tellurium_at_same_interval():
+    # COPASI engine-swap drop-in: measured ~3.2e-7 (not bit-reproducible run to run).
+    a = _run("aldolase", "tellurium", "tellurium", 0.005)
+    b = _run("aldolase", "tellurium", "copasi", 0.005)
+    res = compare_to_reference(*a, *b)
+    assert not res.diverged and res.max_rel_err < 1e-3, res.max_rel_err
