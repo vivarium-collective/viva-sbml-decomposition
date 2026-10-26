@@ -6,97 +6,113 @@ status: complete
 runtime:
   default_emitter: xarray
 object_of_evaluation: method
-question: When you have a biochemical model, when should you run it monolithically in Tellurium (libroadrunner/CVODE) and when is it worth decomposing it into vivarium / process-bigraph sub-processes — and what does each point on that spectrum cost in performance and accuracy, buy in composability, and where does Tellurium (and SBML itself) stop being the right tool as models get larger or stop being reaction networks at all?
-hypothesis: 'Across the spectrum monolithic Tellurium → operator-split → modular → fully-native process-bigraph, performance and accuracy degrade monotonically while composability rises, so no point dominates. Beyond the single-model comparison we predict two boundaries: (a) the monolithic libroadrunner build strains superlinearly as models scale, so decomposition''s modularity matters at size even though it is not free on wall-clock; and (b) not every model is expressible as SBML — an agent-based model reduces to an SBML/ODE only in the large-population, well-mixed, deterministic limit.'
-lead: 'A methods investigation, not a biology result. Nine arms run SBML models — and, at the edges, a scaled multi-organ body and a stochastic agent-based model — across a spectrum of implementations under one workspace, each measured on speed, accuracy, and composability. The deliverable is a decision guide: which decomposition patterns to use, which to avoid, where Tellurium strains, and where SBML stops applying.'
+question: When you have a biochemical model, when should you run it monolithically in Tellurium (libroadrunner/CVODE) and when is it worth decomposing it into vivarium / process-bigraph sub-processes —
+  and what does each point on that spectrum cost in performance and accuracy, buy in composability, and where does Tellurium (and SBML itself) stop being the right tool as models get larger or stop being
+  reaction networks at all?
+hypothesis: 'Across the spectrum monolithic Tellurium → split → modular → fully-native process-bigraph, performance and accuracy degrade monotonically while composability rises, so no point dominates. Beyond
+  the single-model comparison we predict two boundaries: (a) the monolithic libroadrunner build strains superlinearly as models scale, so decomposition''s modularity matters at size even though it is not
+  free on wall-clock; and (b) not every model is expressible as SBML — an agent-based model reduces to an SBML/ODE only in the large-population, well-mixed, deterministic limit.'
+lead: 'A methods investigation, not a biology result. Seven studies run SBML models — and, at the edges, a scaled multi-organ body and a stochastic agent-based model — across a spectrum of implementations
+  (on a small set of generic composites) under one workspace, each measured on speed, accuracy, and composability. The deliverable is a decision guide: which decomposition patterns to use, which to avoid,
+  where Tellurium strains, and where SBML stops applying.'
 executive:
-  what_is_this: 'A head-to-head of ways to run the same model — from a single libroadrunner/CVODE call to a fully hand-written process-bigraph network — plus two boundary probes: scaling a model until Tellurium''s build strains, and asking whether an agent-based model can even be an SBML model. Nine member studies, measured on speed × accuracy × composability.'
-  verdict: 'No single implementation wins on all axes. Monolithic Tellurium is the fastest arm and the numerical reference; every decomposition adds orchestration overhead and operator-splitting error that shrinks as the coupling interval shrinks. The payoff is strictly composability: only the decomposed arms can substitute a submodel, couple through a store, or mix engines (arm 6 runs half libroadrunner / half native in one composite — impossible for a monolith). The ensemble arm is the one place vivarium wins on wall-clock (7.5× via Ray). Two boundaries sharpen the picture: as a model scales, the monolithic libroadrunner BUILD time strains superlinearly (~O(N^1.6)) — but decomposition is not a free win (it is slower end-to-end at every size we measured, paying off only at very large models, and with accuracy degradation); and an ABM reduces to an SBML/Tellurium ODE only in the large-population limit — at small populations the ODE misses the stochastic collapse entirely (predators go extinct in 86.5% of runs; the ODE cycles forever).'
+  what_is_this: 'A head-to-head of ways to run the same model — from a single libroadrunner/CVODE call to a fully hand-written process-bigraph network — plus two boundary probes: scaling a model until Tellurium''s
+    build strains, and asking whether an agent-based model can even be an SBML model. Seven member studies, measured on speed × accuracy × composability.'
+  verdict: 'No single implementation wins on all axes. Monolithic Tellurium is the fastest implementation and the numerical reference; every decomposition adds orchestration overhead and additive-split
+    (Jacobi) coupling error that shrinks as the coupling interval shrinks. The payoff is strictly composability: only the decomposed studies can substitute a submodel, couple through a store, or mix engines
+    (cross-engine-coupling runs half libroadrunner / half a second engine in one composite — impossible for a monolith — and the engines are interchangeable at the seam). The ensemble study is the one place
+    vivarium wins on wall-clock (7.5× via Ray). Two boundaries sharpen the picture: as a model scales, the monolithic libroadrunner BUILD time strains superlinearly (~O(N^1.6)) — but decomposition is not
+    a free win (it is slower end-to-end at every size we measured, paying off only at very large models, and with accuracy degradation); and an ABM reduces to an SBML/Tellurium ODE only in the large-population
+    limit — at small populations the ODE misses the stochastic collapse entirely (predators go extinct in 86.5% of runs; the ODE cycles forever).'
   verdict_status: passing-with-caveats
   decisions_needed:
-  - question: Adopt the opt-in bulk-binding + heap scheduler across all tellurium arms and re-measure?
-    context: 'viva-tellurium bulk_species (#24) gives arm 1 ~12% bit-identical; process-bigraph #270''s heap scheduler helps mismatched-interval composites. Both are merged; arm 1 already uses bulk.'
+  - question: Adopt the opt-in bulk-binding + heap scheduler across all tellurium studies and re-measure?
+    context: 'viva-tellurium bulk_species (#24) gives sbml-in-tellurium ~12% bit-identical; process-bigraph #270''s heap scheduler helps mismatched-interval composites. Both are merged; sbml-in-tellurium
+      already uses bulk.'
   computed_verdict_status: passing
   computed_acceptance:
     criteria:
-    - study: arm1-monolithic-tellurium
-      behavior: arm1-matches-direct-libroadrunner
+    - study: sbml-in-tellurium
+      behavior: matches-direct-libroadrunner
       result: passing
-    - study: arm2-operator-split
-      behavior: arm2-converges-with-interval
+    - study: mechanical-split-cost
+      behavior: additive-split-converges-with-interval
       result: passing
-    - study: arm3-modular-submodels
-      behavior: arm3-matches-reference-within-tolerance
+    - study: biological-modular-seam
+      behavior: biological-seam-matches-reference
       result: passing
-    - study: arm4-native-pbg
-      behavior: arm4-matches-reference-high-fidelity
+    - study: fully-native-pbg
+      behavior: native-matches-reference-high-fidelity
       result: passing
-    - study: arm5-ensemble-ray
-      behavior: arm5-real-parallel-speedup
+    - study: cross-engine-coupling
+      behavior: cross-engine-composition-runs
       result: passing
-    - study: arm6-coupling-demo
-      behavior: arm6-cross-engine-composition-runs
+    - study: ensemble-and-multirate
+      behavior: ray-ensemble-real-parallel-speedup
       result: passing
-    - study: arm7-multirate
-      behavior: arm7-heap-beats-scan-at-scale
+    - study: ensemble-and-multirate
+      behavior: heap-beats-scan-at-scale
       result: passing
-    - study: arm8-multiorgan
-      behavior: arm8-monolith-build-strains-superlinearly
+    - study: bigger-models-and-abm-limit
+      behavior: monolith-build-strains-superlinearly
       result: passing
-    - study: arm9-abm-meanfield
-      behavior: arm9-meanfield-valid-only-at-large-N
+    - study: bigger-models-and-abm-limit
+      behavior: meanfield-valid-only-at-large-N
       result: passing
     unmet: []
     diverges_from_authored: true
 scientific_argument:
-  main_claim: 'On the implementation spectrum, speed and accuracy are best at the monolithic pole and composability at the decomposed pole — a genuine tradeoff with no dominating point — and the tool itself has limits: Tellurium''s monolithic build strains superlinearly at scale, and SBML cannot represent an agent-based model outside its mean-field limit.'
+  main_claim: 'On the implementation spectrum, speed and accuracy are best at the monolithic pole and composability at the decomposed pole — a genuine tradeoff with no dominating point — and the tool itself
+    has limits: Tellurium''s monolithic build strains superlinearly at scale, and SBML cannot represent an agent-based model outside its mean-field limit.'
   evidence_for:
-  - Arm 1 (monolithic) matches direct libroadrunner to ~1e-6 and is the fastest arm; bulk-port binding makes it ~12% faster, bit-identical.
-  - Arms 2–3 show real operator-splitting error that shrinks with the coupling interval (0.587→0.067; 0.468→0.100).
-  - Arm 4 (fully native) reaches ~1e-7 fidelity with no libroadrunner at runtime; at 17 species the scalar-dict vs numpy-array leaf choice is perf-irrelevant.
-  - Arm 6 runs a cross-engine hybrid (libroadrunner + native in one composite) that a monolith cannot express, reproducing arm 3 to 3.2e-7 — the composability payoff.
-  - Arm 5 (ensemble) achieves a real 7.5× wall-clock speedup via Ray.
-  - 'Arm 7 shows process-bigraph #270''s heap scheduler is bit-identical to the scan loop and its multi-rate advantage grows with process count (1.0×→1.64× over P=4→256).'
-  - Arm 8 measures the monolithic libroadrunner BUILD straining superlinearly (~O(N^1.64), 0.20s→18.5s over 97→1537 species).
-  - 'Arm 9 shows the ABM→SBML mean-field reduction is valid at large population (K=400: 4.9% error, no extinction).'
+  - sbml-in-tellurium (monolithic) matches direct libroadrunner to ~1e-6 and is the fastest implementation; bulk-port binding makes it ~12% faster, bit-identical.
+  - mechanical-split-cost and biological-modular-seam show real split error that shrinks with the coupling interval (0.587->0.067; 0.468->0.100). mechanical-split-cost now uses additive (Jacobi) coupling
+    via the generic reaction_split composite rather than the earlier sequential Lie split.
+  - fully-native-pbg (fully native) reaches ~1e-7 fidelity with no libroadrunner at runtime; at 17 species the scalar-dict vs numpy-array leaf choice is perf-irrelevant.
+  - cross-engine-coupling runs a cross-engine hybrid (libroadrunner + a second engine in one composite) that a monolith cannot express, reproducing biological-modular-seam to 3.2e-7 with the native lower
+    half — the composability payoff; engines are interchangeable at the seam.
+  - ensemble-and-multirate (same-rate ensemble) achieves a real 7.5x wall-clock speedup via Ray.
+  - 'ensemble-and-multirate (multi-rate ensemble) shows process-bigraph #270''s heap scheduler is bit-identical to the scan loop and its multi-rate advantage grows with process count (1.0x->1.64x over P=4->256).'
+  - bigger-models-and-abm-limit measures the monolithic libroadrunner BUILD straining superlinearly (~O(N^1.64), 0.20s->18.5s over 97->1537 species).
+  - 'bigger-models-and-abm-limit shows the ABM->SBML mean-field reduction is valid at large population (K=400: 4.9% error, no extinction).'
   evidence_against:
-  - overhead_fraction (framework SHARE of wall-clock) is HIGHEST for the cheap monolith (~0.32) and lowest for decomposed/native arms — a cheap process makes the framework look expensive, so share is NOT the decomposition cost.
-  - Decomposition is slower END-TO-END than the monolith at every multi-organ size measured (arm 8); it only build-wins at ~769+ species, and its accuracy degrades at scale (0.31 at 385 species).
-  - A clean operator split (arm 2) was only possible across a weakly-coupled seam; splitting across the strong energy coupling diverges.
-  - 'At small population the ABM→SBML reduction is INVALID (arm 9, K=8): the ODE misses the stochastic collapse the ABM shows (predator extinction 86.5%, total 51%).'
+  - overhead_fraction (framework SHARE of wall-clock) is HIGHEST for the cheap monolith (~0.32) and lowest for decomposed/native studies — a cheap process makes the framework look expensive, so share is NOT
+    the decomposition cost.
+  - Decomposition is slower END-TO-END than the monolith at every multi-organ size measured (bigger-models-and-abm-limit); it only build-wins at ~769+ species, and its accuracy degrades at scale (0.31 at
+    385 species).
+  - A clean mechanical split (mechanical-split-cost) was only possible across a weakly-coupled seam; splitting across the strong energy coupling diverges.
+  - 'At small population the ABM→SBML reduction is INVALID (bigger-models-and-abm-limit, K=8): the ODE misses the stochastic collapse the ABM shows (predator extinction 86.5%, total 51%).'
   key_figures:
   - 3-way tradeoff map (speed × accuracy × composability)
-  - Per-arm process-vs-framework overhead breakdown
-  - arm2/arm3 convergence vs coupling interval
-  - arm5 ensemble serial-vs-Ray scaling
-  - arm8 multi-organ strain curve (build + run vs species count)
-  - arm9 ABM vs mean-field ODE (large pop match, small pop collapse)
+  - Per-study process-vs-framework overhead breakdown
+  - mechanical-split-cost/biological-modular-seam convergence vs coupling interval
+  - ensemble-and-multirate ensemble serial-vs-Ray scaling
+  - bigger-models-and-abm-limit multi-organ strain curve (build + run vs species count)
+  - bigger-models-and-abm-limit ABM vs mean-field ODE (large pop match, small pop collapse)
   caveats:
-  - Core comparison is one metabolic model (Teusink glycolysis); arms 8–9 are boundary probes with their own synthetic/biological vehicles.
+  - Core comparison is one metabolic model (Teusink glycolysis); bigger-models-and-abm-limit holds the boundary probes with their own synthetic/biological vehicles.
   - 'Mismatched coupling intervals carry an O(P²) scheduler cost in pb ≤1.10.x; process-bigraph #270 (merged) reduces it to ~O(P log P). Prefer equal intervals on older pins.'
-  - Arm 8 decomposed-run at very large N (≥256 species) was left unmeasured; no end-to-end scale win is claimed there.
-  - Arm 9 extinction fractions are parameter- and scale-specific; the qualitative limit (ODE shows zero extinction) is general.
+  - 'bigger-models-and-abm-limit: the decomposed multi-organ run at very large N (≥256 species) was left unmeasured; no end-to-end scale win is claimed there.'
+  - 'bigger-models-and-abm-limit: ABM extinction fractions are parameter- and scale-specific; the qualitative limit (ODE shows zero extinction) is general.'
   interpretation_ref: ''
 at_a_glance:
-- study: arm1-monolithic-tellurium
-  role: monolithic SBML in libroadrunner/CVODE — the speed + accuracy reference (now with bulk-port binding, ~12% faster, bit-identical)
-- study: arm2-operator-split
-  role: same model, operator-split sub-steps through a store — isolates orchestration overhead + splitting error (mechanical split; strong-coupling seam diverges)
-- study: arm3-modular-submodels
-  role: biological upper/lower seam as two coupled process nodes sharing a store — genuine composability (0.468→0.100 as the step shrinks)
-- study: arm4-native-pbg
+- study: sbml-in-tellurium
+  role: monolithic SBML in libroadrunner/CVODE — the speed + accuracy reference (bulk-port binding, ~12% faster, bit-identical)
+- study: mechanical-split-cost
+  role: same model split mechanically into two reaction groups on one additive store — isolates orchestration overhead + split error (shrinks with the coupling interval; strong-coupling seam diverges)
+- study: biological-modular-seam
+  role: biological upper/lower seam as two coupled process nodes sharing a store — genuine composability (0.468->0.100 as the step shrinks)
+- study: fully-native-pbg
   role: fully native process-bigraph RHS, no libroadrunner — ~1e-7 fidelity; scalar vs array leaf irrelevant at 17 species
-- study: arm5-ensemble-ray
-  role: parameter ensemble of monoliths on Ray — the one arm where vivarium wins on wall-clock (7.5×)
-- study: arm6-coupling-demo
-  role: cross-engine hybrid (Tellurium + native in one composite) — the composability existence proof a monolith cannot match
-- study: arm7-multirate
-  role: 'multi-rate composite on process-bigraph #270''s heap scheduler — bit-identical to scan; advantage grows with process count'
-- study: arm8-multiorgan
-  role: scale a model until Tellurium strains — monolithic libroadrunner BUILD is superlinear (~O(N^1.6)); decomposition is not a free win
-- study: arm9-abm-meanfield
-  role: 'ADVERSARIAL: can an ABM be SBML? Only in the large-population limit — at small populations the ODE misses the stochastic collapse'
-how_to_read: Start with arm 1 (the reference), read arms 2→4 as increasing decomposition (accuracy falls, composability rises), then arm 5 (the parallel win) and arm 6 (the capability proof). Arm 7 is the scheduler probe, arm 8 the scaling/strain boundary, and arm 9 the SBML-applicability boundary (the adversarial case). The 3-way tradeoff map and the decision table are the deliverable.
+- study: cross-engine-coupling
+  role: cross-engine hybrid (Tellurium + COPASI / native at one seam) — engines are interchangeable, a composition a monolith cannot express
+- study: ensemble-and-multirate
+  role: 'ensembles of monoliths: same-rate on Ray (7.5x wall-clock win) and multi-rate on process-bigraph #270''s heap scheduler (bit-identical to scan; advantage grows with process count)'
+- study: bigger-models-and-abm-limit
+  role: 'ADVERSARIAL: scale a model until Tellurium strains (monolithic BUILD ~O(N^1.6); decomposition is not a free win) and ask whether an ABM can be SBML (only in the large-population limit)'
+how_to_read: 'Start with sbml-in-tellurium (the reference), read mechanical-split-cost -> biological-modular-seam -> fully-native-pbg as increasing decomposition (accuracy falls, composability rises), then
+  cross-engine-coupling (the capability proof) and ensemble-and-multirate (the parallel and scheduler wins). bigger-models-and-abm-limit holds the two boundary probes: where the monolith strains at scale
+  and where SBML stops applying (the adversarial case). The 3-way tradeoff map and the decision table are the deliverable.'
 glossary:
 - term: operator splitting
   definition: advancing subsets of a system separately over an interval then composing — introduces a splitting error that shrinks with the interval
@@ -109,40 +125,40 @@ glossary:
 competing_frameworks:
 - name: monolith-always
   prediction: running the whole model in Tellurium is always the right choice
-  discriminated_by: arm 6 (a cross-engine composition the monolith cannot express), arm 5 (the ensemble wall-clock win), and arm 8 (the monolithic build strain at scale)
+  discriminated_by: cross-engine-coupling (a cross-engine composition the monolith cannot express), ensemble-and-multirate (the ensemble wall-clock win), and bigger-models-and-abm-limit (the monolithic
+    build strain at scale)
 - name: decompose-always
   prediction: process-bigraph decomposition is free / always worth it
-  discriminated_by: arms 2–4 + arm 8 — the measured, non-zero speed + accuracy cost of every decomposition, slower end-to-end at every size measured
+  discriminated_by: mechanical-split-cost, biological-modular-seam, fully-native-pbg + bigger-models-and-abm-limit — the measured, non-zero speed + accuracy cost of every decomposition, slower end-to-end
+    at every size measured
 - name: everything-is-SBML
   prediction: any dynamical model can be captured as an SBML/Tellurium model
-  discriminated_by: arm 9 — an ABM reduces to SBML only in the large-population limit; at small populations the ODE structurally misses stochastic extinction
+  discriminated_by: bigger-models-and-abm-limit — an ABM reduces to SBML only in the large-population limit; at small populations the ODE structurally misses stochastic extinction
 studies:
-- arm1-monolithic-tellurium
-- arm2-operator-split
-- arm3-modular-submodels
-- arm4-native-pbg
-- arm5-ensemble-ray
-- arm6-coupling-demo
-- arm7-multirate
-- arm8-multiorgan
-- arm9-abm-meanfield
+- sbml-in-tellurium
+- mechanical-split-cost
+- biological-modular-seam
+- fully-native-pbg
+- cross-engine-coupling
+- ensemble-and-multirate
+- bigger-models-and-abm-limit
 expert_docs: []
 acceptance_criteria:
-- study: arm1-monolithic-tellurium
-  behavior: arm1-matches-direct-libroadrunner
-- study: arm2-operator-split
-  behavior: arm2-converges-with-interval
-- study: arm3-modular-submodels
-  behavior: arm3-matches-reference-within-tolerance
-- study: arm4-native-pbg
-  behavior: arm4-matches-reference-high-fidelity
-- study: arm5-ensemble-ray
-  behavior: arm5-real-parallel-speedup
-- study: arm6-coupling-demo
-  behavior: arm6-cross-engine-composition-runs
-- study: arm7-multirate
-  behavior: arm7-heap-beats-scan-at-scale
-- study: arm8-multiorgan
-  behavior: arm8-monolith-build-strains-superlinearly
-- study: arm9-abm-meanfield
-  behavior: arm9-meanfield-valid-only-at-large-N
+- study: sbml-in-tellurium
+  behavior: matches-direct-libroadrunner
+- study: mechanical-split-cost
+  behavior: additive-split-converges-with-interval
+- study: biological-modular-seam
+  behavior: biological-seam-matches-reference
+- study: fully-native-pbg
+  behavior: native-matches-reference-high-fidelity
+- study: cross-engine-coupling
+  behavior: cross-engine-composition-runs
+- study: ensemble-and-multirate
+  behavior: ray-ensemble-real-parallel-speedup
+- study: ensemble-and-multirate
+  behavior: heap-beats-scan-at-scale
+- study: bigger-models-and-abm-limit
+  behavior: monolith-build-strains-superlinearly
+- study: bigger-models-and-abm-limit
+  behavior: meanfield-valid-only-at-large-N

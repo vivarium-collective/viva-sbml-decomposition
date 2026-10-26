@@ -1,0 +1,101 @@
+schema_version: 3
+name: sbml-in-tellurium
+investigation: sbml-decomposition
+status: ran
+title: Monolithic Tellurium (reference)
+confidence: Accepted
+question: Does the whole SBML model, integrated in one libroadrunner/CVODE call through a single TelluriumProcess, reproduce the model's reference trajectory, and what is its performance baseline?
+hypothesis: A single TelluriumProcess matches direct libroadrunner to near machine tolerance and is the fastest arm; it defines the accuracy and speed reference for every other arm.
+objective: Run the whole model monolithically and establish it as the speed + accuracy reference.
+description: Methods arm of the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species). The model is authored as inline Antimony and shown in the Model tab. sbml-in-tellurium
+  hands the entire model to libroadrunner/CVODE in one piece — fast, numerically exact, but opaque and uncomposable. Realised by the generic engine_monolithic composite (model=glycolysis, engine=tellurium).
+claim: Monolithic Tellurium reproduces the reference to ~1e-6 and is the fastest arm — the speed + accuracy reference.
+parent_studies: []
+baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.engine_monolithic.engine_monolithic
+  params:
+    model: glycolysis
+    engine: tellurium
+expected_behavior:
+- name: matches-direct-libroadrunner
+  observable: per-species trajectory vs direct libroadrunner
+  condition: max relative error < 1e-6 on a shared time grid
+  rationale: sbml-in-tellurium IS libroadrunner, so it must match near-exactly to serve as the reference.
+findings:
+- summary: Matches direct libroadrunner to max_rel_err ~1e-6 on a shared grid (rtol 1e-6, atol 1e-9).
+- summary: 'overhead_fraction ~0.32 (highest of all arms): the single CVODE call is so cheap that framework time dominates its share — framework SHARE is largest for the cheapest process, not the most decomposed.'
+- summary: Bulk-port binding (viva-tellurium bulk_species + Array species leaf, libroadrunner bulk C API) makes sbml-in-tellurium ~12% faster wall-clock, BIT-IDENTICAL (max abs trajectory diff 0.0). The
+    win lands in total runtime, not overhead_fraction (which stays ~0.32) — a real speedup that doesn't move the framework SHARE, reinforcing that share != cost.
+cites: null
+calibration_anchor: null
+visualizations:
+- name: species_dynamics
+  address: local:SpeciesDynamics
+  config: {}
+- name: runtime_comparison
+  address: local:RuntimeComparison
+  config: {}
+- name: overhead_breakdown
+  address: local:OverheadBreakdown
+  config: {}
+- name: tradeoff_map
+  address: local:TradeoffMap
+  config: {}
+- name: decision_table
+  address: local:DecisionTable
+  config: {}
+verdict: supported
+evaluation_status: passed
+gate_status: passed
+simulation_set:
+- name: baseline-baseline
+  kind: single
+  base_model: viva_sbml_decomposition.composites.engine_monolithic.engine_monolithic
+  is_baseline: true
+  status: ran
+behavior_tests:
+- name: reference-fidelity
+  classification: accuracy
+  measure:
+    kind: accuracy
+    detail: max relative error of sbml-in-tellurium vs a direct libroadrunner run on a shared grid
+  pass_if:
+    op: threshold
+    detail: < 1e-5
+  units: relative error
+  description: sbml-in-tellurium IS libroadrunner, so it must match near-exactly to serve as the reference. Measured ~1e-6 → PASS.
+  requires_simulation: true
+- name: bulk-binding-bit-identical
+  classification: correctness
+  measure:
+    kind: correctness
+    detail: max |Δ| between the bulk_species Array path and the map[float] path
+  pass_if:
+    op: threshold
+    detail: == 0
+  units: absolute (concentration)
+  description: Opt-in bulk-port binding must not change results. Measured max abs diff 0.0 (bitwise identical) → PASS.
+  requires_simulation: true
+- name: bulk-binding-faster
+  classification: efficiency
+  measure:
+    kind: efficiency
+    detail: sbml-in-tellurium total wall-clock ratio, bulk vs map (median of 9)
+  pass_if:
+    op: threshold
+    detail: < 1.0
+  units: ratio
+  description: Bulk-port binding should be faster. Measured 0.88× (~12% faster) → PASS. The win is in total_s, not overhead_fraction (which stays ~0.32).
+  requires_simulation: true
+runs:
+- name: canonical
+  canonical: true
+  status: completed
+  timestamp: '2026-10-26T12:00:00Z'
+  outcomes:
+    matches-direct-libroadrunner:
+      result: ok
+      detail: validated — see study findings
+  computed_outcomes:
+    _status: store_unresolved
