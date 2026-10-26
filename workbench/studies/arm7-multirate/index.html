@@ -563,7 +563,7 @@
       <div class="ctr-meta">
         <div class="ctr-meta-row"><span class="ctr-meta-k">Model</span> <code>baseline</code><a class="ov-tablink" href="#" onclick="_setStudyTab('compose');return false;">model →</a></div>
         
-        <div class="ctr-meta-row"><span class="ctr-meta-k">Measures</span> <span class="ctr-meta-item">1 behavior test</span><a class="ov-tablink" href="#" onclick="_setStudyTab('audit');return false;">see Tests →</a></div>
+        <div class="ctr-meta-row"><span class="ctr-meta-k">Measures</span> <span class="ctr-meta-item">2 behavior tests</span><a class="ov-tablink" href="#" onclick="_setStudyTab('audit');return false;">see Tests →</a></div>
         
       </div>
     </div>
@@ -1033,33 +1033,71 @@
     
     
     
-    <li class="expected-behavior-item" id="bt-arm7-heap-beats-scan-at-scale"
+    <li class="expected-behavior-item" id="bt-scan-equals-heap"
         data-test-kind="behavioral"
         
-        data-pytest-node="arm7-heap-beats-scan-at-scale"
-        data-classification="unclassified"
-        data-result="ok"
+        data-pytest-node="scan-equals-heap"
+        data-classification="correctness"
+        data-result="pending"
         style="margin: 0 0 10px 0; padding: 10px 12px; border-left: 4px solid #cbd5e1; background: #f8fafc; border-radius: 4px;">
       
         
       <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
         <span class="bt-result" style="font-size: 0.75em; font-family: monospace; padding: 2px 8px; border-radius: 9999px; background: #f1f5f9; color: #475569">⏳ pending</span>
-        <span class="classification-pill classification-unclassified">unclassified</span>
-        <strong style="font-size: 0.9em;">arm7-heap-beats-scan-at-scale</strong>
+        <span class="classification-pill classification-correctness">correctness</span>
+        <strong style="font-size: 0.9em;">scan-equals-heap</strong>
+        
+        <span class="muted" style="font-size:0.78em">requires: <code>True</code></span>
         
       </div>
-      <div style="margin-top: 6px; font-size: 0.95em;"></div>
+      <div style="margin-top: 6px; font-size: 0.95em;">process-bigraph #270&#39;s heap scheduler must be bit-identical to the scan loop (only tick order differs). Verified True at P=4..256 → PASS.</div>
       
-      <div style="margin-top:6px;font-size:0.85em;padding:6px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:3px">
-        <strong>Latest result:</strong>
+      
+      <details style="margin-top: 6px; font-size: 0.82em;">
+        <summary class="muted" style="cursor: pointer;">Assertion</summary>
         
+        <pre style="background:#fff; padding:8px; margin:4px 0 0 0; border:1px solid #e2e8f0; border-radius:3px; overflow-x:auto;">measure: {"detail": "max |\u0394| in final state between scheduler=\u0027scan\u0027 and scheduler=\u0027heap\u0027, at every measured P", "kind": "correctness"}
+pass_if: {"detail": "== 0", "op": "threshold"}</pre>
+      </details>
+      
+      
+      
+      
+    </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li class="expected-behavior-item" id="bt-heap-advantage-grows-with-scale"
+        data-test-kind="behavioral"
         
-          
-          <code style="font-family:ui-monospace,monospace;color:#475569;margin-right:8px">detail: bit-identical scan==heap; heap/scan speedup rises monotonically 0.98x@P=4 -&gt; 1.64x@P=256</code>
-          
+        data-pytest-node="heap-advantage-grows-with-scale"
+        data-classification="efficiency"
+        data-result="pending"
+        style="margin: 0 0 10px 0; padding: 10px 12px; border-left: 4px solid #cbd5e1; background: #f8fafc; border-radius: 4px;">
+      
+        
+      <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+        <span class="bt-result" style="font-size: 0.75em; font-family: monospace; padding: 2px 8px; border-radius: 9999px; background: #f1f5f9; color: #475569">⏳ pending</span>
+        <span class="classification-pill classification-efficiency">efficiency</span>
+        <strong style="font-size: 0.9em;">heap-advantage-grows-with-scale</strong>
+        
+        <span class="muted" style="font-size:0.78em">requires: <code>True</code></span>
         
       </div>
+      <div style="margin-top: 6px; font-size: 0.95em;">The multi-rate advantage should grow with process count. Measured 0.98× @P=4 → 1.64× @P=256 (crossover ~P=50-64) → PASS. Larger P (optimize: 4.8×@100→46×@1000) cited.</div>
       
+      
+      <details style="margin-top: 6px; font-size: 0.82em;">
+        <summary class="muted" style="cursor: pointer;">Assertion</summary>
+        
+        <pre style="background:#fff; padding:8px; margin:4px 0 0 0; border:1px solid #e2e8f0; border-radius:3px; overflow-x:auto;">measure: {"detail": "heap-vs-scan speedup at the largest measured P vs the smallest", "kind": "efficiency"}
+pass_if: {"detail": "speedup(large P) \u003e speedup(small P)", "op": "threshold"}</pre>
+      </details>
       
       
       
@@ -1126,7 +1164,7 @@
         
       </span>
       
-      <span class="status-step set gate-status-passed">
+      <span class="status-step  gate-status-blocked">
         <span class="dot"></span>5 · Decision
         <span class="step-val">passed</span>
         
@@ -1221,9 +1259,14 @@
         evaluator's result from the behavior-test outcomes — the evaluation the
         conclusion rests on.</p>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span class="gate-status-passed" style="padding:2px 12px;border-radius:9999px;font-weight:700;font-size:0.85em">passed</span>
+        <span class="gate-status-blocked" style="padding:2px 12px;border-radius:9999px;font-weight:700;font-size:0.85em">blocked</span>
         <span class="muted small">evaluated by code</span>
-        <span class="muted small">0/1 passed</span>
+        <span class="muted small">0/2 passed</span>
+      </div>
+      
+      <div class="gate-divergence-chip" title="The coded gate evaluator disagrees with the authored gate_status — an audit signal worth never hiding."
+           style="margin-top:8px;display:inline-block;padding:4px 12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;color:#92400e;font-size:0.85em;font-weight:600">
+        ⚠ gate drift — code: <code>blocked</code> · authored: <code>passed</code>
       </div>
       
     </div>
@@ -1318,7 +1361,7 @@
 </section>
 
 </main>
-<script>window.__DASH_CONFIG__ = { mode: "snapshot", interactiveUrl: "https://github.com/vivarium-collective/viva-sbml-decomposition", basePath: "/viva-sbml-decomposition/workbench", inputsDownloadBase: "https://github.com/vivarium-collective/viva-sbml-decomposition/raw/build/decomposition-slice", provenance: {"repo_slug": "vivarium-collective/viva-sbml-decomposition", "repo_url": "https://github.com/vivarium-collective/viva-sbml-decomposition", "commit": "bef3cff945bd4012331d862c1f64962018371c0f", "commit_url": "https://github.com/vivarium-collective/viva-sbml-decomposition/commit/bef3cff945bd4012331d862c1f64962018371c0f", "branch": "build/decomposition-slice", "lockfile": "uv.lock@7333f5c89033", "generated_at": "2026-10-26 04:14 UTC"} };</script>
+<script>window.__DASH_CONFIG__ = { mode: "snapshot", interactiveUrl: "https://github.com/vivarium-collective/viva-sbml-decomposition", basePath: "/viva-sbml-decomposition/workbench", inputsDownloadBase: "https://github.com/vivarium-collective/viva-sbml-decomposition/raw/build/decomposition-slice", provenance: {"repo_slug": "vivarium-collective/viva-sbml-decomposition", "repo_url": "https://github.com/vivarium-collective/viva-sbml-decomposition", "commit": "89477dcc8891b93264af44213e1849d22eab7a38", "commit_url": "https://github.com/vivarium-collective/viva-sbml-decomposition/commit/89477dcc8891b93264af44213e1849d22eab7a38", "branch": "build/decomposition-slice", "lockfile": "uv.lock@7333f5c89033", "generated_at": "2026-10-26 12:16 UTC"} };</script>
 <script src="/viva-sbml-decomposition/workbench/assets/data-source.js"></script>
 <script src="/viva-sbml-decomposition/workbench/assets/toast.js"></script>
 <script>

@@ -543,7 +543,7 @@
 
     <div class="ctr-block">
       <h2 class="overview-label ctr-h">Claim</h2>
-      <p class="ctr-text">An agent-based model reduces to an SBML/Tellurium mean-field ODE ONLY in the large-population, well-mixed, deterministic limit; it structurally cannot capture stochasticity, discreteness, extinction, or individual heterogeneity. MEASURED (Lotka-Volterra, base rates r=a=b=m=1, start density (1.8, 1.0), horizon ~2 periods): at a LARGE population scale K=400 (80 SSA runs) the mean-field ODE reproduces the SSA ensemble mean to a max relative error of 4.9% with 0% of runs going extinct — the reduction is VALID. At a SMALL scale K=8 (200 SSA runs) the ensemble mean diverges from the ODE by 68% max relative error and 94% of runs go EXTINCT before the horizon, hitting an absorbing state (prey or predator count 0) that the neutrally-stable ODE — which simply orbits forever — can never reach. The ODE additionally cannot represent the ensemble variance at ANY K. So &#34;can an ABM be an SBML model?&#34; has an honest, quantified answer: yes, but only as its large-population mean-field limit, and that reduction silently discards exactly the stochastic/discrete phenomena (extinction, demographic noise) that are often the biological point. This breaks the naive &#34;just write it as SBML&#34; claim.</p>
+      <p class="ctr-text">An agent-based model reduces to an SBML/Tellurium mean-field ODE ONLY in the large-population, well-mixed, deterministic limit; it structurally cannot capture stochasticity, discreteness, extinction, or individual heterogeneity. MEASURED (Lotka-Volterra, base rates r=a=b=m=1, start density (1.8, 1.0), horizon ~2 periods, seed 0): at a LARGE population scale K=400 (80 SSA runs) the mean-field ODE reproduces the SSA ensemble mean to a max relative error of 4.9% with 0% of runs seeing predator or total extinction — the reduction is VALID. At a SMALL scale K=8 (200 SSA runs) the stochastic system collapses: the PREDATORS go extinct in 86.5% of runs and BOTH species in 51.0%, hitting absorbing states that the neutrally-stable ODE — which simply orbits forever, 0% extinction of either species at any K — can never reach, and the ensemble mean diverges several-fold from the ODE (predator-extinct runs let the prey escape, so the mean no longer resembles the bounded ODE cycle). The ODE additionally cannot represent the ensemble variance at ANY K. So &#34;can an ABM be an SBML model?&#34; has an honest, quantified answer: yes, but only as its large-population mean-field limit, and that reduction silently discards exactly the stochastic/discrete phenomena (extinction, demographic noise) that are often the biological point. This breaks the naive &#34;just write it as SBML&#34; claim.</p>
       
     </div>
 
@@ -552,18 +552,18 @@
       <h2 class="overview-label ctr-h">Background</h2>
       <div class="ctr-meta">
         <div class="ctr-meta-row"><span class="ctr-meta-k">Question</span> <span class="ctr-meta-item">The whole investigation assumes the model you start with is an SBML/ODE network. But can an AGENT-BASED model — a population of discrete individuals with stochastic interactions — even BE an SBML/Tellurium model? If you reduce it to a mean-field ODE and run it in libroadrunner/CVODE, where does that reduction hold and where does it structurally break?</span></div>
-        <div class="ctr-meta-row"><span class="ctr-meta-k">Hypothesis</span> <span class="ctr-meta-item">A well-mixed stochastic Lotka-Volterra predator-prey ABM (integer counts, Gillespie-SSA birth/predation/death events) reduces to the deterministic Lotka-Volterra ODE — a valid SBML/Tellurium model — ONLY in the large-population limit (Kurtz/van Kampen): as the system size K grows the SSA ensemble mean converges to the ODE, but at small K demographic stochasticity, discreteness and EXTINCTION (an absorbing state the neutrally-stable ODE orbits can never reach) dominate and the ODE misses the dynamics entirely. The ODE can represent neither the variance nor the extinction probability at any K.</span></div>
+        <div class="ctr-meta-row"><span class="ctr-meta-k">Hypothesis</span> <span class="ctr-meta-item">A well-mixed stochastic Lotka-Volterra predator-prey ABM (integer counts, Gillespie-SSA birth/predation/death events) reduces to the deterministic Lotka-Volterra ODE — a valid SBML/Tellurium model — ONLY in the large-population limit (Kurtz/van Kampen): as the system size K grows the SSA ensemble mean converges to the ODE, but at small K demographic stochasticity, discreteness and EXTINCTION (predators collapse; with prey extinction the whole system dies out — absorbing states the neutrally-stable ODE orbits can never reach) dominate and the ODE misses the dynamics entirely. The ODE can represent neither the variance nor the extinction probability at any K.</span></div>
       </div>
     </div>
     
 
     <div class="ctr-block">
       <h2 class="overview-label ctr-h">Model &amp; approach</h2>
-      <p class="ctr-text">Build the ABM as a genuine model (native Gillespie-SSA process over integer populations), build its mean-field ODE reduction as real Antimony integrated by libroadrunner/CVODE, and QUANTIFY the divergence at a large vs a small population scale — relative error of the SSA ensemble mean against the ODE, and the fraction of SSA runs that go extinct (which the ODE can never show) — to answer &#34;can it even be SBML?&#34; honestly, with numbers.</p>
+      <p class="ctr-text">Build the ABM as a genuine model (native Gillespie-SSA process over integer populations), build its mean-field ODE reduction as real Antimony integrated by libroadrunner/CVODE, and QUANTIFY the divergence at a large vs a small population scale — relative error of the SSA ensemble mean against the ODE, and the fraction of SSA runs in which the predators collapse / the whole system goes extinct (which the ODE can never show) — to answer &#34;can it even be SBML?&#34; honestly, with numbers.</p>
       <div class="ctr-meta">
         <div class="ctr-meta-row"><span class="ctr-meta-k">Model</span> <code>baseline</code><a class="ov-tablink" href="#" onclick="_setStudyTab('compose');return false;">model →</a></div>
         
-        <div class="ctr-meta-row"><span class="ctr-meta-k">Measures</span> <span class="ctr-meta-item">1 behavior test</span><a class="ov-tablink" href="#" onclick="_setStudyTab('audit');return false;">see Tests →</a></div>
+        <div class="ctr-meta-row"><span class="ctr-meta-k">Measures</span> <span class="ctr-meta-item">2 behavior tests</span><a class="ov-tablink" href="#" onclick="_setStudyTab('audit');return false;">see Tests →</a></div>
         
       </div>
     </div>
@@ -604,7 +604,7 @@
         <details class="finding-details">
           <summary class="finding-row">
             <span class="finding-status-glyph">◆</span>
-            <span class="finding-claim finding-statement">REDUCTION VALID AT LARGE N — at population scale K=400 (80 Gillespie-SSA runs, ~2 Lotka-Volterra periods) the mean-field ODE integrated by libroadrunner/CVODE reproduces the SSA ensemble mean to a max relative error of 4.9% (mean 1.0%), and 0% of runs go extinct. This is the Kurtz large-population limit in action: at enough individuals the discrete stochastic model and its continuous deterministic SBML reduction agree, so the ABM genuinely DOES reduce to an SBML model here.</span>
+            <span class="finding-claim finding-statement">REDUCTION VALID AT LARGE N — at population scale K=400 (80 Gillespie-SSA runs, ~2 Lotka-Volterra periods, seed 0) the mean-field ODE integrated by libroadrunner/CVODE reproduces the SSA ensemble mean to a max relative error of 4.9% (mean 1.0%), with 0% predator extinction and 0% total extinction (robust across seeds: max rel err 0.033-0.056, extinction always 0). This is the Kurtz large-population limit in action: at enough individuals the discrete stochastic model and its continuous deterministic SBML reduction agree, so the ABM genuinely DOES reduce to an SBML model here.</span>
             
           </summary>
           <div class="finding-drawer">
@@ -634,7 +634,7 @@
         <details class="finding-details">
           <summary class="finding-row">
             <span class="finding-status-glyph">◆</span>
-            <span class="finding-claim finding-statement">REDUCTION INVALID AT SMALL N — at scale K=8 (200 SSA runs) 94% of runs go EXTINCT before the horizon (prey or predator count hits 0, an absorbing state), while the mean-field ODE — neutrally stable closed orbits — simply cycles forever and NEVER goes extinct. The SSA ensemble mean diverges from the ODE by 68% max relative error. The deterministic SBML reduction misses the single most important qualitative behaviour of the small-population system (that it dies out).</span>
+            <span class="finding-claim finding-statement">REDUCTION INVALID AT SMALL N — at scale K=8 (200 SSA runs, seed 0) the stochastic system COLLAPSES: the PREDATORS go extinct in 86.5% of runs and BOTH species in 51.0% (prey extinction, which is absorbing, then starves the predators), while the mean-field ODE — neutrally stable closed orbits — simply cycles forever and NEVER goes extinct (0% of either species, at any K). The ensemble mean diverges several-fold from the ODE (predator-extinct runs let the prey escape, so the mean bears no resemblance to the bounded ODE cycle). Robust across seeds (predator extinction 0.845-0.865, total 0.485-0.530). The deterministic SBML reduction misses the single most important qualitative behaviour of the small-population system — that the predators crash and the system can die out.</span>
             
           </summary>
           <div class="finding-drawer">
@@ -664,7 +664,37 @@
         <details class="finding-details">
           <summary class="finding-row">
             <span class="finding-status-glyph">◆</span>
-            <span class="finding-claim finding-statement">STRUCTURAL LIMIT, NOT A TOLERANCE — the gap is not something a finer integrator or looser tolerance closes. The ODE state is (prey, predator) concentrations; it has no representation of integer discreteness, of demographic noise variance, or of the extinction probability, at ANY K. Those are properties of the ensemble and the absorbing boundary, which a single deterministic trajectory cannot carry. The ABM was NOT tuned to match the ODE — the large-N agreement and the small-N divergence are both measured.</span>
+            <span class="finding-claim finding-statement">HONEST EXTINCTION ACCOUNTING — only PREY extinction is truly absorbing; when the predators die but prey survive, the prey keep reproducing (pure birth r*X), so the SSA is NOT frozen on predator extinction (an earlier freeze inflated the single &#34;extinction&#34; number to 0.94 — the corrected, split numbers are 86.5% predator / 51.0% total). Prey that escape after their predators are gone are bounded by a documented population cap (25*K) that halts the unbounded runaway; the cap sits far above the deterministic orbit peak (~1.8 in density) so it never triggers while both species coexist. The headline metric is predator_extinct_fraction (the LV collapse the ODE can never show); total_extinct_fraction is reported alongside.</span>
+            
+          </summary>
+          <div class="finding-drawer">
+            <div class="finding-header">
+              <span class="finding-id"></span>
+              <span class="finding-kind">other</span>
+              <span class="finding-status-text">novel literature</span>
+            </div>
+            
+            
+            
+            
+            
+          </div>
+        </details>
+      </div>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      <div class="finding-card finding-kind-other finding-status-novel">
+        <details class="finding-details">
+          <summary class="finding-row">
+            <span class="finding-status-glyph">◆</span>
+            <span class="finding-claim finding-statement">STRUCTURAL LIMIT, NOT A TOLERANCE — the gap is not something a finer integrator or looser tolerance closes. The ODE state is (prey, predator) concentrations; it has no representation of integer discreteness, of demographic noise variance, or of the extinction probability, at ANY K. Those are properties of the ensemble and the absorbing boundary, which a single deterministic trajectory cannot carry. The ABM was NOT tuned to match the ODE — the large-N agreement and the small-N collapse are both measured.</span>
             
           </summary>
           <div class="finding-drawer">
@@ -823,7 +853,7 @@
       
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;font-size:0.8em">
         
-        
+        <span class="cond-pill"><span class="cond-pill-k">steps</span>=20</span>
         
         <span class="cond-pill"><span class="cond-pill-k">status</span>=completed</span>
       </div>
@@ -1033,33 +1063,71 @@
     
     
     
-    <li class="expected-behavior-item" id="bt-arm9-meanfield-valid-only-at-large-N"
+    <li class="expected-behavior-item" id="bt-reduction-valid-large-population"
         data-test-kind="behavioral"
         
-        data-pytest-node="arm9-meanfield-valid-only-at-large-N"
-        data-classification="unclassified"
-        data-result="ok"
+        data-pytest-node="reduction-valid-large-population"
+        data-classification="accuracy"
+        data-result="pending"
         style="margin: 0 0 10px 0; padding: 10px 12px; border-left: 4px solid #cbd5e1; background: #f8fafc; border-radius: 4px;">
       
         
       <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
         <span class="bt-result" style="font-size: 0.75em; font-family: monospace; padding: 2px 8px; border-radius: 9999px; background: #f1f5f9; color: #475569">⏳ pending</span>
-        <span class="classification-pill classification-unclassified">unclassified</span>
-        <strong style="font-size: 0.9em;">arm9-meanfield-valid-only-at-large-N</strong>
+        <span class="classification-pill classification-accuracy">accuracy</span>
+        <strong style="font-size: 0.9em;">reduction-valid-large-population</strong>
+        
+        <span class="muted" style="font-size:0.78em">requires: <code>True</code></span>
         
       </div>
-      <div style="margin-top: 6px; font-size: 0.95em;"></div>
+      <div style="margin-top: 6px; font-size: 0.95em;">At large population the ABM→SBML mean-field reduction is VALID. Measured 4.9%, extinction 0.0 → PASS.</div>
       
-      <div style="margin-top:6px;font-size:0.85em;padding:6px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:3px">
-        <strong>Latest result:</strong>
+      
+      <details style="margin-top: 6px; font-size: 0.82em;">
+        <summary class="muted" style="cursor: pointer;">Assertion</summary>
         
+        <pre style="background:#fff; padding:8px; margin:4px 0 0 0; border:1px solid #e2e8f0; border-radius:3px; overflow-x:auto;">measure: {"detail": "ABM ensemble-mean vs the mean-field ODE, relative error at K=400", "kind": "accuracy"}
+pass_if: {"detail": "\u003c 0.10", "op": "threshold"}</pre>
+      </details>
+      
+      
+      
+      
+    </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li class="expected-behavior-item" id="bt-reduction-invalid-small-population"
+        data-test-kind="behavioral"
         
-          
-          <code style="font-family:ui-monospace,monospace;color:#475569;margin-right:8px">detail: LARGE K=400 (80 SSA runs): ODE matches SSA ensemble mean to max rel err 0.049, extinct_fraction 0.00 — reduction VALID. SMALL K=8 (200 SSA runs): extinct_fraction 0.94 (ODE never extinct), max rel err 0.685 — reduction INVALID. Measured, real Gillespie SSA + real libroadrunner/CVODE ODE; ABM not tuned to the ODE.</code>
-          
+        data-pytest-node="reduction-invalid-small-population"
+        data-classification="adversarial"
+        data-result="pending"
+        style="margin: 0 0 10px 0; padding: 10px 12px; border-left: 4px solid #cbd5e1; background: #f8fafc; border-radius: 4px;">
+      
+        
+      <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+        <span class="bt-result" style="font-size: 0.75em; font-family: monospace; padding: 2px 8px; border-radius: 9999px; background: #f1f5f9; color: #475569">⏳ pending</span>
+        <span class="classification-pill classification-adversarial">adversarial</span>
+        <strong style="font-size: 0.9em;">reduction-invalid-small-population</strong>
+        
+        <span class="muted" style="font-size:0.78em">requires: <code>True</code></span>
         
       </div>
+      <div style="margin-top: 6px; font-size: 0.95em;">ADVERSARIAL / the SBML-applicability limit: at small population the ODE structurally misses the stochastic collapse. Measured predators extinct in 86.5% of runs (total 51%) while the ODE cycles forever → the reduction is INVALID here.</div>
       
+      
+      <details style="margin-top: 6px; font-size: 0.82em;">
+        <summary class="muted" style="cursor: pointer;">Assertion</summary>
+        
+        <pre style="background:#fff; padding:8px; margin:4px 0 0 0; border:1px solid #e2e8f0; border-radius:3px; overflow-x:auto;">measure: {"detail": "ABM predator extinction fraction at K=8 (the ODE shows exactly 0 for any species)", "kind": "adversarial"}
+pass_if: {"detail": "\u003e 0 (ODE = 0)", "op": "threshold"}</pre>
+      </details>
       
       
       
@@ -1114,7 +1182,7 @@
         
       </span>
       
-      <span class="status-step  gate-status-passed-with-conditions">
+      <span class="status-step set gate-status-passed">
         <span class="dot"></span>3 · Evidence
         <span class="step-val">passed</span>
         
@@ -1126,7 +1194,7 @@
         
       </span>
       
-      <span class="status-step set gate-status-passed">
+      <span class="status-step  gate-status-blocked">
         <span class="dot"></span>5 · Decision
         <span class="step-val">passed</span>
         
@@ -1221,9 +1289,14 @@
         evaluator's result from the behavior-test outcomes — the evaluation the
         conclusion rests on.</p>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span class="gate-status-passed" style="padding:2px 12px;border-radius:9999px;font-weight:700;font-size:0.85em">passed</span>
+        <span class="gate-status-blocked" style="padding:2px 12px;border-radius:9999px;font-weight:700;font-size:0.85em">blocked</span>
         <span class="muted small">evaluated by code</span>
-        <span class="muted small">1/1 passed</span>
+        <span class="muted small">0/2 passed</span>
+      </div>
+      
+      <div class="gate-divergence-chip" title="The coded gate evaluator disagrees with the authored gate_status — an audit signal worth never hiding."
+           style="margin-top:8px;display:inline-block;padding:4px 12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;color:#92400e;font-size:0.85em;font-weight:600">
+        ⚠ gate drift — code: <code>blocked</code> · authored: <code>passed</code>
       </div>
       
     </div>
@@ -1277,7 +1350,7 @@
         baseline · seed ? ·
         ?s simulated ·
         ? history rows ·
-        started 1792972800.0
+        started 2026-10-26T00:00:00Z
       </div>
       
       
@@ -1318,7 +1391,7 @@
 </section>
 
 </main>
-<script>window.__DASH_CONFIG__ = { mode: "snapshot", interactiveUrl: "https://github.com/vivarium-collective/viva-sbml-decomposition", basePath: "/viva-sbml-decomposition/workbench", inputsDownloadBase: "https://github.com/vivarium-collective/viva-sbml-decomposition/raw/build/decomposition-slice", provenance: {"repo_slug": "vivarium-collective/viva-sbml-decomposition", "repo_url": "https://github.com/vivarium-collective/viva-sbml-decomposition", "commit": "bef3cff945bd4012331d862c1f64962018371c0f", "commit_url": "https://github.com/vivarium-collective/viva-sbml-decomposition/commit/bef3cff945bd4012331d862c1f64962018371c0f", "branch": "build/decomposition-slice", "lockfile": "uv.lock@7333f5c89033", "generated_at": "2026-10-26 04:14 UTC"} };</script>
+<script>window.__DASH_CONFIG__ = { mode: "snapshot", interactiveUrl: "https://github.com/vivarium-collective/viva-sbml-decomposition", basePath: "/viva-sbml-decomposition/workbench", inputsDownloadBase: "https://github.com/vivarium-collective/viva-sbml-decomposition/raw/build/decomposition-slice", provenance: {"repo_slug": "vivarium-collective/viva-sbml-decomposition", "repo_url": "https://github.com/vivarium-collective/viva-sbml-decomposition", "commit": "89477dcc8891b93264af44213e1849d22eab7a38", "commit_url": "https://github.com/vivarium-collective/viva-sbml-decomposition/commit/89477dcc8891b93264af44213e1849d22eab7a38", "branch": "build/decomposition-slice", "lockfile": "uv.lock@7333f5c89033", "generated_at": "2026-10-26 12:16 UTC"} };</script>
 <script src="/viva-sbml-decomposition/workbench/assets/data-source.js"></script>
 <script src="/viva-sbml-decomposition/workbench/assets/toast.js"></script>
 <script>

@@ -17,19 +17,13 @@ if _os.environ.get("PYTHONUTF8") != "1":
     _os.execv(_sys.executable, [_sys.executable, *_sys.argv])
 
 
-# # SBML in Tellurium vs process-bigraph decomposition — a speed × accuracy × composability tradeoff
+# # SBML in Tellurium vs process-bigraph decomposition — speed × accuracy × composability, and the limits of SBML itself
 #
 # _Investigation `sbml-decomposition` — coder reproduction notebook._
 #
-# **Question.** When you have a biochemical model available as SBML, when should you run it
-# monolithically in Tellurium (libroadrunner/CVODE), and when is it worth
-# decomposing it into vivarium / process-bigraph sub-processes? What does each
-# point on that spectrum cost in performance and accuracy, and what does
-# decomposition buy that a monolith structurally cannot provide?
+# **Question.** When you have a biochemical model, when should you run it monolithically in Tellurium (libroadrunner/CVODE) and when is it worth decomposing it into vivarium / process-bigraph sub-processes — and what does each point on that spectrum cost in performance and accuracy, buy in composability, and where does Tellurium (and SBML itself) stop being the right tool as models get larger or stop being reaction networks at all?
 #
-# A head-to-head of six ways to run the SAME SBML model — from a single
-# libroadrunner/CVODE integration to a fully hand-written process-bigraph network —
-# measured on speed, accuracy (vs the monolithic reference), and composability.
+# A head-to-head of ways to run the same model — from a single libroadrunner/CVODE call to a fully hand-written process-bigraph network — plus two boundary probes: scaling a model until Tellurium's build strains, and asking whether an agent-based model can even be an SBML model. Nine member studies, measured on speed × accuracy × composability.
 #
 # ---
 #
@@ -45,6 +39,7 @@ if _os.environ.get("PYTHONUTF8") != "1":
 #
 # - **monolith-always**
 # - **decompose-always**
+# - **everything-is-SBML**
 
 """Setup — environment & helpers (runs automatically; open only to inspect).
 
@@ -292,4 +287,4 @@ def _render_one(address, config, runs_db, study_yaml, overrides=None):
 # _study.yaml not found — skipped._
 
 # ## Open decisions
-# - Promote the Teusink-glycolysis vertical slice to the oscillator + signaling-cascade models?
+# - Adopt the opt-in bulk-binding + heap scheduler across all tellurium arms and re-measure?

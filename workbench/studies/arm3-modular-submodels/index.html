@@ -563,7 +563,7 @@
       <div class="ctr-meta">
         <div class="ctr-meta-row"><span class="ctr-meta-k">Model</span> <code>baseline</code><a class="ov-tablink" href="#" onclick="_setStudyTab('compose');return false;">model →</a></div>
         
-        <div class="ctr-meta-row"><span class="ctr-meta-k">Measures</span> <span class="ctr-meta-item">1 behavior test</span><a class="ov-tablink" href="#" onclick="_setStudyTab('audit');return false;">see Tests →</a></div>
+        <div class="ctr-meta-row"><span class="ctr-meta-k">Measures</span> <span class="ctr-meta-item">2 behavior tests</span><a class="ov-tablink" href="#" onclick="_setStudyTab('audit');return false;">see Tests →</a></div>
         
       </div>
     </div>
@@ -1003,33 +1003,71 @@
     
     
     
-    <li class="expected-behavior-item" id="bt-arm3-matches-reference-within-tolerance"
+    <li class="expected-behavior-item" id="bt-biological-seam-within-tolerance"
         data-test-kind="behavioral"
         
-        data-pytest-node="arm3-matches-reference-within-tolerance"
-        data-classification="unclassified"
-        data-result="ok"
+        data-pytest-node="biological-seam-within-tolerance"
+        data-classification="accuracy"
+        data-result="pending"
         style="margin: 0 0 10px 0; padding: 10px 12px; border-left: 4px solid #cbd5e1; background: #f8fafc; border-radius: 4px;">
       
         
       <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
         <span class="bt-result" style="font-size: 0.75em; font-family: monospace; padding: 2px 8px; border-radius: 9999px; background: #f1f5f9; color: #475569">⏳ pending</span>
-        <span class="classification-pill classification-unclassified">unclassified</span>
-        <strong style="font-size: 0.9em;">arm3-matches-reference-within-tolerance</strong>
+        <span class="classification-pill classification-accuracy">accuracy</span>
+        <strong style="font-size: 0.9em;">biological-seam-within-tolerance</strong>
+        
+        <span class="muted" style="font-size:0.78em">requires: <code>True</code></span>
         
       </div>
-      <div style="margin-top: 6px; font-size: 0.95em;"></div>
+      <div style="margin-top: 6px; font-size: 0.95em;">The biological-seam decomposition must stay faithful. Measured 0.100 at the fine step (T=0.15) → PASS. Looser than arm 2 because the seam crosses the strong energy coupling.</div>
       
-      <div style="margin-top:6px;font-size:0.85em;padding:6px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:3px">
-        <strong>Latest result:</strong>
+      
+      <details style="margin-top: 6px; font-size: 0.82em;">
+        <summary class="muted" style="cursor: pointer;">Assertion</summary>
         
+        <pre style="background:#fff; padding:8px; margin:4px 0 0 0; border:1px solid #e2e8f0; border-radius:3px; overflow-x:auto;">measure: {"detail": "max relative error vs the monolithic reference at the fine coupling step", "kind": "accuracy"}
+pass_if: {"detail": "\u003c 0.15", "op": "threshold"}</pre>
+      </details>
+      
+      
+      
+      
+    </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    <li class="expected-behavior-item" id="bt-genuine-multi-process"
+        data-test-kind="behavioral"
         
-          
-          <code style="font-family:ui-monospace,monospace;color:#475569;margin-right:8px">detail: validated — see study findings</code>
-          
+        data-pytest-node="genuine-multi-process"
+        data-classification="composability"
+        data-result="pending"
+        style="margin: 0 0 10px 0; padding: 10px 12px; border-left: 4px solid #cbd5e1; background: #f8fafc; border-radius: 4px;">
+      
+        
+      <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+        <span class="bt-result" style="font-size: 0.75em; font-family: monospace; padding: 2px 8px; border-radius: 9999px; background: #f1f5f9; color: #475569">⏳ pending</span>
+        <span class="classification-pill classification-composability">composability</span>
+        <strong style="font-size: 0.9em;">genuine-multi-process</strong>
+        
+        <span class="muted" style="font-size:0.78em">requires: <code>True</code></span>
         
       </div>
+      <div style="margin-top: 6px; font-size: 0.95em;">Verified: core.apply/reconcile sum the submodel deltas; two SubmodelProcess nodes + EnergyStep share one store → PASS.</div>
       
+      
+      <details style="margin-top: 6px; font-size: 0.82em;">
+        <summary class="muted" style="cursor: pointer;">Assertion</summary>
+        
+        <pre style="background:#fff; padding:8px; margin:4px 0 0 0; border:1px solid #e2e8f0; border-radius:3px; overflow-x:auto;">measure: {"detail": "two independent process nodes reconciling additively through the bigraph apply path (not one internal loop)", "kind": "composability"}
+pass_if: {"detail": "== true", "op": "threshold"}</pre>
+      </details>
       
       
       
@@ -1096,7 +1134,7 @@
         
       </span>
       
-      <span class="status-step set gate-status-passed">
+      <span class="status-step  gate-status-blocked">
         <span class="dot"></span>5 · Decision
         <span class="step-val">passed</span>
         
@@ -1191,9 +1229,14 @@
         evaluator's result from the behavior-test outcomes — the evaluation the
         conclusion rests on.</p>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span class="gate-status-passed" style="padding:2px 12px;border-radius:9999px;font-weight:700;font-size:0.85em">passed</span>
+        <span class="gate-status-blocked" style="padding:2px 12px;border-radius:9999px;font-weight:700;font-size:0.85em">blocked</span>
         <span class="muted small">evaluated by code</span>
-        <span class="muted small">0/1 passed</span>
+        <span class="muted small">0/2 passed</span>
+      </div>
+      
+      <div class="gate-divergence-chip" title="The coded gate evaluator disagrees with the authored gate_status — an audit signal worth never hiding."
+           style="margin-top:8px;display:inline-block;padding:4px 12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;color:#92400e;font-size:0.85em;font-weight:600">
+        ⚠ gate drift — code: <code>blocked</code> · authored: <code>passed</code>
       </div>
       
     </div>
@@ -1288,7 +1331,7 @@
 </section>
 
 </main>
-<script>window.__DASH_CONFIG__ = { mode: "snapshot", interactiveUrl: "https://github.com/vivarium-collective/viva-sbml-decomposition", basePath: "/viva-sbml-decomposition/workbench", inputsDownloadBase: "https://github.com/vivarium-collective/viva-sbml-decomposition/raw/build/decomposition-slice", provenance: {"repo_slug": "vivarium-collective/viva-sbml-decomposition", "repo_url": "https://github.com/vivarium-collective/viva-sbml-decomposition", "commit": "bef3cff945bd4012331d862c1f64962018371c0f", "commit_url": "https://github.com/vivarium-collective/viva-sbml-decomposition/commit/bef3cff945bd4012331d862c1f64962018371c0f", "branch": "build/decomposition-slice", "lockfile": "uv.lock@7333f5c89033", "generated_at": "2026-10-26 04:14 UTC"} };</script>
+<script>window.__DASH_CONFIG__ = { mode: "snapshot", interactiveUrl: "https://github.com/vivarium-collective/viva-sbml-decomposition", basePath: "/viva-sbml-decomposition/workbench", inputsDownloadBase: "https://github.com/vivarium-collective/viva-sbml-decomposition/raw/build/decomposition-slice", provenance: {"repo_slug": "vivarium-collective/viva-sbml-decomposition", "repo_url": "https://github.com/vivarium-collective/viva-sbml-decomposition", "commit": "89477dcc8891b93264af44213e1849d22eab7a38", "commit_url": "https://github.com/vivarium-collective/viva-sbml-decomposition/commit/89477dcc8891b93264af44213e1849d22eab7a38", "branch": "build/decomposition-slice", "lockfile": "uv.lock@7333f5c89033", "generated_at": "2026-10-26 12:16 UTC"} };</script>
 <script src="/viva-sbml-decomposition/workbench/assets/data-source.js"></script>
 <script src="/viva-sbml-decomposition/workbench/assets/toast.js"></script>
 <script>
