@@ -1,1 +1,1 @@
-{"present": false, "run_id": "sbml-in-tellurium:canonical", "reason": "this run has no on-disk store"}
+{"present": true, "stores": [], "run_id": "viva_sbml_decomposition.composites.engine_monolithic.engine_monolithic__1793031014__8fed88", "run_label": "baseline", "started_at": 1793031017.958921, "completed_at": 1793031022.0806909, "status": "completed"}

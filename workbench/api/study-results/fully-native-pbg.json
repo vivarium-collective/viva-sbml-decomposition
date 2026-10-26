@@ -1,1 +1,1 @@
-{"present": false, "run_id": "fully-native-pbg:canonical", "reason": "this run has no on-disk store"}
+{"present": true, "stores": [], "run_id": "viva_sbml_decomposition.composites.engine_monolithic.native_composite__1793031028__12c06b", "run_label": "baseline", "started_at": 1793031030.170977, "completed_at": 1793031036.760899, "status": "completed"}

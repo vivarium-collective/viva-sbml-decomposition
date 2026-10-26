@@ -1,1 +1,1 @@
-{"present": false, "run_id": "cross-engine-coupling:canonical", "reason": "this run has no on-disk store"}
+{"present": true, "stores": [], "run_id": "viva_sbml_decomposition.composites.reaction_split.reaction_split__1793031597__5431d0", "run_label": "baseline", "started_at": 1793031600.160758, "completed_at": 1793031636.687926, "status": "completed"}

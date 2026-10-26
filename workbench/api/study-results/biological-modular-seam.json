@@ -1,1 +1,1 @@
-{"present": false, "run_id": "biological-modular-seam:canonical", "reason": "this run has no on-disk store"}
+{"present": true, "stores": [], "run_id": "viva_sbml_decomposition.composites.reaction_split.reaction_split__1793031071__4b6492", "run_label": "baseline", "started_at": 1793031073.819129, "completed_at": 1793031078.370684, "status": "completed"}

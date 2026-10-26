@@ -1,1 +1,1 @@
-{"present": false, "run_id": "mechanical-split-cost:canonical", "reason": "this run has no on-disk store"}
+{"present": true, "stores": [], "run_id": "viva_sbml_decomposition.composites.reaction_split.reaction_split__1793031055__f5cc4d", "run_label": "baseline", "started_at": 1793031058.177674, "completed_at": 1793031064.841072, "status": "completed"}

@@ -1,1 +1,1 @@
-{"present": false, "run_id": "ensemble-and-multirate:canonical", "reason": "this run has no on-disk store"}
+{"present": true, "stores": [], "run_id": "viva_sbml_decomposition.composites.ensemble.ensemble__1793031084__90d048", "run_label": "baseline", "started_at": 1793031088.4062452, "completed_at": 1793031096.51108, "status": "completed"}
