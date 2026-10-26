@@ -5,7 +5,7 @@ convergence, ensemble scaling, composability, the 3-way tradeoff map) are
 cross-arm aggregates — they cannot come from a single run's xarray. This module
 gathers them into one dict: the fast arms are measured LIVE (so the numbers are
 real, not transcribed), while the slow arm-3 convergence and the Ray ensemble
-carry the values measured in their own studies (arm 3 / arm 5), with provenance.
+carry the values measured in their own studies (biological-modular-seam / ensemble-and-multirate), with provenance.
 
 `collect_metrics()` returns the dict; `write_metrics(path)` caches it as JSON so
 the Visualizations render without re-running the arms. Re-run to refresh.
@@ -27,14 +27,17 @@ from ..models.glycolysis import GLYCOLYSIS_META
 SP = GLYCOLYSIS_META["species"]
 T_END = GLYCOLYSIS_META["t_end"]
 
-# Arm display order + labels (the spectrum).
+# Metric-column ids (stable internal keys) + READER-facing study labels (the spectrum).
+# Column -> study: arm1=sbml-in-tellurium, arm2=mechanical-split-cost (additive/Jacobi
+# coupling), arm3=biological-modular-seam, arm4=fully-native-pbg,
+# arm5=ensemble-and-multirate, arm6=cross-engine-coupling. The ids never reach a reader.
 ARMS = [
-    ("arm1", "Monolithic\nTellurium"),
-    ("arm2", "Operator\nsplit"),
-    ("arm3", "Modular\nsubmodels"),
-    ("arm4", "Native\nprocess-bigraph"),
+    ("arm1", "SBML in\nTellurium"),
+    ("arm2", "Mechanical split\n(additive)"),
+    ("arm3", "Biological\nmodular seam"),
+    ("arm4", "Fully native\nPBG"),
     ("arm5", "Ensemble\n(Ray)"),
-    ("arm6", "Coupling\ndemo"),
+    ("arm6", "Cross-engine\ncoupling"),
 ]
 
 

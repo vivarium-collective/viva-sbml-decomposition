@@ -1,9 +1,9 @@
-"""MultirateScaling — arm 7 scan (O(P^2)) vs heap (#270, O(P log P)) wall-clock vs N.
+"""MultirateScaling — multi-rate scan (O(P^2)) vs heap (#270, O(P log P)) wall-clock vs N.
 
-The data is the measured scan-vs-heap timing of the arm-7 multi-rate composite
+The data is the measured scan-vs-heap timing of the multi-rate composite
 (independent monolithic glycolysis instances on geometrically-spaced coupling
-intervals), carried in :meth:`generate_state` rather than ``metrics.json`` — arm 7
-is a scheduler measurement, not one of the cross-arm metric aggregates. The
+intervals), carried in :meth:`generate_state` rather than ``metrics.json`` — this
+is a scheduler measurement, not one of the cross-study metric aggregates. The
 numbers are the real medians recorded at build time by
 ``viva_sbml_decomposition.composites.ensemble.multirate_scaling``; the regime
 is documented, not fabricated: heap is ~5% SLOWER at tiny N (heap bookkeeping with

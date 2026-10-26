@@ -23,10 +23,10 @@ class ConvergenceCurves(PlotlyVisualization):
             pts = sorted(pts)
             data.append({"type": "scatter", "mode": "lines+markers",
                          "x": [p[0] for p in pts], "y": [p[1] for p in pts],
-                         "name": f"{arm}: {state['labels'].get(arm, '')}",
+                         "name": state['labels'].get(arm, arm),
                          "line": {"color": PAL.get(arm), "width": 3},
                          "marker": {"size": 10},
-                         "hovertemplate": arm + "<br>interval %{x:g}<br>max rel err %{y:.3g}<extra></extra>"})
+                         "hovertemplate": state['labels'].get(arm, arm) + "<br>interval %{x:g}<br>max rel err %{y:.3g}<extra></extra>"})
         return {"data": data, "layout": layout(
             "Convergence: smaller coupling interval, smaller error",
             "max relative error vs coupling interval, log-log",

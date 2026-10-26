@@ -1,4 +1,4 @@
-"""ABMMeanField — the adversarial arm: does the ABM reduce to the mean-field ODE?
+"""ABMMeanField — the adversarial study (bigger-models-and-abm-limit): does the ABM reduce to the mean-field ODE?
 
 Two stacked panels, both in DENSITY units (count / population-scale K) so the one
 scale-free Lotka-Volterra ODE trajectory is the shared reference in each:
@@ -16,7 +16,7 @@ truly absorbing while predator extinction leaves the prey to grow: the headline
 is the PREDATOR-extinction fraction (the Lotka-Volterra collapse the ODE can
 never show) with the TOTAL-extinction fraction (both species zero) alongside.
 
-All numbers are measured (committed to ``abm_meanfield_data.json`` by the arm-9
+All numbers are measured (committed to ``abm_meanfield_data.json`` by the ABM
 ensemble helper; re-run to refresh). Nothing is tuned to make the ABM match the
 ODE — the small-population collapse is the finding. Prey that escape after their
 predators die are bounded by a documented population cap (POP_CAP_DENSITY).

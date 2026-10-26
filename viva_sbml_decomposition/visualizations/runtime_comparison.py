@@ -1,4 +1,4 @@
-"""RuntimeComparison — framework-overhead share per arm."""
+"""RuntimeComparison — framework-overhead share per study."""
 from __future__ import annotations
 
 from ._plotly import PlotlyVisualization
@@ -33,10 +33,10 @@ class RuntimeComparison(PlotlyVisualization):
         trace = {"type": "bar", "x": state["labels"], "y": ys, "text": text,
                  "textposition": "outside", "cliponaxis": False,
                  "marker": {"color": [PAL.get(a, "#64748b") for a in arms]},
-                 "customdata": arms,
+                 "customdata": state["labels"],
                  "hovertemplate": "%{customdata}<br>framework share: %{y:.1%}<extra></extra>"}
         return {"data": [trace], "layout": layout(
-            "Framework overhead share by arm",
+            "Framework overhead share by study",
             "share of wall-clock spent in the framework (not process compute)",
             yaxis=axis("overhead fraction", tickformat=".0%", range=[0, max([y for y in ys if y] + [0.1]) * 1.3]),
             xaxis={"gridcolor": "rgba(0,0,0,0)"}, showlegend=False,

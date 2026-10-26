@@ -25,7 +25,7 @@ class OverheadBreakdown(PlotlyVisualization):
 
     def figure(self, state):
         arms = state["arms"]
-        common = {"type": "bar", "x": state["labels"], "customdata": arms}
+        common = {"type": "bar", "x": state["labels"], "customdata": state["labels"]}
         data = [
             {**common, "name": "process (compute)", "y": state["process_s"],
              "marker": {"color": "#2563eb"},
@@ -41,7 +41,7 @@ class OverheadBreakdown(PlotlyVisualization):
         ann.append(caption(state.get("note", ""), -0.32))
         return {"data": data, "layout": layout(
             "Where the time goes: process vs framework",
-            "arms with a measured total (arm3, arm5 not re-timed live); linear seconds, so arm6 dominates",
+            "arms with a measured total (modular seam and ensemble not re-timed live); linear seconds, so cross-engine coupling dominates",
             barmode="stack", yaxis=axis("wall-clock (s)"),
             xaxis={"gridcolor": "rgba(0,0,0,0)"},
             margin={"l": 70, "r": 25, "t": 80, "b": 110},

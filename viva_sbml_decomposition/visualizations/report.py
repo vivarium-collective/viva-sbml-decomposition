@@ -1,8 +1,8 @@
-"""Assemble a self-contained investigation report embedding all nine figures.
+"""Assemble a self-contained investigation report embedding all thirteen figure sections.
 
 The workbench's study/report renderer is run-coupled — it renders visualizations
 that map to a single run's emitted observables. The decomposition figures are
-cross-arm AGGREGATES (they read the committed metrics artifact, not one run), so
+cross-study AGGREGATES (they read the committed metrics artifact, not one run), so
 they don't render through that path. This builder renders every figure's
 ``update()`` html and lays them out with the investigation narrative + the
 decision table into one standalone, shareable HTML page.
@@ -37,17 +37,17 @@ _INV = os.path.join(_WS, "workspace", "investigations", "sbml-decomposition",
 
 # Figures in reading order, each with a section heading.
 _FIGURES = [
-    ("Model dynamics (the glycolysis trajectory every arm computes)", SpeciesDynamics),
-    ("Runtime comparison — framework share per arm", RuntimeComparison),
+    ("Model dynamics (the glycolysis trajectory every study computes)", SpeciesDynamics),
+    ("Runtime comparison — framework share per study", RuntimeComparison),
     ("Where the time goes — process vs framework", OverheadBreakdown),
     ("Accuracy divergence from the monolithic reference", AccuracyDivergence),
-    ("Operator-split / modular convergence vs coupling interval", ConvergenceCurves),
+    ("Mechanical-split (additive) / modular-seam convergence vs coupling interval", ConvergenceCurves),
     ("Ensemble — serial vs Ray throughput", EnsembleScaling),
     ("Multi-rate scheduler — event-heap (#270) vs stock scan", MultirateScaling),
     ("Multi-organ scaling — where monolithic Tellurium strains", MultiorganScaling),
     ("Composability scorecard", ComposabilityScorecard),
     ("The 3-way tradeoff map (speed × accuracy × composability)", TradeoffMap),
-    ("Adversarial arm — can an ABM even be an SBML model? (only in the large-population limit)", ABMMeanField),
+    ("Adversarial study — can an ABM even be an SBML model? (only in the large-population limit)", ABMMeanField),
     ("Extinction the mean-field ODE can never show (the SBML-applicability limit)", ABMExtinction),
     ("Decision guide", DecisionTable),
 ]
@@ -64,37 +64,36 @@ def _fig_html(cls) -> str:
 
 # Per-study "hero" figures — each study page leads with the figures that capture
 # ITS main point (a curated slice of the suite; matches the study.yaml viz blocks).
+# Merged studies carry the union of their former arms' figures.
 _STUDY_FIGURES = {
-    "arm1-monolithic-tellurium": [
-        ("The glycolysis trajectory this arm runs exactly", SpeciesDynamics),
-        ("Runtime — framework share per arm", RuntimeComparison),
+    "sbml-in-tellurium": [
+        ("The glycolysis trajectory this study runs exactly", SpeciesDynamics),
+        ("Runtime — framework share per study", RuntimeComparison),
         ("Where the time goes — process vs framework", OverheadBreakdown)],
-    "arm2-operator-split": [
-        ("Splitting error shrinks with the coupling interval", ConvergenceCurves),
+    "mechanical-split-cost": [
+        ("Additive-split error shrinks with the coupling interval", ConvergenceCurves),
         ("Accuracy vs the monolithic reference", AccuracyDivergence)],
-    "arm3-modular-submodels": [
+    "biological-modular-seam": [
         ("Convergence of the biological-seam decomposition", ConvergenceCurves),
         ("Composability — this is where it climbs", ComposabilityScorecard)],
-    "arm4-native-pbg": [
+    "fully-native-pbg": [
         ("Reference fidelity of the native port (~1e-7)", AccuracyDivergence),
-        ("Runtime — framework share per arm", RuntimeComparison)],
-    "arm5-ensemble-ray": [
-        ("The parallel win — serial vs Ray", EnsembleScaling),
-        ("Runtime — framework share per arm", RuntimeComparison)],
-    "arm6-coupling-demo": [
-        ("Composability — the cross-engine arm tops the axis", ComposabilityScorecard),
-        ("The 3-way tradeoff (arm 6 off the accuracy axis)", TradeoffMap),
+        ("Runtime — framework share per study", RuntimeComparison)],
+    "cross-engine-coupling": [
+        ("Composability — cross-engine coupling tops the axis", ComposabilityScorecard),
+        ("The 3-way tradeoff (cross-engine coupling off the accuracy axis)", TradeoffMap),
+        ("Accuracy — cross-engine runs are exempt (no monolithic reference)", AccuracyDivergence),
         ("Decision guide", DecisionTable)],
-    "arm7-multirate": [
+    "ensemble-and-multirate": [
+        ("The parallel win — serial vs Ray", EnsembleScaling),
         ("Event-heap scheduler (#270) vs stock scan on a many-rate composite", MultirateScaling),
-        ("Runtime — framework share per arm (context)", RuntimeComparison)],
-    "arm8-multiorgan": [
+        ("Runtime — framework share per study (context)", RuntimeComparison)],
+    "bigger-models-and-abm-limit": [
         ("The strain curve — monolithic compile explodes, decomposition stays cheap", MultiorganScaling),
-        ("Composability — why decomposition is the way out at scale", ComposabilityScorecard)],
-    "arm9-abm-meanfield": [
+        ("Composability — why decomposition is the way out at scale", ComposabilityScorecard),
         ("Extinction the mean-field ODE can never show (the SBML-applicability limit)", ABMExtinction),
         ("The ABM vs its mean-field ODE reduction — valid at large N, breaks at small N", ABMMeanField),
-        ("Where arm 9 sits on the 3-way tradeoff", TradeoffMap)],
+        ("Where the ABM limit sits on the 3-way tradeoff", TradeoffMap)],
 }
 
 
@@ -164,10 +163,10 @@ def build_study_reports() -> list:
             if isinstance(f, dict) and f.get("summary"))
         fig_html = "".join(
             f'<h3>{_esc(h)}</h3><div class="fig">{_fig_html(c)}</div>' for h, c in figs)
-        # Per-study model section. Most arms run the Teusink glycolysis model;
-        # arm 9 (adversarial) runs a Lotka-Volterra ABM whose SBML reduction is
+        # Per-study model section. Most studies run the Teusink glycolysis model;
+        # the ABM-limit study (adversarial) runs a Lotka-Volterra ABM whose SBML reduction is
         # the mean-field ODE — and whose ABM half is deliberately NOT SBML.
-        if slug == "arm9-abm-meanfield":
+        if slug == "bigger-models-and-abm-limit":
             from ..composites.abm import LV_ANTIMONY
             model_html = (
                 "<h2>Model — the mean-field SBML reduction (Lotka-Volterra, Antimony)</h2>"
@@ -201,7 +200,7 @@ def build_study_reports() -> list:
 <h1>{_esc(s.get('title') or slug)}</h1>
 <p class="muted">{_esc(s.get('question'))}</p>
 <div class="claim"><strong>Claim.</strong> {_esc(s.get('claim'))}</div>
-<h2>What this arm shows</h2>{fig_html}
+<h2>What this study shows</h2>{fig_html}
 <h2>Findings</h2><ul>{findings}</ul>
 {model_html}
 </body></html>"""

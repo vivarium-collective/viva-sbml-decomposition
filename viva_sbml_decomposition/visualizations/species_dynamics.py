@@ -1,4 +1,4 @@
-"""SpeciesDynamics — the reference glycolysis trajectory every arm computes."""
+"""SpeciesDynamics — the reference glycolysis trajectory every study computes."""
 from __future__ import annotations
 
 from ._plotly import PlotlyVisualization
@@ -27,5 +27,5 @@ class SpeciesDynamics(PlotlyVisualization):
                 for i, (k, y) in enumerate(s["species"].items())]
         return {"data": data, "layout": layout(
             "Glycolysis dynamics (reference trajectory)",
-            f"the {len(data)} species with the largest dynamic range; all arms compute this",
+            f"the {len(data)} species with the largest dynamic range; all studies compute this",
             xaxis=axis("time"), yaxis=axis("concentration"), hovermode="x unified")}

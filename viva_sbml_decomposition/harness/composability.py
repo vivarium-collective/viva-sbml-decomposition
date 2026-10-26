@@ -2,10 +2,10 @@
 
 Accuracy and speed are *measured* (the accuracy + timing harnesses). Composability
 is not a single number you can read off a run; it is a **rubric judgment** about
-how the arm is structured — can you swap a piece, wire in a coupling, embed it in
+how the study's build is structured — can you swap a piece, wire in a coupling, embed it in
 a larger multiscale model? This module fixes that rubric: three criteria, each on
 a documented 0..3 integer scale (:class:`Level`: Low / Med / High / Max), scored
-per arm with a written rationale. The scores are deliberately coarse and
+per study (rubric ids arm1..arm6 are internal keys; see ``STUDY_NAMES``) with a written rationale. The scores are deliberately coarse and
 structural — they follow the criteria below, they are NOT reverse-engineered to
 make any plot come out a particular way.
 
@@ -17,13 +17,13 @@ implementation without touching the rest?
 
 * 0 (Low)  — one opaque SBML/libroadrunner object; nothing is individually
   addressable, so nothing can be swapped. *(monolith)*
-* 1 (Med)  — reactions are partitioned into operator groups, but the split lives
+* 1 (Med)  — reactions are partitioned into reaction groups, but the split lives
   *inside one process*; the groups are an implementation detail, not independently
-  swappable named nodes. *(operator split)*
+  swappable named nodes. *(mechanical split)*
 * 2 (High) — the model is named, separate nodes (submodel processes / a native
   process), each independently replaceable at its port. *(modular, native)*
 * 3 (Max)  — a substitution is actually DEMONSTRATED: one node is swapped for a
-  different engine and the composite still runs. *(coupling demo)*
+  different engine and the composite still runs. *(cross-engine coupling)*
 
 **coupling_readiness** — can you wire a NEW coupling (another process, an external
 driver, a second model) into the model's state?
@@ -31,18 +31,18 @@ driver, a second model) into the model's state?
 * 0 (Low)  — no shared store; coupling anything in means editing the SBML itself.
   *(monolith)*
 * 1 (Med)  — a single process boundary; state is internal, so an external coupler
-  still has only the one coarse interface to attach to. *(operator split)*
+  still has only the one coarse interface to attach to. *(mechanical split)*
 * 2 (High) — a shared vivarium store with named species leaves; new nodes couple
   additively through it without touching the existing nodes. *(modular, native)*
 * 3 (Max)  — a cross-engine / cross-implementation coupling is actually
-  DEMONSTRATED through that shared store. *(coupling demo)*
+  DEMONSTRATED through that shared store. *(cross-engine coupling)*
 
 **multiscale_fit** — how readily does the arm slot into a larger multiscale
 composite (other time scales, other state representations, other processes)?
 
 * 0 (Low)  — fixed single scale, single engine, single representation. *(monolith)*
-* 1 (Med)  — operator-split: sub-steppable in time, but still one engine / one
-  process. *(operator split)*
+* 1 (Med)  — mechanical split: sub-steppable in time, but still one engine / one
+  process. *(mechanical split)*
 * 2 (High) — store-coupled nodes: sub-steppable AND composable with other store
   writers. *(modular, ensemble, coupling demo's Tellurium half)*
 * 3 (Max)  — a pure-Python process with no simulator dependency and a swappable
@@ -53,17 +53,17 @@ Accuracy exemption
 ------------------
 
 ``accuracy_exempt`` is the real distinguishing flag the Task-12 figure keys off
-to decide which arms appear on the accuracy axis. It is ``True`` ONLY for arm 6
-and ``False`` for arms 1-5. Arms 1-5 each have a monolithic reference (arm 1) and
-so carry a measured accuracy; arm 6 is the composability EXISTENCE PROOF and has
+to decide which arms appear on the accuracy axis. It is ``True`` ONLY for cross-engine-coupling (arm6)
+and ``False`` for the other five. They each have a monolithic reference (sbml-in-tellurium) and
+so carry a measured accuracy; cross-engine coupling is the composability EXISTENCE PROOF and has
 no dedicated accuracy benchmark of its own, so it is kept off the accuracy axis by
-design. (The exemption is NOT because arm 6's numbers differ — it solves the same
-ODEs and reproduces arm 3 to ~1e-7; see ``reaction_split``.)
+design. (The exemption is NOT because cross-engine coupling's numbers differ — it solves the same
+ODEs and reproduces the biological modular seam to ~1e-7; see ``reaction_split``.)
 
 The ``accuracy`` field here is a **placeholder** (``None`` for every arm): this
 module scores composability only. The real per-arm accuracy numbers come from the
 accuracy harness on an actual run (Task 11/12), keyed on ``accuracy_exempt`` to
-skip arm 6.
+skip cross-engine coupling.
 """
 from __future__ import annotations
 
@@ -86,6 +86,25 @@ MAX_LEVEL = int(Level.MAX)
 
 ARM_IDS = ["arm1", "arm2", "arm3", "arm4", "arm5", "arm6"]
 
+# Stable internal rubric ids -> the study each one scores (reader-facing names).
+# The ids are internal keys only; every rendered surface uses these display names.
+STUDY_SLUGS = {
+    "arm1": "sbml-in-tellurium",
+    "arm2": "mechanical-split-cost",
+    "arm3": "biological-modular-seam",
+    "arm4": "fully-native-pbg",
+    "arm5": "ensemble-and-multirate",
+    "arm6": "cross-engine-coupling",
+}
+STUDY_NAMES = {
+    "arm1": "SBML in Tellurium",
+    "arm2": "Mechanical split (additive coupling)",
+    "arm3": "Biological modular seam",
+    "arm4": "Fully native PBG",
+    "arm5": "Ensemble & multi-rate",
+    "arm6": "Cross-engine coupling",
+}
+
 
 @dataclass(frozen=True)
 class ComposabilityScore:
@@ -93,8 +112,8 @@ class ComposabilityScore:
 
     ``substitutability`` / ``coupling_readiness`` / ``multiscale_fit`` are each a
     :class:`Level` (0..3). ``accuracy_exempt`` is the distinguishing flag the
-    Task-12 viz assembler keys off: ``True`` only for arm 6 (the composability
-    existence proof, kept off the accuracy axis), ``False`` for arms 1-5. The
+    Task-12 viz assembler keys off: ``True`` only for arm6 / cross-engine-coupling (the composability
+    existence proof, kept off the accuracy axis), ``False`` for the other five. The
     ``accuracy`` field is a placeholder (``None`` here for every arm) — this module
     scores composability only; real accuracy comes from the accuracy harness on a
     run (Task 11/12). ``rationale`` is the written justification tying the scores
@@ -120,7 +139,7 @@ _RUBRIC = {
         accuracy_exempt=False,
         accuracy=None,
         rationale=(
-            "Monolithic: one opaque SBML/libroadrunner object. Nothing is "
+            "SBML in Tellurium (monolithic): one opaque SBML/libroadrunner object. Nothing is "
             "individually addressable to swap, there is no shared store to wire a "
             "coupling into, and it runs at a single fixed scale — lowest on every "
             "axis."
@@ -134,7 +153,7 @@ _RUBRIC = {
         accuracy_exempt=False,
         accuracy=None,
         rationale=(
-            "Operator split: reactions are partitioned into two groups, but the "
+            "Mechanical split (additive coupling): reactions are partitioned into two groups, but the "
             "split lives inside one process and advances the full state — the "
             "groups are an implementation detail, not swappable named nodes, and an "
             "external coupler still sees only the one process boundary. Low-ish."
@@ -148,7 +167,7 @@ _RUBRIC = {
         accuracy_exempt=False,
         accuracy=None,
         rationale=(
-            "Modular submodels: separate named SubmodelProcess nodes at the "
+            "Biological modular seam: separate named SubmodelProcess nodes at the "
             "aldolase seam, each independently replaceable, sharing one species "
             "store that new nodes couple into additively — high substitutability "
             "and coupling-readiness."
@@ -162,7 +181,7 @@ _RUBRIC = {
         accuracy_exempt=False,
         accuracy=None,
         rationale=(
-            "Native pbg process: a named, replaceable node sharing the species "
+            "Fully native PBG process: a named, replaceable node sharing the species "
             "store (high substitutability + coupling-readiness), AND a "
             "simulator-free pure-Python RHS with a swappable scalar/array leaf — "
             "maximally embeddable across scales (multiscale_fit = Max)."
@@ -176,7 +195,7 @@ _RUBRIC = {
         accuracy_exempt=False,
         accuracy=None,
         rationale=(
-            "Ensemble: N monolithic instances orchestrated as independent nodes on "
+            "Ensemble & multi-rate: N monolithic instances orchestrated as independent nodes on "
             "a real parallel backend — each instance is a swappable node and the "
             "harness composes them, so it is store/node-composable (high), though "
             "each leaf instance is still a monolith."
@@ -190,14 +209,14 @@ _RUBRIC = {
         accuracy_exempt=True,
         accuracy=None,
         rationale=(
-            "Coupling demonstration: one submodel node is actually swapped for a "
+            "Cross-engine coupling: one submodel node is actually swapped for a "
             "different engine (native pbg) while the other stays Tellurium, and the "
             "two reconcile through the shared store — a substitution AND a "
             "cross-engine coupling both demonstrated, the maximum of the axis. "
             "The impossibility for the monolith is STRUCTURAL (you cannot mix a "
             "hand-written process and an SBML submodel in one libroadrunner "
-            "integrator), not numeric — arm 6 solves the same ODEs and reproduces "
-            "arm 3 to ~1e-7. It is accuracy-exempt because it is the composability "
+            "integrator), not numeric — cross-engine coupling solves the same ODEs and reproduces "
+            "the biological modular seam to ~1e-7. It is accuracy-exempt because it is the composability "
             "existence proof with no dedicated accuracy benchmark, not because its "
             "numbers differ."
         ),

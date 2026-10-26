@@ -64,7 +64,7 @@ def test_accuracy_excludes_exempt_arms():
     spec = _spec("accuracy_divergence", "AccuracyDivergence")
     bars = [t for t in spec["data"] if t.get("type") == "bar"]
     plotted = sum(len(t["x"]) for t in bars)
-    assert plotted == 3  # arm2-4 (arm1 is a floor marker)
+    assert plotted == 3  # mechanical split, modular seam, native (SBML-in-Tellurium is a floor marker)
     assert spec["layout"]["yaxis"]["type"] == "log"
     text = " ".join(a["text"] for a in spec["layout"]["annotations"])
     assert text.count("N/A") >= 2
@@ -87,13 +87,13 @@ def test_scorecard_heatmap_3x6():
     assert len(z) == 3 and len(z[0]) == 6
 
 
-def test_tradeoff_arm6_off_axis():
+def test_tradeoff_cross_engine_off_axis():
     spec = _spec("tradeoff_map", "TradeoffMap")
     main = spec["data"][0]
     assert len(main["x"]) == 4 and all(x > 0 for x in main["x"])
     names = " ".join(str(t.get("name", "")) for t in spec["data"]) + " ".join(
         a["text"] for a in spec["layout"].get("annotations", []))
-    assert "arm6" in names and "no accuracy axis" in names
+    assert "Cross-engine" in names and "arm6" not in names and "no accuracy axis" in names
 
 
 def test_species_dynamics_uses_trajectory():
@@ -122,7 +122,7 @@ def test_per_study_reports_embed_hero_figures():
     """Each member study gets a committed report page with its hero figures + the model."""
     from viva_sbml_decomposition.visualizations.report import build_study_reports, _STUDY_FIGURES
     paths = build_study_reports()
-    assert len(paths) == len(_STUDY_FIGURES) == 9
+    assert len(paths) == len(_STUDY_FIGURES) == 7
     for p in paths:
         html = open(p).read()
         assert "Plotly.newPlot" in html          # at least one interactive figure

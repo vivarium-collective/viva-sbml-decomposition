@@ -1,6 +1,6 @@
-"""MultiorganScaling — arm 8 end-to-end strain curve: monolithic Tellurium vs vivarium decomposition.
+"""MultiorganScaling — bigger-models end-to-end strain curve: monolithic Tellurium vs vivarium decomposition.
 
-The synthetic multi-organ body (arm 8) grows species=3N+1, reactions=4N as the
+The synthetic multi-organ body (bigger-models study) grows species=3N+1, reactions=4N as the
 organ count N climbs. This figure plots, against the species count on a log-log
 axis, FOUR measured wall-clocks — the monolithic libroadrunner BUILD (compile) and
 raw-CVODE RUN, and the decomposed BUILD (N small compiles) and composite RUN — plus
@@ -18,7 +18,7 @@ only measured through N=128; beyond that the figure shows BUILD-only anchors
 
 Numbers are the real medians recorded by
 ``viva_sbml_decomposition.composites._multiorgan.multiorgan_scaling`` — carried
-here (not in metrics.json) because arm 8 is a standalone scaling study. Do not
+here (not in metrics.json) because this is a standalone scaling study. Do not
 hand-edit; re-run the helper to refresh.
 """
 from __future__ import annotations

@@ -1,4 +1,4 @@
-"""ComposabilityScorecard — 0-3 scores per arm and dimension."""
+"""ComposabilityScorecard — 0-3 scores per study and dimension."""
 from __future__ import annotations
 
 from ._plotly import PlotlyVisualization
@@ -27,7 +27,7 @@ class ComposabilityScorecard(PlotlyVisualization):
                  "text": s["scores"], "texttemplate": "%{text}",
                  "textfont": {"size": 16, "color": "white"},
                  "xgap": 3, "ygap": 3, "colorbar": {"title": {"text": "score (0-3)"}, "tickvals": [0, 1, 2, 3]},
-                 "customdata": [s["arms"]] * len(names),
+                 "customdata": [s["labels"]] * len(names),
                  "hovertemplate": "%{customdata}<br>%{y}: %{z}/3<extra></extra>"}
         return {"data": [trace], "layout": layout(
             "Composability scorecard",

@@ -1,4 +1,4 @@
-"""EnsembleScaling — arm5 serial vs Ray-parallel wall-clock."""
+"""EnsembleScaling — ensemble serial vs Ray-parallel wall-clock."""
 from __future__ import annotations
 
 from ._plotly import PlotlyVisualization

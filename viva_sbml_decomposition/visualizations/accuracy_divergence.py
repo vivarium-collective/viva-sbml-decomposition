@@ -26,7 +26,7 @@ class AccuracyDivergence(PlotlyVisualization):
         pos = [(a, l, e) for a, l, e in zip(arms, labs, errs) if e > 0]
         zero = [(a, l) for a, l, e in zip(arms, labs, errs) if e <= 0]
         data = [{"type": "bar", "x": [l for _, l, _ in pos], "y": [e for _, _, e in pos],
-                 "customdata": [a for a, _, _ in pos],
+                 "customdata": [l.replace("<br>", " ") for _, l, _ in pos],
                  "marker": {"color": [PAL[a] for a, _, _ in pos]},
                  "text": [f"{e:.2g}" for _, _, e in pos], "textposition": "outside",
                  "hovertemplate": "%{customdata}<br>max rel err: %{y:.3g}<extra></extra>",
@@ -42,10 +42,10 @@ class AccuracyDivergence(PlotlyVisualization):
         for i, (a, l) in enumerate(zip(state["exempt"], state.get("exempt_labels", state["exempt"]))):
             ann.append({"xref": "paper", "yref": "paper", "x": 0.99, "xanchor": "right",
                         "y": 0.95 - 0.1 * i, "showarrow": False, "align": "right",
-                        "text": f"{a} ({l.replace(chr(10), ' ').replace('<br>', ' ')}): N/A (accuracy-exempt)",
+                        "text": f"{l.replace(chr(10), ' ').replace('<br>', ' ')}: N/A (accuracy-exempt)",
                         "font": {"size": 12}})
         return {"data": data, "layout": layout(
-            "Accuracy divergence from the monolithic reference",
+            "Accuracy divergence from the monolithic (SBML-in-Tellurium) reference",
             "max relative error across species, log scale; exact-zero shown as a floor marker",
             yaxis=axis("max relative error", type="log", range=[-9.5, 0.5]),
             xaxis={"gridcolor": "rgba(0,0,0,0)"}, showlegend=False,

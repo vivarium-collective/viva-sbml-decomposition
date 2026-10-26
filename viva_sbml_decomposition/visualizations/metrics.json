@@ -8,12 +8,12 @@
     "arm6"
   ],
   "labels": {
-    "arm1": "Monolithic\nTellurium",
-    "arm2": "Operator\nsplit",
-    "arm3": "Modular\nsubmodels",
-    "arm4": "Native\nprocess-bigraph",
+    "arm1": "SBML in\nTellurium",
+    "arm2": "Mechanical split\n(additive)",
+    "arm3": "Biological\nmodular seam",
+    "arm4": "Fully native\nPBG",
     "arm5": "Ensemble\n(Ray)",
-    "arm6": "Coupling\ndemo"
+    "arm6": "Cross-engine\ncoupling"
   },
   "reference_trajectory": {
     "time": [
@@ -5475,16 +5475,16 @@
   },
   "overhead": {
     "arm1": {
-      "total_s": 0.07342862500809133,
-      "process_s": 0.04993756837211549,
-      "framework_s": 0.023491056635975838,
-      "overhead_fraction": 0.31991688028186943
+      "total_s": 0.07638574996963143,
+      "process_s": 0.05151554848998785,
+      "framework_s": 0.024870201479643583,
+      "overhead_fraction": 0.32558692543479895
     },
     "arm2": {
-      "total_s": 0.8815235409419984,
-      "process_s": 0.8108607879839838,
-      "framework_s": 0.07066275295801461,
-      "overhead_fraction": 0.0801598025192886
+      "total_s": 1.2725076659116894,
+      "process_s": 1.1362888670992106,
+      "framework_s": 0.13621879881247878,
+      "overhead_fraction": 0.1070475270692257
     },
     "arm3": {
       "overhead_fraction": 0.05,
@@ -5494,33 +5494,33 @@
       "_provenance": "arm3 study (coarse interval), slow to re-run live"
     },
     "arm4_scalar": {
-      "total_s": 0.3016596669331193,
-      "process_s": 0.29556033108383417,
-      "framework_s": 0.006099335849285126,
-      "overhead_fraction": 0.02021926202894537
+      "total_s": 0.31785062490962446,
+      "process_s": 0.31123666977509856,
+      "framework_s": 0.006613955134525895,
+      "overhead_fraction": 0.02080837543234802
     },
     "arm4_array": {
-      "total_s": 0.3024009168148041,
-      "process_s": 0.29602511692792177,
-      "framework_s": 0.006375799886882305,
-      "overhead_fraction": 0.021083930412773726
+      "total_s": 0.31913004186935723,
+      "process_s": 0.3120952781755477,
+      "framework_s": 0.007034763693809509,
+      "overhead_fraction": 0.022043564600193116
     },
     "arm6": {
-      "total_s": 30.172492041951045,
-      "process_s": 29.779541734606028,
-      "framework_s": 0.3929503073450178,
-      "overhead_fraction": 0.013023462125656374
+      "total_s": 31.902318665990606,
+      "process_s": 31.457551557337865,
+      "framework_s": 0.4447671086527407,
+      "overhead_fraction": 0.013941529244608909
     },
     "arm4": {
-      "total_s": 0.3016596669331193,
-      "process_s": 0.29556033108383417,
-      "framework_s": 0.006099335849285126,
-      "overhead_fraction": 0.02021926202894537
+      "total_s": 0.31785062490962446,
+      "process_s": 0.31123666977509856,
+      "framework_s": 0.006613955134525895,
+      "overhead_fraction": 0.02080837543234802
     }
   },
   "accuracy": {
     "arm1": 0.0,
-    "arm2": 0.06742701571682175,
+    "arm2": 0.11187071600332503,
     "arm3": 0.1,
     "arm4": 1.0648853847474125e-07,
     "arm5": null,
@@ -5530,11 +5530,11 @@
     "arm2": [
       [
         0.1,
-        0.587
+        0.8569497970539292
       ],
       [
         0.0125,
-        0.06742701571682175
+        0.11187071600332503
       ]
     ],
     "arm3": [
