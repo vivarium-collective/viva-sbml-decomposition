@@ -38,24 +38,43 @@ state at any ``N`` — CVODE stays well-posed as the knob grows. Per-organ rate
    **additively** through the bigraph apply path (a Jacobi operator split of the
    blood ODE). Organ-private species (``o{i}_G/M/P``) also live in that store but
    are written by their one organ only (no double counting). Building the body this
-   way compiles ``N`` *small* models (cost linear in ``N``) instead of one giant one.
+   way compiles ``N`` *small* models (one libroadrunner setup per organ) instead of
+   one giant one.
 
-**The strain curve** (:func:`multiorgan_scaling`) captures, per ``N``:
-``mono_build_s`` (the libroadrunner compile — where Tellurium strains), ``mono_run_s``
-(raw CVODE integration of the monolith), ``decomp_run_s`` (the vivarium composite
-run — orchestration + ``N`` small integrations), and ``accuracy`` (decomposed vs the
-monolithic reference, per-species ``max_rel_err`` from the Task-accuracy harness).
+**The strain curve** (:func:`multiorgan_scaling`) captures, per ``N``, the honest
+END-TO-END picture: ``mono_build_s`` (the one big libroadrunner compile — where
+Tellurium strains) and ``mono_run_s`` (raw CVODE integration) and their sum
+``mono_total_s``; ``decomp_build_s`` (the ``N`` small compiles) and ``decomp_run_s``
+(the vivarium composite run — orchestration + ``N`` small integrations) and their sum
+``decomp_total_s``; and ``accuracy`` (decomposed vs the monolithic reference).
 
 **Measured regime (recorded 2026-10-25, M-series laptop; see the figure/study).**
-The monolithic build is superlinear — ``N=32 -> 512`` (16x reactions) takes the
-compile from ``0.21 s`` to ``18.8 s`` (~88x, ~O(N^1.7)) — and the dense CVODE step
-blows up from ``0.002 s`` to ``2.56 s``. The decomposed build is near-linear in ``N``
-(``0.48 s -> 4.3 s``), so by ``N=512`` the body builds **4.4x faster decomposed than
-monolithic**, and the gap keeps widening. The additive-split accuracy is first-order
-in the coupling interval (halves as the interval halves) and degrades with coupling
-density (more organs sharing the one pool): ``max_rel_err`` ``~2e-3`` at ``N=2`` rising
-to ``~5e-2`` at ``N=32`` for the default interval. Numbers are REAL — re-run
-:func:`multiorgan_scaling` to refresh; do not hand-edit to flatter the curve.
+The one genuinely strong, well-measured result is that the **monolithic BUILD is
+superlinear in the reaction count** — ``0.20 s`` at 97 species rising to ``18.5 s``
+at 1537 species (~94x for ~16x the reactions, ~O(N^1.64)) — with the dense-CVODE run
+blowing up alongside it (``0.0023 s -> 2.56 s``). That is the real strain point.
+
+But decomposition is **NOT a free win**, and the arm is framed honestly end-to-end:
+
+- The decomposed BUILD is ``N`` separate libroadrunner setups, so it is *slower* than
+  the single monolithic compile up to ~100 species (``1.7x`` slower at 97 species),
+  reaches rough **parity** around 385 species (``1.40`` vs ``1.76 s``) and only becomes
+  a clear win at very large ``N`` (``2.4x`` at 1537 species). It does not "build several-
+  fold faster by hundreds of species".
+- The decomposed per-tick RUN overhead dwarfs the monolith's CVODE integration
+  (``~16x`` at 385 species: ``0.95 s`` vs ``0.058 s``), so the body is **SLOWER
+  END-TO-END at every ``N`` measured** (``decomp_total 2.35 s`` vs ``mono_total 1.81 s``
+  at 385 species). The end-to-end gap narrows as ``N`` grows, but the decomposed run is
+  left UNMEASURED past ``N=128`` (too slow for the harness), so **no end-to-end crossover
+  is claimed** — decomposition trades the monolith's superlinear build for much higher
+  run overhead and would only pay off end-to-end at models larger than measured.
+- Accuracy (additive-split error) is first-order in the coupling interval (halves as the
+  interval halves) and degrades with coupling density: ``max_rel_err`` ``~2e-3`` at ``N=2``,
+  ``~1.2e-2`` at ``N=8``, ``~5.2e-2`` at ``N=32``, ``~0.31`` at ``N=128``. So the speed gap
+  narrows exactly where accuracy becomes unusable — the speed and acceptable-accuracy
+  regimes do NOT co-occur at a fixed interval.
+
+Numbers are REAL — re-run :func:`multiorgan_scaling` to refresh; do not hand-edit.
 """
 from __future__ import annotations
 
@@ -321,7 +340,8 @@ def glycolysis_multiorgan_mono(core=None, n_organs: int = DEFAULT_N_ORGANS):
         "each its own small libroadrunner instance, coupled through ONE shared "
         "blood store — every organ writes its per-interval Glc_blood delta, which "
         "reconcile additively through the bigraph apply path (arm-3 pattern). "
-        "Builds N small models (linear in N) instead of one giant one."
+        "Builds N small models (one libroadrunner setup per organ) instead of one "
+        "giant one — a structural build-vs-run trade, not a guaranteed speed win."
     ),
     parameters={
         "n_organs": {"type": "integer", "default": DEFAULT_N_ORGANS},
@@ -388,28 +408,39 @@ def _median_time(fn, repeats: int) -> float:
 
 def multiorgan_scaling(ns: Sequence[int] = (2, 8, 32), *,
                        coupling_interval: float = DEFAULT_COUPLING_INTERVAL,
-                       repeats: int = 3) -> List[dict]:
-    """Measure the strain curve: monolithic build/run vs decomposed run, vs ``N``.
+                       repeats: int = 3, run_decomposed_max_n: int | None = None) -> List[dict]:
+    """Measure the honest end-to-end strain curve, monolithic vs decomposed, vs ``N``.
 
-    For each ``n`` in ``ns`` returns
-    ``{n, species, mono_build_s, mono_run_s, decomp_run_s, accuracy}``:
+    For each ``n`` in ``ns`` returns ``{n, species, mono_build_s, mono_run_s,
+    mono_total_s, decomp_build_s, decomp_run_s, decomp_total_s, accuracy}``:
 
     - ``species`` = ``3n + 1`` (the scaling knob's species count).
     - ``mono_build_s`` — median wall-clock of ``te.loada(build_multiorgan_antimony(n))``,
-      i.e. the libroadrunner model COMPILE. **This is where Tellurium strains** —
-      superlinear in the reaction count.
+      i.e. the ONE big libroadrunner model COMPILE. **This is where Tellurium
+      strains** — superlinear in the reaction count (~O(N^1.65)).
     - ``mono_run_s`` — median raw-CVODE integration of the monolith over ``T_END``.
+    - ``mono_total_s`` = ``mono_build_s + mono_run_s`` (compile once, then integrate).
+    - ``decomp_build_s`` — median wall-clock to compile the ``N`` SMALL per-organ
+      models (``te.loada(single_organ_antimony(i))`` for every organ). This is the
+      decomposed build cost; it is roughly LINEAR in ``N`` but carries ``N`` separate
+      libroadrunner setups, so at small/moderate ``N`` it is SLOWER than the single
+      monolithic compile, and only undercuts it once the monolith's superlinearity
+      dominates (very large ``N``).
     - ``decomp_run_s`` — median run of the decomposed vivarium composite over
       ``T_END`` (construction excluded; orchestration + ``N`` small integrations).
-      This carries framework overhead the raw ``mono_run_s`` does not, so the run
-      comparison is CONSERVATIVE against decomposition.
+      This carries per-tick framework overhead the raw ``mono_run_s`` does not, so
+      it is MUCH larger than the monolith's CVODE run. ``None`` when ``n`` exceeds
+      ``run_decomposed_max_n`` (then ``decomp_total_s``/``accuracy`` are ``None`` too:
+      an honestly UNMEASURED point, not a guess).
+    - ``decomp_total_s`` = ``decomp_build_s + decomp_run_s`` (or ``None``).
     - ``accuracy`` — decomposed-vs-monolithic ``max_rel_err`` over all species
-      (:func:`compare_to_reference`), the additive-split error at ``coupling_interval``.
+      (:func:`compare_to_reference`), the additive-split error at ``coupling_interval``
+      (``None`` when the decomposed run was skipped).
 
-    Numbers are whatever was measured; the monolithic build/run blow up
-    superlinearly while the decomposed build is linear in ``N`` (see the module
-    docstring for the recorded regime). Honest: if the monolith does not strain
-    within an affordable ``N`` on a given machine, the returned curve says so.
+    All numbers are whatever was measured. The headline is honest end-to-end:
+    the monolithic BUILD is superlinear, but decomposition does NOT build faster
+    until very large ``N`` and its per-tick RUN overhead makes it SLOWER end-to-end
+    at the moderate ``N`` a test/affordable measurement can reach. Re-run to refresh.
     """
     import tellurium as te
 
@@ -424,31 +455,44 @@ def multiorgan_scaling(ns: Sequence[int] = (2, 8, 32), *,
             lambda rr=rr, cols=cols: (rr.reset(), rr.simulate(0, T_END, 51, cols)),
             repeats)
 
-        # Decomposed run, construction excluded: build a fresh composite per repeat
-        # OUTSIDE the timer, time only comp.run(T_END).
-        doc = _build_decomposed_document(n, coupling_interval)
+        # Decomposed BUILD = compiling the N SMALL per-organ models (the work
+        # Composite construction defers to each OrganProcess._build). Timed the same
+        # way as mono_build_s (te.loada), so the two builds are apples-to-apples.
+        organ_srcs = [single_organ_antimony(i) for i in range(n)]
+        decomp_build_s = _median_time(
+            lambda srcs=organ_srcs: [te.loada(s) for s in srcs], repeats)
 
-        def _decomp_once(doc=doc):
-            core = allocate_core()
-            register_multiorgan(core)
-            comp = Composite({"state": copy.deepcopy(doc)}, core=core)
-            t0 = time.perf_counter()
-            comp.run(T_END)
-            return time.perf_counter() - t0
+        decomp_run_s = decomp_total_s = accuracy = None
+        if run_decomposed_max_n is None or n <= run_decomposed_max_n:
+            # Decomposed run, construction excluded: build a fresh composite per
+            # repeat OUTSIDE the timer, time only comp.run(T_END).
+            doc = _build_decomposed_document(n, coupling_interval)
 
-        _decomp_once()  # warmup
-        decomp_run_s = statistics.median(_decomp_once() for _ in range(repeats))
+            def _decomp_once(doc=doc):
+                core = allocate_core()
+                register_multiorgan(core)
+                comp = Composite({"state": copy.deepcopy(doc)}, core=core)
+                t0 = time.perf_counter()
+                comp.run(T_END)
+                return time.perf_counter() - t0
 
-        ref_traj, ref_t = run_mono(n)
-        arm_traj, arm_t = run_decomposed(n_organs=n, coupling_interval=coupling_interval)
-        acc = compare_to_reference(ref_traj, ref_t, arm_traj, arm_t)
+            _decomp_once()  # warmup
+            decomp_run_s = statistics.median(_decomp_once() for _ in range(repeats))
+            decomp_total_s = decomp_build_s + decomp_run_s
+
+            ref_traj, ref_t = run_mono(n)
+            arm_traj, arm_t = run_decomposed(n_organs=n, coupling_interval=coupling_interval)
+            accuracy = float(compare_to_reference(ref_traj, ref_t, arm_traj, arm_t).max_rel_err)
 
         out.append({
             "n": int(n),
             "species": 3 * n + 1,
             "mono_build_s": float(mono_build_s),
             "mono_run_s": float(mono_run_s),
-            "decomp_run_s": float(decomp_run_s),
-            "accuracy": float(acc.max_rel_err),
+            "mono_total_s": float(mono_build_s + mono_run_s),
+            "decomp_build_s": float(decomp_build_s),
+            "decomp_run_s": None if decomp_run_s is None else float(decomp_run_s),
+            "decomp_total_s": None if decomp_total_s is None else float(decomp_total_s),
+            "accuracy": accuracy,
         })
     return out

@@ -106,23 +106,37 @@ def test_decomposition_genuinely_couples_through_blood():
     assert np.any(traj8["o0_G"] > 0)            # organs actually took up glucose
 
 
-def test_multiorgan_scaling_shape_and_monotone_growth():
+def test_multiorgan_scaling_shape_and_growth():
     rows = multiorgan_scaling(ns=(2, 8, 32), repeats=1)
     assert [r["n"] for r in rows] == [2, 8, 32]
     for r in rows:
-        assert set(r) == {"n", "species", "mono_build_s", "mono_run_s",
-                          "decomp_run_s", "accuracy"}
+        assert set(r) == {"n", "species", "mono_build_s", "mono_run_s", "mono_total_s",
+                          "decomp_build_s", "decomp_run_s", "decomp_total_s", "accuracy"}
         assert r["species"] == 3 * r["n"] + 1
-        for key in ("mono_build_s", "mono_run_s", "decomp_run_s"):
+        for key in ("mono_build_s", "mono_run_s", "mono_total_s",
+                    "decomp_build_s", "decomp_run_s", "decomp_total_s"):
             assert r[key] > 0 and np.isfinite(r[key])
+        assert r["mono_total_s"] == pytest.approx(r["mono_build_s"] + r["mono_run_s"])
+        assert r["decomp_total_s"] == pytest.approx(r["decomp_build_s"] + r["decomp_run_s"])
         assert np.isfinite(r["accuracy"])
+    # Assert DETERMINISTIC growth signals only (wall-clock at ~1e-4 s is too noisy
+    # to assert at repeats=1): species count and the monolithic BUILD, which spans
+    # ~10x from N=2 to N=32 (the superlinear-compile strain signal).
     species = [r["species"] for r in rows]
     assert species == sorted(species) and len(set(species)) == 3  # strictly grows
-    # The monolithic BUILD is the strain signal: it grows with the model size.
     builds = [r["mono_build_s"] for r in rows]
-    assert builds[-1] > builds[0]
-    # Monolithic integration also grows with species count.
-    assert rows[-1]["mono_run_s"] > rows[0]["mono_run_s"]
+    assert builds[-1] > builds[0]  # 97-species compile >> 7-species compile
+
+
+def test_multiorgan_scaling_can_skip_large_decomposed_run():
+    # Build is measured at every N; the expensive decomposed RUN (and the accuracy
+    # that needs it) is honestly left UNMEASURED past the cap, not guessed.
+    rows = multiorgan_scaling(ns=(2, 32), repeats=1, run_decomposed_max_n=2)
+    small, big = rows
+    assert small["decomp_run_s"] is not None and small["accuracy"] is not None
+    assert big["decomp_run_s"] is None and big["decomp_total_s"] is None
+    assert big["accuracy"] is None
+    assert big["decomp_build_s"] > 0 and big["mono_build_s"] > 0  # builds still measured
 
 
 def test_multiorgan_figure_renders_plotly():
@@ -133,7 +147,7 @@ def test_multiorgan_figure_renders_plotly():
     assert set(out) == {"html"} and isinstance(out["html"], str)
     assert "Plotly.newPlot" in out["html"] and "viva_MultiorganScaling" in out["html"]
     spec = inst.figure(MultiorganScaling.generate_state())
-    assert len(spec["data"]) == 4 and "layout" in spec
+    assert len(spec["data"]) == 5 and "layout" in spec
     import plotly.graph_objects as go
 
     go.Figure(spec)  # valid plotly spec

@@ -220,8 +220,11 @@ at_a_glance:
 - study: arm8-multiorgan
   role: synthetic N-organ scaling knob (species=3N+1, shared blood pool) — stretches a monolithic
     libroadrunner/CVODE instance past the fixed 17-species model to its strain point (the compile is
-    superlinear in reactions), showing where decomposition into N per-organ processes wins on build cost
-    at scale
+    superlinear in reactions, ~O(N^1.64)). The honest end-to-end finding is that decomposition into N
+    per-organ processes is NOT a free win — its build only reaches parity in the hundreds of species and
+    its per-tick
+    run overhead makes it slower end-to-end at every N measured; a structural build-vs-run trade, not a
+    scaling victory
 how_to_read: 'Start with arm 1 (the reference), then read arms 2→4 as increasing decomposition
 
   (watch accuracy degrade and composability rise), then arm 5 (the parallel win) and
@@ -276,7 +279,7 @@ acceptance_criteria:
 - study: arm7-multirate
   behavior: arm7-heap-beats-scan-at-scale
 - study: arm8-multiorgan
-  behavior: arm8-monolith-strains-decomposition-scales
+  behavior: arm8-monolith-build-strains-superlinearly
 adversarial_coverage_skip: true
 adversarial_coverage_skip_reason: 'Methods tradeoff investigation, not a discovery study with biological
   negative controls. The adversarial content is integral and documented as the ''avoid'' findings: a mechanical
