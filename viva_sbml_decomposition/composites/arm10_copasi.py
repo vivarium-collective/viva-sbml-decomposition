@@ -7,7 +7,7 @@ copasi_glycolysis.CopasiProcess`:
   **COPASI/basico** (LSODA) through a single process node, the COPASI analogue
   of arm 1's monolithic Tellurium run. It is the second-engine accuracy point:
   validated against arm 1's libroadrunner/CVODE reference (see
-  :func:`copasi_mono_accuracy`; measured max-relative-error ~1.7e-6).
+  :func:`copasi_mono_accuracy`; measured max-relative-error ~1.29e-7).
 
 * :func:`glycolysis_cross_engine` — a genuine **two-engine composition**: the
   arm-3 aldolase-seam decomposition with upper glycolysis integrated by a
@@ -105,20 +105,32 @@ _SUBPROC_SRC = (
     "import sys, json, pickle\n"
     "payload = json.loads(sys.argv[1]); out = sys.argv[2]\n"
     "from viva_sbml_decomposition.composites import arm10_copasi as m\n"
-    "if payload['kind'] == 'mono':\n"
+    "kind = payload['kind']\n"
+    "if kind == 'mono':\n"
     "    traj, t = m._run_copasi_mono_inproc(n_steps=payload['n_steps'])\n"
-    "else:\n"
+    "    data = {'traj': {k: v for k, v in traj.items()}, 't': t}\n"
+    "elif kind == 'cross':\n"
     "    traj, t = m._run_cross_engine_inproc(coupling_interval=payload['coupling_interval'])\n"
+    "    data = {'traj': {k: v for k, v in traj.items()}, 't': t}\n"
+    "elif kind == 'setcheck':\n"
+    "    data = {'setcheck': m._verify_set_path_equivalence_inproc()}\n"
+    "else:\n"
+    "    raise ValueError('unknown kind ' + repr(kind))\n"
     "with open(out, 'wb') as f:\n"
-    "    pickle.dump({'traj': {k: v for k, v in traj.items()}, 't': t}, f)\n"
+    "    pickle.dump(data, f)\n"
 )
 
 
-def _run_in_subprocess_with_retry(kind, *, n_steps=None, coupling_interval=None,
-                                  retries=6):
-    """Run the COPASI composite ``kind`` in a retrying subprocess; return (traj, t)."""
-    payload = json.dumps(
-        {"kind": kind, "n_steps": n_steps, "coupling_interval": coupling_interval})
+def _subprocess_with_retry(payload_dict, *, retries=6):
+    """Run ``_SUBPROC_SRC`` with ``payload_dict`` in a retrying subprocess.
+
+    Returns the pickled ``data`` dict. Retries ONLY a signal kill (negative
+    returncode: SIGABRT=-6 / SIGSEGV=-11 — COPASI's intermittent loader abort); a
+    deterministic Python error (positive returncode, a traceback) fails FAST so a
+    bad config isn't retried 6x (~85s x 6 for cross@0.001).
+    """
+    payload = json.dumps(payload_dict)
+    kind = payload_dict.get("kind")
     fd, out_path = tempfile.mkstemp(suffix=".pkl")
     os.close(fd)
     try:
@@ -130,17 +142,32 @@ def _run_in_subprocess_with_retry(kind, *, n_steps=None, coupling_interval=None,
             )
             if proc.returncode == 0 and os.path.getsize(out_path) > 0:
                 with open(out_path, "rb") as fh:
-                    data = pickle.load(fh)
-                return data["traj"], data["t"]
+                    return pickle.load(fh)
             last = proc
+            if proc.returncode is not None and proc.returncode > 0:
+                raise RuntimeError(
+                    f"COPASI subprocess {kind!r} failed with a Python error "
+                    f"(returncode={proc.returncode}); not a signal abort, so not "
+                    f"retried.\nstderr tail:\n{(proc.stderr or '')[-1500:]}"
+                )
         raise RuntimeError(
-            f"COPASI composite {kind!r} aborted in all {retries} subprocess "
-            f"attempts (last returncode={getattr(last, 'returncode', '?')}); "
+            f"COPASI subprocess {kind!r} was signal-aborted in all {retries} "
+            f"attempts (last returncode={getattr(last, 'returncode', '?')}, i.e. "
+            f"SIGABRT/SIGSEGV from COPASI's loader); "
             f"stderr tail: {(getattr(last, 'stderr', '') or '')[-800:]}"
         )
     finally:
         if os.path.exists(out_path):
             os.remove(out_path)
+
+
+def _run_in_subprocess_with_retry(kind, *, n_steps=None, coupling_interval=None,
+                                  retries=6):
+    """Run the COPASI composite ``kind`` in a retrying subprocess; return (traj, t)."""
+    data = _subprocess_with_retry(
+        {"kind": kind, "n_steps": n_steps, "coupling_interval": coupling_interval},
+        retries=retries)
+    return data["traj"], data["t"]
 
 
 _WARMED = False
@@ -149,14 +176,16 @@ _WARMED = False
 def warm_copasi_models():
     """Load BOTH arm-10 COPASI models (full + lower subset) into the cache up front.
 
-    COPASI's model load (``importSBMLFromString`` and even the native
-    ``loadModel``) aborts the process *nondeterministically* when it runs AFTER
-    ``run_time_course`` activity has happened in the same long-lived process (an
-    uncatchable C++ abort observed ~1-in-10 across composites in one pytest
-    process). Loading every model this workspace uses ONCE, before any time
-    course executes, means no COPASI load ever follows a solve — which removes the
-    abort in practice. The cache makes this idempotent and cheap after the first
-    call, so run_* and register_* call it before building any Composite.
+    OPTIONAL helper for callers that run MANY COPASI composites in ONE long-lived
+    process (e.g. the GIL benchmark). COPASI's model load aborts the process
+    *nondeterministically*, and loading every model once up front — before any
+    ``run_time_course`` — concentrates the (small, fixed) number of load events
+    and reduces the chance a load lands mid-session. It is deliberately NOT called
+    from the composite BUILD/registration path (building the composite doc and
+    registering the process must never trigger an in-process model load, so
+    dashboard rendering/building can't abort), nor from the subprocess run path
+    (each subprocess runs ONE composite, so it loads only the one model it needs).
+    Idempotent and cheap after the first call.
     """
     global _WARMED
     if _WARMED:
@@ -224,23 +253,20 @@ def _build_mono_document(interval: float) -> dict:
     }
 
 
-def register_copasi_mono(core=None):
-    """Register CopasiProcess + RAM emitter and warm the COPASI models up front."""
-    core = register_copasi(core)
-    warm_copasi_models()   # load all COPASI models before any solve (abort guard)
-    return core
-
-
 @composite_generator(
     name="glycolysis_copasi_mono",
     description=(
         "Arm 10: the whole 17-species Teusink glycolysis model run by COPASI/basico "
         "(LSODA) in one process node — COPASI as a SECOND SBML engine on the same "
         "model, validated against arm 1's libroadrunner/CVODE reference (two "
-        "different integrators agree to ~1.7e-6)."
+        "different integrators agree to max_rel_err ~1.3e-7). NOTE: building this "
+        "doc is abort-safe (no COPASI load), but an in-process RUN loads a COPASI "
+        "model, whose loader aborts the process nondeterministically (~1-in-6) on "
+        "the current python-copasi build; the measurement path runs it in a "
+        "retrying subprocess to avoid this."
     ),
     default_n_steps=DEFAULT_N_STEPS,
-    core_extensions=[register_copasi_mono],
+    core_extensions=[register_copasi],
     fidelity="real",
     methods=["COPASI/basico LSODA"],
 )
@@ -254,7 +280,6 @@ def _run_copasi_mono_inproc(core=None, n_steps: int = DEFAULT_N_STEPS):
     if core is None:
         core = allocate_core()
     register_copasi(core)
-    warm_copasi_models()   # load all COPASI models before any solve (abort guard)
     doc = _build_mono_document(_mono_interval(n_steps))
     return extract_run(doc, core, GLYCOLYSIS_META["t_end"], GLYCOLYSIS_META["species"])
 
@@ -280,7 +305,6 @@ def register_cross_engine(core=None):
     core.register_link("CopasiProcess", CopasiProcess)        # COPASI/basico
     core.register_link("EnergyStep", EnergyStep)
     core.register_link("ram-emitter", RAMEmitter)
-    warm_copasi_models()   # load all COPASI models before any solve (abort guard)
     return core
 
 
@@ -360,7 +384,10 @@ def _build_cross_document(coupling_interval: float) -> dict:
         "reconciling additive deltas each coupling interval. Two different SBML "
         "engines interoperate through the pbg typed store and converge to the "
         "libroadrunner reference — a composition a single monolithic engine cannot "
-        "express."
+        "express. NOTE: building this doc is abort-safe (no COPASI load), but an "
+        "in-process RUN loads a COPASI model whose loader aborts the process "
+        "nondeterministically (~1-in-6) on the current python-copasi build; the "
+        "measurement path runs it in a retrying subprocess to avoid this."
     ),
     parameters={
         "coupling_interval": {"type": "float", "default": DEFAULT_COUPLING_INTERVAL},
@@ -394,6 +421,87 @@ def run_cross_engine(core=None, coupling_interval=DEFAULT_COUPLING_INTERVAL):
     so COPASI's intermittent loader abort can never kill the caller.
     """
     return _run_in_subprocess_with_retry("cross", coupling_interval=coupling_interval)
+
+
+# --------------------------------------------------------------------------- #
+# Bulk-SET bit-identity check (the pinned fast-path guarantee).               #
+# --------------------------------------------------------------------------- #
+
+def _verify_set_path_equivalence_inproc(perturb: float = 1.1) -> dict:
+    """Compare the raw-handle bulk SET against basico's per-name set_species.
+
+    On the full Teusink model: perturb the settable species by ``perturb``,
+    inject that state TWO ways — (A) the hot-loop raw path
+    (``CMetab.setInitialConcentration`` + ``updateInitialValues``) and (B) basico's
+    per-name ``set_species(exact=True, initial_concentration=...)`` — integrate one
+    interval each (``use_initial_values=True``), and also run an UNSET baseline
+    (model's own initial values). Returns max |Δ| over all 17 species for
+    ``raw_vs_basico`` (should be ~0, bit-identical) and ``raw_vs_baseline``
+    (should be clearly non-zero, so a silent no-op SET can't masquerade as a pass).
+    In-process (loads COPASI), so callers invoke it through the retrying subprocess.
+    """
+    import COPASI
+    import basico
+
+    from viva_sbml_decomposition.processes.copasi_glycolysis import (
+        _antimony_to_sbml, _ensure_cps)
+
+    base = _antimony_to_sbml(GLYCOLYSIS_ANTIMONY, "antimony")
+    dm = basico.load_model(_ensure_cps(base))
+    basico.set_current_model(dm)
+    sp = basico.get_species(model=dm)
+    id2name = {str(r.sbml_id): n for n, r in sp.iterrows()}
+    species = GLYCOLYSIS_META["species"]
+    settable = [s for s in species if sp.loc[id2name[s]].type != "assignment"]
+    model = dm.getModel()
+    metabs = {model.getMetabolite(i).getSBMLId(): model.getMetabolite(i)
+              for i in range(model.getNumMetabs())}
+    fw = COPASI.CCore.Framework_Concentration
+    interval = 0.1
+    initial = {s: float(metabs[s].getConcentration()) for s in settable}
+    perturbed = {s: initial[s] * perturb for s in settable}
+
+    def _init_conc():
+        return {s: float(metabs[s].getInitialConcentration()) for s in settable}
+
+    def _step_read():
+        basico.run_time_course(duration=interval, intervals=1,
+                               use_initial_values=True, model=dm)
+        return {s: float(metabs[s].getConcentration()) for s in species}
+
+    # Baseline: UNSET (integrate from the model's own initial values).
+    for s in settable:
+        metabs[s].setInitialConcentration(initial[s])
+    model.updateInitialValues(fw)
+    baseline = _step_read()
+    # Path A: raw-handle bulk SET of the perturbed state (the hot-loop path).
+    for s in settable:
+        metabs[s].setInitialConcentration(perturbed[s])
+    model.updateInitialValues(fw)
+    raw_init = _init_conc()
+    raw = _step_read()
+    # Path B: basico per-name set_species of the same perturbed state.
+    for s in settable:
+        basico.set_species(name=id2name[s], exact=True,
+                           initial_concentration=perturbed[s], model=dm)
+    basico_init = _init_conc()
+    via_basico = _step_read()
+
+    return {
+        # SET-level: the two paths write the SAME initial concentration (the pure
+        # bit-identity guarantee — no integration, so ~machine epsilon).
+        "set_level_max_abs_diff": max(abs(raw_init[s] - basico_init[s]) for s in settable),
+        # Integration-level: same post-step trajectory (CVODE at rtol 1e-8 amplifies
+        # the machine-eps SET difference to ~1e-10 — still far below rtol).
+        "post_step_max_abs_diff": max(abs(raw[s] - via_basico[s]) for s in species),
+        # Not a silent no-op: the perturbed SET visibly moved the result.
+        "raw_vs_baseline": max(abs(raw[s] - baseline[s]) for s in species),
+    }
+
+
+def copasi_set_bit_identity() -> dict:
+    """Robust (subprocess) accessor for :func:`_verify_set_path_equivalence_inproc`."""
+    return _subprocess_with_retry({"kind": "setcheck"})["setcheck"]
 
 
 # --------------------------------------------------------------------------- #
@@ -467,12 +575,15 @@ def copasi_gil_factor(n_threads: int = 4, n_steps: int = DEFAULT_N_STEPS,
     """Measure whether basico/COPASI releases the GIL on its solve.
 
     Runs ``n_threads`` identical COPASI-mono integrations serially, then the same
-    batch on a ``ThreadPoolExecutor``; the ratio is the GIL verdict (arm-5 style).
-    The COPASI model is loaded up front (``warm_copasi_models``) and shared from
-    the cache; this is sound precisely because ``run_time_course`` holds the GIL
-    (threads never truly overlap, so the shared model is touched one-at-a-time) —
-    had the solve released the GIL, the threaded batch would both speed up AND
-    expose the shared model to a race, either of which this measurement surfaces.
+    batch on a ``ThreadPoolExecutor``; the ratio would be the GIL verdict (arm-5
+    style). FINDING (honest): ``run_time_course`` HOLDS the GIL — a speedup ~1.0x,
+    no release — AND, beyond that, threaded in-process COPASI SEGFAULTS: COPASI's
+    global current-model is not thread-safe, so concurrent runs crash (observed
+    here as a reliable SIGSEGV during concurrent Composite setup). So this
+    benchmark typically ABORTS rather than returning a clean ratio, which is
+    itself the result: COPASI cannot be parallelized with in-process threads — a
+    COPASI ensemble must use Ray separate PROCESSES (exactly arm 5's conclusion for
+    libroadrunner). Run manually, never in the test suite.
     """
     from concurrent.futures import ThreadPoolExecutor
 

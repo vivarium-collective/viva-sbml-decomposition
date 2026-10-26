@@ -6,11 +6,15 @@
 so it can play both roles arm 10 needs:
 
 * ``coupling_mode="overwrite"`` (the default) — the **monolithic second engine**.
-  There is a single writer, so the process integrates its own model
-  *continuously* (each interval continues from COPASI's own current state) and
-  writes the absolute 17-species state back with ``overwrite`` semantics, plus
-  the current time. This is COPASI-as-a-second-engine on the whole Teusink model
-  and is validated against the libroadrunner reference.
+  There is a single writer. Each interval it reads the prior step's absolute state
+  back from the shared store, RE-INJECTS it as COPASI initial concentrations, and
+  integrates one interval from there (``use_initial_values=True``), then writes
+  the absolute 17-species state back with ``overwrite`` semantics plus the current
+  time. Re-injecting the previous state and stepping one interval is equivalent to
+  a continuous integration (the state is Markovian) but keeps every step self-
+  contained, so the cached datamodel is safely reusable run-to-run. This is
+  COPASI-as-a-second-engine on the whole Teusink model, validated against the
+  libroadrunner reference.
 
 * ``coupling_mode="delta"`` — the **cross-engine coupling** role. The process is
   built from a *reaction subset* of the model (all species/parameters/rules
@@ -34,8 +38,10 @@ and making COPASI look ~30x slower than it is). Instead it writes/reads the
 cached ``COPASI.CMetab`` handles directly (``setInitialConcentration`` +
 ``model.updateInitialValues(Framework_Concentration)``; ``getConcentration``),
 which is a genuine bulk write/read (~0.5 ms set / ~0 ms get per update) and is
-verified bit-identical to basico's per-name ``set_species``/``get_species`` path
-(max |Δ| ~1.6e-13 over a step) — so the fast path is pinned, not a silent no-op.
+verified against basico's per-name ``set_species``/``get_species`` path: the SET
+writes the IDENTICAL initial concentration (bit-identical, ~machine epsilon) and
+the post-step trajectory matches to ~2e-10 (< CVODE rtol 1e-8) — so the fast path
+is pinned, not a silent no-op (see ``test_bulk_set_is_bit_identical...``).
 Each injected state is integrated with ``run_time_course(..., intervals=1,
 use_initial_values=True)``, so the step starts from exactly the injected initial
 values (no reliance on retained transient state).
@@ -206,17 +212,23 @@ def _get_or_build_model(sbml, reactions, rtol, atol):
               for i in range(model.getNumMetabs())}
     initial = {sid: float(metabs[sid].getInitialConcentration()) for sid in species_ids}
 
-    # Match LSODA tolerances to arm 1's CVODE tolerances. Best-effort: a basico
-    # that does not expose the setter leaves COPASI's defaults (1e-6/1e-12).
-    try:
-        basico.set_task_settings(
-            basico.T.TIME_COURSE,
-            {"method": {"Relative Tolerance": float(rtol),
-                        "Absolute Tolerance": float(atol)}},
-            model=dm,
+    # Match LSODA tolerances to arm 1's CVODE tolerances, and VERIFY they took —
+    # "matched tolerances" is load-bearing for the accuracy claim, so a failure
+    # here must be loud, not silently fall back to COPASI's 1e-6/1e-12 defaults.
+    basico.set_task_settings(
+        basico.T.TIME_COURSE,
+        {"method": {"Relative Tolerance": float(rtol),
+                    "Absolute Tolerance": float(atol)}},
+        model=dm,
+    )
+    got = basico.get_task_settings(basico.T.TIME_COURSE, model=dm)["method"]
+    if (abs(float(got["Relative Tolerance"]) - float(rtol)) > 1e-18
+            or abs(float(got["Absolute Tolerance"]) - float(atol)) > 1e-18):
+        raise RuntimeError(
+            f"COPASI time-course tolerances did not take (wanted rtol={rtol}, "
+            f"atol={atol}; got rtol={got['Relative Tolerance']}, "
+            f"atol={got['Absolute Tolerance']}) — 'matched tolerances' would be false."
         )
-    except Exception:
-        pass
 
     cm = _CopasiModel(dm, model, metabs, COPASI.CCore.Framework_Concentration,
                       species_ids, settable, initial)

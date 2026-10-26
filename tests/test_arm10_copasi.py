@@ -5,7 +5,7 @@ Two things are under test:
 1. **COPASI-mono** (``glycolysis_copasi_mono``) — the whole Teusink model run by
    COPASI/basico (LSODA) through process-bigraph, validated against the arm-1
    libroadrunner/CVODE reference. Two different integrators agree to a small but
-   non-zero residual (measured max-relative-error ~1.7e-6), so the accuracy gate
+   non-zero residual (measured max-relative-error ~1.29e-7), so the accuracy gate
    ``MONO_TOL`` sits well above that and tracks a genuine engine swap, not
    integrator noise.
 
@@ -20,13 +20,13 @@ Two things are under test:
 Tolerances (chosen + recorded here):
 
 * ``MONO_TOL = 1e-3`` — COPASI-mono vs. the libroadrunner reference. Measured
-  ~1.7e-6; ~3 orders of headroom.
+  ~1.29e-7; ~4 orders of headroom.
 * ``ENGINE_SWAP_TOL = 1e-3`` — cross-engine (COPASI lower) vs. arm 3
   (Tellurium lower) at the *same* coupling interval. This is the clean
   engine-swap proof: with the engine the only thing changed, the two agree to
-  machine-noise levels (measured ~1e-12), so this gate is a wide bound that
-  still fails hard if the COPASI node is wired wrongly. It isolates the engine
-  substitution from the (shared) operator-split error.
+  ~3.2e-7 (measured), so this gate is a wide bound that still fails hard if the
+  COPASI node is wired wrongly. It isolates the engine substitution from the
+  (shared) operator-split error.
 * ``CROSS_TOL = 0.5`` — cross-engine vs. the reference at the fine interval.
   The aldolase seam cuts the strong phosphate/energy coupling, so additive
   (Jacobi) splitting across it carries a large first-order error that shrinks
@@ -59,10 +59,11 @@ FINE_INTERVAL = 0.001     # ~0.21 max rel err (within CROSS_TOL): the convergenc
 
 @pytest.fixture(scope="module")
 def runs():
-    """Compute the heavy arm-10 runs once and share them across the module.
+    """Compute the arm-10 runs (except the slow fine interval) once per module.
 
-    The cross-engine fine run (0.001 = 30k steps) is the slow one, so everything
-    is run once here instead of per-test.
+    The cross-engine FINE run (0.001 = 30k steps, ~85 s) is NOT here — it lives
+    only in the ``slow``-marked convergence test so the default suite doesn't pay
+    for it. This fixture holds the fast(er) shared runs.
     """
     from viva_sbml_decomposition.composites.arm10_copasi import (
         run_copasi_mono,
@@ -72,13 +73,11 @@ def runs():
     ref_traj, ref_t = run_monolithic(n_steps=300)
     mono = run_copasi_mono(n_steps=300)
     cross_coarse = run_cross_engine(coupling_interval=COARSE_INTERVAL)
-    cross_fine = run_cross_engine(coupling_interval=FINE_INTERVAL)
     arm3_coarse = arm3_modular.run_arm(coupling_interval=COARSE_INTERVAL)
     return SimpleNamespace(
         ref=(ref_traj, ref_t),
         mono=mono,
         cross_coarse=cross_coarse,
-        cross_fine=cross_fine,
         arm3_coarse=arm3_coarse,
     )
 
@@ -150,16 +149,20 @@ def test_cross_engine_reproduces_arm3_at_same_interval(runs):
     )
 
 
+@pytest.mark.slow
 def test_cross_engine_converges_to_reference(runs):
     """Two different engines sharing one store converge to the reference.
 
     Monotone trend (fine beats coarse) AND the fine run is within CROSS_TOL while
     the coarse run is not — a gate that genuinely asserts convergence rather than
-    passing vacuously.
+    passing vacuously. Marked ``slow``: the fine run is 0.001 = 30k steps (~85 s).
     """
+    from viva_sbml_decomposition.composites.arm10_copasi import run_cross_engine
+
     ref_traj, ref_t = runs.ref
     coarse = compare_to_reference(ref_traj, ref_t, *runs.cross_coarse)
-    fine = compare_to_reference(ref_traj, ref_t, *runs.cross_fine)
+    fine = compare_to_reference(
+        ref_traj, ref_t, *run_cross_engine(coupling_interval=FINE_INTERVAL))
     assert not fine.diverged and not coarse.diverged
     assert fine.max_rel_err < coarse.max_rel_err, (
         f"fine {fine.max_rel_err:.3e} not better than coarse {coarse.max_rel_err:.3e}"
@@ -193,9 +196,46 @@ def test_cross_engine_uses_two_distinct_engines():
 
 
 # --------------------------------------------------------------------------- #
+# Bulk-SET bit-identity (the guarantee the COPASI runtime story rests on).     #
+# --------------------------------------------------------------------------- #
+
+def test_bulk_set_is_bit_identical_to_basico_set_species():
+    """The raw-handle bulk SET == basico's per-name set_species, and actually writes.
+
+    Injecting one perturbed state via the hot-loop raw path and via
+    ``basico.set_species(exact=True, initial_concentration=...)`` must give equal
+    post-step trajectories (~1e-12) — the pinned fast-path guarantee — AND both
+    must differ clearly from the unset baseline, so a silent no-op SET cannot
+    masquerade as a pass. Run through the retrying subprocess (loads COPASI).
+    """
+    from viva_sbml_decomposition.composites.arm10_copasi import copasi_set_bit_identity
+
+    r = copasi_set_bit_identity()
+    # SET-level: the two paths write the IDENTICAL initial concentration (no
+    # integration), the pure bit-identity guarantee.
+    assert r["set_level_max_abs_diff"] < 1e-12, (
+        f"raw-handle SET writes a different initial concentration than "
+        f"basico.set_species (max |Δ| = {r['set_level_max_abs_diff']:.3e}); "
+        f"the fast path is NOT bit-identical"
+    )
+    # Integration-level: same post-step trajectory to within CVODE's own rtol
+    # (1e-8); the machine-eps SET difference amplifies to ~1e-10 over one interval.
+    assert r["post_step_max_abs_diff"] < 1e-8, (
+        f"post-step divergence {r['post_step_max_abs_diff']:.3e} exceeds the "
+        f"integrator tolerance; the SET paths are not equivalent"
+    )
+    # Not a silent no-op: the perturbed SET visibly moved the result.
+    assert r["raw_vs_baseline"] > 1e-3, (
+        f"perturbed SET barely moved the result ({r['raw_vs_baseline']:.3e}); "
+        f"a silent no-op SET could be passing"
+    )
+
+
+# --------------------------------------------------------------------------- #
 # Measurement helper.                                                          #
 # --------------------------------------------------------------------------- #
 
+@pytest.mark.slow
 def test_measurement_helper_reports_accuracy_and_timing():
     """measure_copasi() returns the mono accuracy/timing and a finite cross number."""
     from viva_sbml_decomposition.composites.arm10_copasi import measure_copasi
