@@ -104,3 +104,13 @@ def test_decision_table_six_rows():
     spec = _spec("decision_table", "DecisionTable")
     t = spec["data"][0]
     assert t["type"] == "table" and len(t["cells"]["values"][0]) == 6
+
+
+def test_standalone_report_embeds_all_figures(tmp_path):
+    """The assembled investigation report embeds every figure's interactive html."""
+    from viva_sbml_decomposition.visualizations.report import build_report, _FIGURES
+    out = build_report(str(tmp_path / "report.html"))
+    html = open(out).read()
+    assert html.count("Plotly.newPlot") == len(_FIGURES) == 9
+    # narrative + decision content present
+    assert "Verdict" in html and "composab" in html.lower()

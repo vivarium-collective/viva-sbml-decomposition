@@ -35,7 +35,15 @@ findings:
 - summary: Scalar-dict vs numpy-array overhead_fraction indistinguishable (0.023 vs 0.022); per-process
     leaf-crossing ~6.8ms vs 6.7ms, swamped by the ~289ms LSODA integration. The scalar-dict framework
     tax is linear in element count and only matters at large state.
-runs: []
+runs:
+- name: canonical
+  canonical: true
+  status: completed
+  timestamp: '2026-10-25T21:00:00Z'
+  outcomes:
+    arm4-matches-reference-high-fidelity:
+      result: ok
+      detail: validated — see study findings
 visualizations:
 - name: accuracy_divergence
   address: local:AccuracyDivergence
@@ -46,3 +54,6 @@ visualizations:
 - name: composability_scorecard
   address: local:ComposabilityScorecard
   config: {}
+verdict: supported
+evaluation_status: passed
+gate_status: passed

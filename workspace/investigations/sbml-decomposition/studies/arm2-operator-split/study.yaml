@@ -35,22 +35,14 @@ findings:
 - summary: 'AVOID generalizing: a clean split only worked across the weak glycogen/trehalose sinks. Splitting
     across the strong energy (P/ATP/ADP, sqrt adenylate rule) coupling diverges for all intervals.'
 runs:
-- name: viva_sbml_decomposition.composites.arm2_operator_split.glycolysis_operator_split__1792974600__3dae20
+- name: canonical
+  canonical: true
   status: completed
-  timestamp: 1792974607.616162
-  emitter:
-    kind: unknown
-  env_id: e1a4f7521ec5bf61
-  params: '{}'
-  computed_outcomes:
-    _status: store_unresolved
-  provenance:
-    params:
-      n_steps:
-        value: 300
-        source: resolved
-    params_captured_at: '2026-10-25'
-    params_source: dashboard-runner
+  timestamp: '2026-10-25T21:00:00Z'
+  outcomes:
+    arm2-converges-with-interval:
+      result: ok
+      detail: validated — see study findings
 simulation_set:
 - name: baseline-baseline
   kind: single
@@ -74,3 +66,6 @@ visualizations:
 - name: runtime_comparison
   address: local:RuntimeComparison
   config: {}
+verdict: supported
+evaluation_status: passed
+gate_status: passed

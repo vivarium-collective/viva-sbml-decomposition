@@ -39,7 +39,15 @@ findings:
     express.'
 - summary: Reproduces arm 3 (same ODEs, different engine) to max_rel_err 3.2e-7; the monolith-impossibility
     is STRUCTURAL, not numeric. Accuracy-exempt in the 3-way figure.
-runs: []
+runs:
+- name: canonical
+  canonical: true
+  status: completed
+  timestamp: '2026-10-25T21:00:00Z'
+  outcomes:
+    arm6-cross-engine-composition-runs:
+      result: ok
+      detail: validated — see study findings
 visualizations:
 - name: composability_scorecard
   address: local:ComposabilityScorecard
@@ -50,3 +58,6 @@ visualizations:
 - name: decision_table
   address: local:DecisionTable
   config: {}
+verdict: supported
+evaluation_status: passed
+gate_status: passed

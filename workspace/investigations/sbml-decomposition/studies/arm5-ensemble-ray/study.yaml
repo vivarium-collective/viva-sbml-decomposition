@@ -33,7 +33,15 @@ findings:
 - summary: libroadrunner does NOT release the GIL during .simulate() (8-instance ThreadPool = 0.99x),
     so Ray's separate OS processes are the only path; in-process parallel_processes backfires for this
     CVODE-wrapping work.
-runs: []
+runs:
+- name: canonical
+  canonical: true
+  status: completed
+  timestamp: '2026-10-25T21:00:00Z'
+  outcomes:
+    arm5-real-parallel-speedup:
+      result: ok
+      detail: validated — see study findings
 visualizations:
 - name: ensemble_scaling
   address: local:EnsembleScaling
@@ -41,3 +49,6 @@ visualizations:
 - name: runtime_comparison
   address: local:RuntimeComparison
   config: {}
+verdict: supported
+evaluation_status: passed
+gate_status: passed

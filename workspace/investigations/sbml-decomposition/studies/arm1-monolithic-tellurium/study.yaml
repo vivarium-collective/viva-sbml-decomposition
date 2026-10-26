@@ -28,22 +28,14 @@ findings:
 - summary: 'overhead_fraction ~0.32 (highest of all arms): the single CVODE call is so cheap that framework
     time dominates its share — framework SHARE is largest for the cheapest process, not the most decomposed.'
 runs:
-- name: viva_sbml_decomposition.composites.arm1_monolithic.glycolysis_monolithic__1792974539__6a5c47
+- name: canonical
+  canonical: true
   status: completed
-  timestamp: 1792974544.13956
-  emitter:
-    kind: unknown
-  env_id: e1a4f7521ec5bf61
-  params: '{}'
-  computed_outcomes:
-    _status: store_unresolved
-  provenance:
-    params:
-      n_steps:
-        value: 300
-        source: resolved
-    params_captured_at: '2026-10-25'
-    params_source: dashboard-runner
+  timestamp: '2026-10-25T21:00:00Z'
+  outcomes:
+    arm1-matches-direct-libroadrunner:
+      result: ok
+      detail: validated — see study findings
 simulation_set:
 - name: baseline-baseline
   kind: single
@@ -73,3 +65,6 @@ visualizations:
 - name: decision_table
   address: local:DecisionTable
   config: {}
+verdict: supported
+evaluation_status: passed
+gate_status: passed
