@@ -66,11 +66,9 @@ scientific_argument:
     has limits: Tellurium''s monolithic build strains superlinearly at scale, and SBML cannot represent an agent-based model outside its mean-field limit.'
   evidence_for:
   - sbml-in-tellurium (monolithic) matches direct libroadrunner to ~1e-6 and is the fastest implementation; bulk-port binding makes it ~12% faster, bit-identical.
-  - mechanical-split-cost and biological-modular-seam show real split error that shrinks with the coupling interval (0.587->0.067; 0.468->0.100). mechanical-split-cost now uses additive (Jacobi) coupling
-    via the generic reaction_split composite rather than the earlier sequential Lie split.
+  - "mechanical-split-cost and biological-modular-seam show real split error that shrinks with the coupling interval (mechanical-split-cost, additive Jacobi coupling: 0.857 at 0.1 -> 0.112 at 0.0125 -> 0.0066 at 0.001; biological-modular-seam: 0.468 -> 0.100). The additive coupling converges but is not free: at 0.0125 it is 0.112."
   - fully-native-pbg (fully native) reaches ~1e-7 fidelity with no libroadrunner at runtime; at 17 species the scalar-dict vs numpy-array leaf choice is perf-irrelevant.
-  - cross-engine-coupling runs a cross-engine hybrid (libroadrunner + a second engine in one composite) that a monolith cannot express, reproducing biological-modular-seam to 3.2e-7 with the native lower
-    half — the composability payoff; engines are interchangeable at the seam.
+  - cross-engine-coupling runs a cross-engine hybrid (libroadrunner + a second engine in one composite) that a monolith cannot express, with either the native or the COPASI lower half matching the Tellurium lower half at the same interval to ~3e-7 (an engine-swap drop-in, not bit-reproducible) — the composability payoff.
   - ensemble-and-multirate (same-rate ensemble) achieves a real 7.5x wall-clock speedup via Ray.
   - 'ensemble-and-multirate (multi-rate ensemble) shows process-bigraph #270''s heap scheduler is bit-identical to the scan loop and its multi-rate advantage grows with process count (1.0x->1.64x over P=4->256).'
   - bigger-models-and-abm-limit measures the monolithic libroadrunner BUILD straining superlinearly (~O(N^1.64), 0.20s->18.5s over 97->1537 species).
