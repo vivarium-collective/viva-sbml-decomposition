@@ -3522,56 +3522,6 @@ wheels = [
 ]
 
 [[package]]
-name = "sbml-decomposition"
-version = "0.0.0"
-source = { editable = "." }
-dependencies = [
-    { name = "bigraph-schema" },
-    { name = "bigraph-viz" },
-    { name = "copasi-basico" },
-    { name = "jinja2" },
-    { name = "jsonschema", extra = ["format-nongpl"] },
-    { name = "matplotlib" },
-    { name = "plotly" },
-    { name = "process-bigraph" },
-    { name = "pypdf" },
-    { name = "pyyaml" },
-    { name = "ray" },
-    { name = "viva-tellurium" },
-    { name = "vivarium-workbench" },
-]
-
-[package.optional-dependencies]
-cli = [
-    { name = "rich" },
-    { name = "typer" },
-]
-dev = [
-    { name = "pytest" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "bigraph-schema", specifier = ">=1.8.1" },
-    { name = "bigraph-viz", specifier = ">=2.0.3" },
-    { name = "copasi-basico" },
-    { name = "jinja2", specifier = ">=3.1" },
-    { name = "jsonschema", extras = ["format-nongpl"], specifier = ">=4.21" },
-    { name = "matplotlib" },
-    { name = "plotly" },
-    { name = "process-bigraph", git = "https://github.com/vivarium-collective/process-bigraph.git?branch=main" },
-    { name = "pypdf", specifier = ">=4.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4" },
-    { name = "pyyaml", specifier = ">=6.0" },
-    { name = "ray" },
-    { name = "rich", marker = "extra == 'cli'" },
-    { name = "typer", marker = "extra == 'cli'" },
-    { name = "viva-tellurium", git = "https://github.com/vivarium-collective/viva-tellurium.git?branch=main" },
-    { name = "vivarium-workbench", git = "https://github.com/vivarium-collective/vivarium-workbench.git?branch=main" },
-]
-provides-extras = ["dev", "cli"]
-
-[[package]]
 name = "scipy"
 version = "1.17.1"
 source = { registry = "https://pypi.org/simple" }
@@ -4020,6 +3970,56 @@ xarray = [
     { name = "zarr", version = "3.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "zarrs" },
 ]
+
+[[package]]
+name = "viva-sbml-decomposition"
+version = "0.0.0"
+source = { editable = "." }
+dependencies = [
+    { name = "bigraph-schema" },
+    { name = "bigraph-viz" },
+    { name = "copasi-basico" },
+    { name = "jinja2" },
+    { name = "jsonschema", extra = ["format-nongpl"] },
+    { name = "matplotlib" },
+    { name = "plotly" },
+    { name = "process-bigraph" },
+    { name = "pypdf" },
+    { name = "pyyaml" },
+    { name = "ray" },
+    { name = "viva-tellurium" },
+    { name = "vivarium-workbench" },
+]
+
+[package.optional-dependencies]
+cli = [
+    { name = "rich" },
+    { name = "typer" },
+]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bigraph-schema", specifier = ">=1.8.1" },
+    { name = "bigraph-viz", specifier = ">=2.0.3" },
+    { name = "copasi-basico" },
+    { name = "jinja2", specifier = ">=3.1" },
+    { name = "jsonschema", extras = ["format-nongpl"], specifier = ">=4.21" },
+    { name = "matplotlib" },
+    { name = "plotly" },
+    { name = "process-bigraph", git = "https://github.com/vivarium-collective/process-bigraph.git?branch=main" },
+    { name = "pypdf", specifier = ">=4.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4" },
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "ray" },
+    { name = "rich", marker = "extra == 'cli'" },
+    { name = "typer", marker = "extra == 'cli'" },
+    { name = "viva-tellurium", git = "https://github.com/vivarium-collective/viva-tellurium.git?branch=main" },
+    { name = "vivarium-workbench", git = "https://github.com/vivarium-collective/vivarium-workbench.git?branch=main" },
+]
+provides-extras = ["dev", "cli"]
 
 [[package]]
 name = "viva-superpowers"
