@@ -16,13 +16,10 @@ import json
 import os
 
 import numpy as np
-from process_bigraph import allocate_core
 
-from viva_tellurium.composites import register_tellurium  # noqa: F401 (used via core_extensions)
-
-from ..composites import (arm1_monolithic, arm2_operator_split, arm4_native,
-                          arm6_coupling)
-from ..composites._run import extract_run_timed
+from ..composites.engine_monolithic import (run_engine_monolithic,
+                                            time_engine_monolithic)
+from ..composites.reaction_split import run_reaction_split, time_reaction_split
 from ..harness.accuracy import compare_to_reference
 from ..harness.composability import score_arm
 from ..models.glycolysis import GLYCOLYSIS_META
@@ -41,42 +38,33 @@ ARMS = [
 ]
 
 
-def _timed(doc, core, species_order=None):
-    traj, t, rt = extract_run_timed(doc, core, T_END, SP, detail=True,
-                                    species_order=species_order)
-    return traj, t, rt
-
-
 def collect_metrics() -> dict:
-    # --- arm 1: the reference (measured live) ---
-    # Arm 1 now runs with bulk-binding (bulk_species=True, Array species port):
-    # measure the SAME bulk document run_arm uses so the overhead reflects it.
-    ref_traj, ref_t = arm1_monolithic.run_arm(n_steps=300)
-    c1b = allocate_core(); register_tellurium(c1b)
-    _, _, rt1 = _timed(
-        arm1_monolithic._build_document(arm1_monolithic._interval(300)), c1b,
-        species_order=list(arm1_monolithic._species_order()))
+    # Every arm column is measured LIVE through the GENERIC composites:
+    #   arm1 = engine_monolithic(tellurium)     arm4 = engine_monolithic(native)
+    #   arm2 = reaction_split(seam=mechanical)  arm6 = reaction_split(aldolase, tellurium+native)
+    # --- arm 1: the reference (bulk-bound tellurium monolith) ---
+    ref_traj, ref_t, rt1 = time_engine_monolithic("glycolysis", "tellurium", 300)
 
-    # --- arm 2: operator-split, fine interval (measured live) ---
-    c2 = allocate_core(); arm2_operator_split.register_operator_split(c2)
-    _, _, rt2 = _timed(arm2_operator_split._build_document(0.0125), c2)
-    a2_traj, a2_t = arm2_operator_split.run_arm(coupling_interval=0.0125)
+    # --- arm 2: mechanical split, fine interval ---
+    _, _, rt2 = time_reaction_split("glycolysis", "mechanical", "tellurium", "tellurium", 0.0125)
+    a2_traj, a2_t = run_reaction_split("glycolysis", "mechanical", "tellurium", "tellurium",
+                                       coupling_interval=0.0125)
     acc2 = compare_to_reference(ref_traj, ref_t, a2_traj, a2_t)
+    a2c_traj, a2c_t = run_reaction_split("glycolysis", "mechanical", "tellurium", "tellurium",
+                                         coupling_interval=0.1)
+    acc2_coarse = compare_to_reference(ref_traj, ref_t, a2c_traj, a2c_t)
 
-    # --- arm 4: native, both leaf variants (measured live) ---
-    c4s = allocate_core(); arm4_native.register_native_glycolysis(c4s)
-    _, _, rt4s = _timed(arm4_native._build_document("scalar", 200), c4s)
-    c4a = allocate_core(); arm4_native.register_native_glycolysis(c4a)
-    _, _, rt4a = _timed(arm4_native._build_document("array", 200), c4a)
-    # Accuracy must use the SAME output grid as the reference (n_steps=300) — a
+    # --- arm 4: native, both leaf variants ---
+    _, _, rt4s = time_engine_monolithic("glycolysis", "native", 200, native_leaf="scalar")
+    _, _, rt4a = time_engine_monolithic("glycolysis", "native", 200, native_leaf="array")
+    # Accuracy must use the SAME output grid as the reference (n_steps=300) - a
     # coarser grid would smear the sharp early transient under interpolation.
-    a4_traj, a4_t = arm4_native.run_arm(n_steps=300, leaf="scalar")
+    a4_traj, a4_t = run_engine_monolithic("glycolysis", "native", n_steps=300)
     acc4 = compare_to_reference(ref_traj, ref_t, a4_traj, a4_t)
 
-    # --- arm 6: cross-engine hybrid (measured live); accuracy-exempt ---
-    a6_traj, a6_t = arm6_coupling.run_arm()
-    c6b = allocate_core(); arm6_coupling.register_coupled_submodels(c6b)
-    _, _, rt6 = _timed(arm6_coupling._build_document(arm6_coupling.DEFAULT_COUPLING_INTERVAL), c6b)
+    # --- arm 6: cross-engine hybrid (tellurium upper + native lower); accuracy-exempt ---
+    a6_traj, a6_t, rt6 = time_reaction_split("glycolysis", "aldolase", "tellurium", "native",
+                                             0.005)
     arm6_finite = bool(all(np.all(np.isfinite(v)) for v in a6_traj.values()))
 
     def ov(rt):
@@ -105,7 +93,7 @@ def collect_metrics() -> dict:
     }
 
     convergence = {
-        "arm2": [[0.1, 0.587], [0.0125, float(acc2.max_rel_err)]],
+        "arm2": [[0.1, float(acc2_coarse.max_rel_err)], [0.0125, float(acc2.max_rel_err)]],
         "arm3": [[0.002, 0.468], [0.0005, 0.100]],
     }
 

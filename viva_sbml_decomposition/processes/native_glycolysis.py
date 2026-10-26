@@ -10,7 +10,7 @@ read out of the Antimony text is the block of parameter *constants*
 (``name = value;`` initializations), never a rate.
 
 **Faithfulness.** The port reproduces the arm-1 libroadrunner reference to
-~1e-7 max relative error (see :mod:`tests.test_arm4_native`), which is the
+~1e-7 max relative error (see :mod:`tests.test_engine_monolithic`), which is the
 honest validation that the RHS is the real kinetics and not a curve fit.
 
 **Stiffness.** Teusink glycolysis is moderately stiff (the GAPDH/PGK and the

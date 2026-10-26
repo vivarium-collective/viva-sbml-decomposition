@@ -168,7 +168,7 @@ def build_study_reports() -> list:
         # arm 9 (adversarial) runs a Lotka-Volterra ABM whose SBML reduction is
         # the mean-field ODE — and whose ABM half is deliberately NOT SBML.
         if slug == "arm9-abm-meanfield":
-            from ..composites.arm9_abm import LV_ANTIMONY
+            from ..composites.abm import LV_ANTIMONY
             model_html = (
                 "<h2>Model — the mean-field SBML reduction (Lotka-Volterra, Antimony)</h2>"
                 "<p class=\"muted\">This is the <strong>mean-field ODE reduction</strong> "

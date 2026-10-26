@@ -1,4 +1,4 @@
-"""Arm 8 — multi-organ scaling (stretch Tellurium to its strain point).
+"""Multi-organ scaling (stretch Tellurium to its strain point).
 
 Asserts, at a small affordable N: (1) both composites (monolithic single
 TelluriumProcess + decomposed N-organ, shared-blood) build and run through
@@ -12,18 +12,21 @@ import numpy as np
 import pytest
 from process_bigraph import allocate_core
 
-from viva_sbml_decomposition.composites.arm8_multiorgan import (
-    BLOOD,
-    BLOOD_INITIAL,
+from viva_sbml_decomposition.composites._multiorgan import (
     DEFAULT_COUPLING_INTERVAL,
-    DEFAULT_N_ORGANS,
-    all_species,
-    build_multiorgan_antimony,
-    glycolysis_multiorgan_decomposed,
-    glycolysis_multiorgan_mono,
     multiorgan_scaling,
     run_decomposed,
     run_mono,
+)
+from viva_sbml_decomposition.composites._multiorgan import _build_decomposed_document
+from viva_sbml_decomposition.composites.engine_monolithic import engine_monolithic
+from viva_sbml_decomposition.composites._emit import strip_emitter
+from viva_sbml_decomposition.models.multiorgan import (
+    BLOOD,
+    BLOOD_INITIAL,
+    DEFAULT_N_ORGANS,
+    all_species,
+    build_multiorgan_antimony,
     single_organ_antimony,
 )
 from viva_sbml_decomposition.harness.accuracy import compare_to_reference
@@ -54,16 +57,16 @@ def test_build_multiorgan_antimony_rejects_bad_n():
 
 
 def test_mono_generator_strips_emitter_and_carries_model():
-    doc = glycolysis_multiorgan_mono(n_organs=4)
+    doc = engine_monolithic(model="multiorgan_scaled", engine="tellurium")
     assert not any(k == "emitter" or k.startswith("emitter_") for k in doc)
     # config.model carries the N-organ Antimony (so the Model page can show it)
     model = doc["tellurium"]["config"]["model"]
     assert "model multiorgan_4" in model and model.count("_uptake:") == 4
-    assert sum(1 for k in glycolysis_multiorgan_mono() if k == "tellurium") == 1
+    assert model == build_multiorgan_antimony(4)
 
 
 def test_decomposed_generator_strips_emitter_and_has_n_organ_nodes():
-    doc = glycolysis_multiorgan_decomposed(n_organs=5)
+    doc = strip_emitter(_build_decomposed_document(5, DEFAULT_COUPLING_INTERVAL))
     assert not any(k == "emitter" or k.startswith("emitter_") for k in doc)
     assert sum(1 for k in doc if k.startswith("organ_")) == 5
     assert "blood" in doc and doc["blood"][BLOOD] == BLOOD_INITIAL
@@ -72,8 +75,8 @@ def test_decomposed_generator_strips_emitter_and_has_n_organ_nodes():
         if k.startswith("organ_"):
             assert node["inputs"]["species"] == ["blood"]
             assert node["outputs"]["species"] == ["blood"]
-    assert sum(1 for k in glycolysis_multiorgan_decomposed() if k.startswith("organ_")) \
-        == DEFAULT_N_ORGANS
+    doc8 = _build_decomposed_document(DEFAULT_N_ORGANS, DEFAULT_COUPLING_INTERVAL)
+    assert sum(1 for k in doc8 if k.startswith("organ_")) == DEFAULT_N_ORGANS
 
 
 def test_both_composites_run_and_decomposed_matches_reference():

@@ -5,7 +5,7 @@ The data is the measured scan-vs-heap timing of the arm-7 multi-rate composite
 intervals), carried in :meth:`generate_state` rather than ``metrics.json`` — arm 7
 is a scheduler measurement, not one of the cross-arm metric aggregates. The
 numbers are the real medians recorded at build time by
-``viva_sbml_decomposition.composites.arm7_multirate.multirate_scaling``; the regime
+``viva_sbml_decomposition.composites.ensemble.multirate_scaling``; the regime
 is documented, not fabricated: heap is ~5% SLOWER at tiny N (heap bookkeeping with
 nothing to gain) and pulls ahead as P grows, crossing over near P~50-64 and
 reaching ~1.6x by P=256 on real libroadrunner/CVODE instances.

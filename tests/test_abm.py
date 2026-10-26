@@ -1,6 +1,6 @@
-"""Arm 9 (adversarial): stochastic ABM vs its mean-field SBML/Tellurium reduction.
+"""ABM (adversarial): stochastic ABM vs its mean-field SBML/Tellurium reduction.
 
-Arm 9 is the case built to BREAK the naive "any model is an SBML model" claim.
+The ABM is the case built to BREAK the naive "any model is an SBML model" claim.
 A well-mixed stochastic Lotka-Volterra ABM (integer counts, exact Gillespie SSA)
 is compared to its deterministic mean-field ODE run in libroadrunner/CVODE. The
 tests assert the quantified feasibility finding:
@@ -33,8 +33,8 @@ from __future__ import annotations
 import numpy as np
 from process_bigraph import Composite, allocate_core
 
-from viva_sbml_decomposition.composites import arm9_abm
-from viva_sbml_decomposition.composites.arm9_abm import (
+from viva_sbml_decomposition.composites import abm
+from viva_sbml_decomposition.composites.abm import (
     LARGE_SCALE,
     MEANFIELD_SPECIES,
     SMALL_SCALE,
@@ -69,9 +69,9 @@ def test_abm_runs_as_process_with_integer_populations():
     """The ABM runs through process-bigraph and the population leaf is integer-valued."""
     core = allocate_core()
     register_predator_prey_abm(core)
-    doc = arm9_abm._build_abm_document(scale=LARGE_SCALE, n_points=arm9_abm.N_POINTS, seed=1)
+    doc = abm._build_abm_document(scale=LARGE_SCALE, n_points=abm.N_POINTS, seed=1)
     comp = Composite({"state": doc}, core=core)
-    comp.run(arm9_abm.T_END)
+    comp.run(abm.T_END)
     rows = comp.state["emitter"]["instance"].history
     assert rows, "ABM emitted no history"
     pops = np.array([r["population"] for r in rows], dtype=float)
@@ -123,7 +123,7 @@ def test_meanfield_ode_runs_finite_and_never_extinct():
         assert np.all(np.isfinite(y)), f"{name} not finite"
         # Neutrally-stable LV orbit: strictly positive, never hits the absorbing 0.
         assert y.min() > 0.0, f"{name} reached extinction — the ODE should orbit forever"
-    assert len(t) == arm9_abm.N_POINTS + 1
+    assert len(t) == abm.N_POINTS + 1
 
 
 def test_large_population_abm_mean_matches_ode():
@@ -174,7 +174,7 @@ def test_abm_ensemble_is_seed_controlled():
 
 def test_meanfield_antimony_on_model_page():
     """The mean-field generator carries the LV Antimony on config.model (the Model tab)."""
-    doc = arm9_abm.predator_prey_meanfield()
+    doc = abm.predator_prey_meanfield()
     tp = doc["tellurium"]
     model = tp["config"]["model"]
     assert "Prey" in model and "Pred" in model

@@ -57,7 +57,7 @@ M_PRED_DEATH = 1.0
 X0_DENSITY = 1.8
 Y0_DENSITY = 1.0
 
-# Calibrated population scales + horizon (see tests / arm9 report). "Large" is
+# Calibrated population scales + horizon (see tests / the ABM study). "Large" is
 # the regime where the mean-field reduction is valid; "small" is where it breaks.
 LARGE_SCALE = 400
 SMALL_SCALE = 8

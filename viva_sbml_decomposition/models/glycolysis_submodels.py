@@ -28,7 +28,7 @@ assignment rule whose radicand goes negative once ``P`` drifts too far. A pure
 Lie split (each submodel advancing a whole coupling interval in isolation) drives
 ``P`` out of that domain and CVODE blows up for *every* interval — arm 2 found
 this seam intractable that way. Arm 3 keeps it well-posed by sub-stepping the
-additive reconciliation (see :mod:`viva_sbml_decomposition.composites.arm3_modular`).
+additive reconciliation (see :mod:`viva_sbml_decomposition.composites.reaction_split`).
 """
 from __future__ import annotations
 

@@ -17,7 +17,7 @@ only measured through N=128; beyond that the figure shows BUILD-only anchors
 (decomposed run left honestly unmeasured, so no end-to-end crossover is claimed).
 
 Numbers are the real medians recorded by
-``viva_sbml_decomposition.composites.arm8_multiorgan.multiorgan_scaling`` — carried
+``viva_sbml_decomposition.composites._multiorgan.multiorgan_scaling`` — carried
 here (not in metrics.json) because arm 8 is a standalone scaling study. Do not
 hand-edit; re-run the helper to refresh.
 """

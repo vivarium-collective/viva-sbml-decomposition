@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import re
 
-from ..composites.arm8_multiorgan import all_species, build_multiorgan_antimony
-from ..composites.arm9_abm import LV_ANTIMONY, MEANFIELD_SPECIES
+from ..composites.abm import LV_ANTIMONY, MEANFIELD_SPECIES
 from .glycolysis import GLYCOLYSIS_ANTIMONY, GLYCOLYSIS_META
+from .multiorgan import all_species, build_multiorgan_antimony
 
 _REACTION_RE = re.compile(r"^\s*\w+\s*:[^;]*(?:->|=>)[^;]*;", re.M)
 

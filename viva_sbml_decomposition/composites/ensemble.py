@@ -31,8 +31,6 @@ from viva_sbml_decomposition.harness.timing import time_run
 
 from ._emit import strip_emitter
 from ._engine import ENGINES, EngineNode, engine_node, register_engines
-from .arm5_ensemble import _dispatch_errors, _draws, _try_ray
-from .arm7_multirate import DEFAULT_SCHEDULER, HORIZON, geometric_intervals
 from .engine_monolithic import (DEFAULT_N_STEPS, DEFAULT_T_END, T_END_BY_MODEL,
                                 resolve_model, run_engine_monolithic)
 
@@ -40,6 +38,77 @@ DEFAULT_N_INSTANCES = 8
 
 ParamDraw = Optional[dict]
 Intervals = Union[None, str, Sequence[float]]
+
+# Geometric-interval regime (shared by the generator, the measurement helper, and
+# the figure so they tell one consistent story). ``i_fast`` scales FINER as the
+# instance count grows (so the tick count grows with P — the O(P^2) driver the
+# heap scheduler cancels); ``i_slow`` overruns the run horizon so the slow tail is
+# exactly the "next step past the horizon" case #270 drops from the heap.
+HORIZON = 20.0           # run horizon for the scaling measurement (< t_end=30)
+_I_FAST_FACTOR = 3.0     # i_fast = HORIZON / (_I_FAST_FACTOR * n)
+_I_SLOW_FACTOR = 3.0     # i_slow = HORIZON * _I_SLOW_FACTOR (> HORIZON: dead tail)
+DEFAULT_SCHEDULER = "heap"
+
+
+def geometric_intervals(n: int, horizon: float = HORIZON) -> List[float]:
+    """``n`` geometrically-spaced coupling intervals, fastest -> slowest.
+
+    ``i_fast = horizon / (3 n)`` (finer as ``n`` grows, so the tick count grows
+    with ``P``); ``i_slow = 3 horizon`` (overruns the horizon). All distinct, so
+    the composite is genuinely multi-rate.
+    """
+    if n < 1:
+        raise ValueError("n must be >= 1")
+    i_fast = horizon / (_I_FAST_FACTOR * n)
+    i_slow = horizon * _I_SLOW_FACTOR
+    if n == 1:
+        return [i_fast]
+    r = (i_slow / i_fast) ** (1.0 / (n - 1))
+    return [i_fast * r**k for k in range(n)]
+
+
+# ---------------------------------------------------------------- parallel helpers
+
+def _draws(n_instances: int, param_draws: Optional[Sequence[ParamDraw]]) -> List[ParamDraw]:
+    if n_instances < 1:
+        raise ValueError("n_instances must be >= 1")
+    if param_draws is None:
+        return [None] * n_instances
+    draws = list(param_draws)
+    if len(draws) != n_instances:
+        raise ValueError(
+            f"param_draws has {len(draws)} entries but n_instances={n_instances}"
+        )
+    return draws
+
+
+def _try_ray():
+    """Return the ``ray`` module initialized with a modest cpu count, or None."""
+    try:
+        import ray
+    except ImportError:
+        return None
+    try:
+        if not ray.is_initialized():
+            n_cpus = min(DEFAULT_N_INSTANCES, os.cpu_count() or 1)
+            ray.init(
+                num_cpus=n_cpus,
+                ignore_reinit_error=True,
+                include_dashboard=False,
+                logging_level="ERROR",
+                configure_logging=False,
+            )
+        return ray
+    except (ConnectionError, OSError, RuntimeError):
+        # Ray init/connection failure = availability problem -> serial fallback.
+        return None
+
+
+def _dispatch_errors():
+    """Ray errors that mean the backend (not the model) failed."""
+    from ray.exceptions import RaySystemError
+
+    return (RaySystemError, ConnectionError)
 
 
 def _resolve_intervals(intervals: Intervals, n: int, horizon: float) -> Optional[List[float]]:
@@ -274,4 +343,77 @@ def run_multirate(model="glycolysis", engine="tellurium", n_instances=DEFAULT_N_
             keys = list(rows[0]["species"])
             traj = {s: np.array([r["species"][s] for r in rows], dtype=float) for s in keys}
         out.append((traj, t))
+    return out
+
+
+# ---------------------------------------------------------------- scheduler scaling
+
+def _make_composite(n_instances: int, scheduler: str, horizon: float) -> Composite:
+    """The multi-rate composite under ``scheduler`` (``scan`` | ``heap`` | ``auto``).
+
+    #270's API: the strategy is the ``"scheduler"`` config field on the
+    ``Composite``, passed next to ``"state"``.
+    """
+    core = allocate_core()
+    register_engines(core)
+    doc = build_document("glycolysis", "tellurium", n_instances, "geometric", horizon=horizon)
+    return Composite({"state": doc, "scheduler": scheduler}, core=core)
+
+
+def _reset(comp: Composite) -> None:
+    """Rewind a constructed composite to t=0 so ``run`` can be re-timed.
+
+    Resets each instance's roadrunner clock and clears the scheduler state, so
+    :func:`time_run` measures ``run()`` alone (construction excluded).
+    """
+    for path in comp.process_paths:
+        node = comp.state
+        for key in path:
+            node = node[key]
+        rr = getattr(node.get("instance"), "_rr", None)
+        if rr is not None:
+            rr.reset()
+    comp.front = {}
+    comp.state["global_time"] = 0.0
+    comp.global_time = 0.0
+    comp._event_heap = None
+    comp._run_ticks = 0
+
+
+def _final_state(comp: Composite) -> dict:
+    """Final per-instance species arrays, keyed by store id ``s<i>``."""
+    return {k: np.asarray(v, dtype=float) for k, v in comp.state["stores"].items()}
+
+
+def multirate_scaling(ns: Sequence[int] = (4, 16, 64), *,
+                      horizon: float = HORIZON, repeats: int = 3) -> List[dict]:
+    """Time the multi-rate ensemble under ``scan`` (O(P^2)) vs ``heap`` (#270).
+
+    For each ``n``, builds the composite once per scheduler and times ``run()``
+    alone (median of ``repeats``, one warmup). Returns
+    ``[{n, scan_s, heap_s, speedup, bit_identical}]`` with ``speedup = scan_s /
+    heap_s``. ``bit_identical`` compares the two schedulers' final per-instance
+    state (same math, different tick order), so it must be ``True`` at every ``n``.
+    ``speedup`` is whatever was measured: with real CVODE instances integration
+    dominates the per-tick scan at small P (crossover ~P=50-64).
+    """
+    out: List[dict] = []
+    for n in ns:
+        comp_scan = _make_composite(n, "scan", horizon)
+        scan = time_run(lambda c=comp_scan: (_reset(c), c.run(horizon)),
+                        repeats=repeats, warmup=True)
+        comp_heap = _make_composite(n, "heap", horizon)
+        heap = time_run(lambda c=comp_heap: (_reset(c), c.run(horizon)),
+                        repeats=repeats, warmup=True)
+        scan_s, heap_s = scan.median_s, heap.median_s
+        fs_scan, fs_heap = _final_state(comp_scan), _final_state(comp_heap)
+        bit_identical = (set(fs_scan) == set(fs_heap)
+                         and all(np.array_equal(fs_scan[k], fs_heap[k]) for k in fs_scan))
+        out.append({
+            "n": int(n),
+            "scan_s": float(scan_s),
+            "heap_s": float(heap_s),
+            "speedup": float(scan_s / heap_s) if heap_s > 0 else float("nan"),
+            "bit_identical": bool(bit_identical),
+        })
     return out

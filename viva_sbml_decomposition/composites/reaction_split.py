@@ -35,16 +35,19 @@ from process_bigraph.composite_generator import composite_generator
 from viva_sbml_decomposition.models.glycolysis import GLYCOLYSIS_META
 from viva_sbml_decomposition.models.glycolysis_submodels import (
     LOWER_GLYCOLYSIS, UPPER_GLYCOLYSIS)
+from viva_sbml_decomposition.processes.submodel import _load, _species_metadata
 
 from ._emit import strip_emitter
 from ._engine import (ENGINES, engine_node, register_engines,
                       run_in_subprocess_with_retry, tellurium_species_order)
-from ._run import extract_run
-from .arm2_operator_split import DEFAULT_SPLIT_B
-from .arm3_modular import _load, _species_metadata
+from ._run import extract_run, extract_run_timed
 from .engine_monolithic import T_END_BY_MODEL, resolve_model
 
 SPECIES_PATH = ("species",)
+
+# The "mechanical" seam's lower group: the G6P storage sinks (glycogen / trehalose)
+# branching off the core network. Everything else is the upper ("core") group.
+DEFAULT_SPLIT_B = ["vGLYCO", "vTreha"]
 
 # name -> (upper node name, upper reactions, lower node name, lower reactions,
 #          default coupling interval of the arm it reproduces)
@@ -163,3 +166,15 @@ def run_reaction_split(model="glycolysis", seam="aldolase", engine_a="tellurium"
             "viva_sbml_decomposition.composites.reaction_split", "_run_inproc", kw)
         return data["traj"], data["t"]
     return _run_inproc(**kw)
+
+
+def time_reaction_split(model="glycolysis", seam="aldolase", engine_a="tellurium",
+                        engine_b="tellurium", coupling_interval=None, t_end=None, *,
+                        detail=True):
+    """Run the split in-process; return ``(traj, t, RunTiming)`` (not for COPASI)."""
+    doc, antimony, t_end = _build(model, seam, engine_a, engine_b, coupling_interval,
+                                  t_end=t_end)
+    core = allocate_core()
+    register_engines(core)
+    return extract_run_timed(doc, core, t_end, list(tellurium_species_order(antimony)),
+                             detail=detail)

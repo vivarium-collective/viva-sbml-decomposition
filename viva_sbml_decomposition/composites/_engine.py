@@ -40,14 +40,13 @@ from viva_tellurium.composites import register_tellurium, seed_initial_stores
 
 from viva_sbml_decomposition.models.glycolysis import GLYCOLYSIS_ANTIMONY
 from viva_sbml_decomposition.processes.copasi_glycolysis import register_copasi
+from viva_sbml_decomposition.processes.submodel import register_modular_submodels
 from viva_sbml_decomposition.processes.native_glycolysis import (
     DEFAULT_METHOD,
     NativeSubmodelProcess,
     make_subset_rhs,
     register_native_glycolysis,
 )
-
-from .arm3_modular import register_modular_submodels
 
 ENGINES = ("tellurium", "copasi", "native")
 
@@ -166,15 +165,20 @@ def _copasi_monolithic(model, interval) -> EngineNode:
         stores={"stores": {}})
 
 
-def _native_monolithic(model, interval) -> EngineNode:
-    from viva_sbml_decomposition.processes.native_glycolysis import initial_concentrations
+def _native_monolithic(model, interval, leaf="scalar") -> EngineNode:
+    import numpy as np
+
+    from viva_sbml_decomposition.processes.native_glycolysis import (
+        SPECIES, initial_concentrations)
 
     _require_native_ok(model)
+    if leaf not in ("scalar", "array"):
+        raise ValueError(f"native leaf must be 'scalar' or 'array', got {leaf!r}")
     node = {
         "_type": "process",
         "address": "local:NativeGlycolysisProcess",
         "config": {
-            "model": model, "leaf": "scalar",
+            "model": model, "leaf": leaf,
             "absolute_tolerance": ABSOLUTE_TOLERANCE,
             "relative_tolerance": RELATIVE_TOLERANCE,
             "method": DEFAULT_METHOD,
@@ -183,10 +187,20 @@ def _native_monolithic(model, interval) -> EngineNode:
         "inputs": {"species": ["species"]},
         "outputs": {"species": ["species"]},
     }
+    initial = initial_concentrations()
+    if leaf == "array":
+        # ONE (17,) numpy array leaf is the state; a map[float] ``species_named``
+        # view is what the emitter reads so the trajectory round-trips by name.
+        node["outputs"] = {"species": ["species"], "species_named": ["species_named"]}
+        return EngineNode(
+            "native", "monolithic", node, register_native_glycolysis,
+            emit={"species": "map[float]"}, emit_inputs={"species": ["species_named"]},
+            stores={"species": np.array([initial[s] for s in SPECIES], dtype=float),
+                    "species_named": dict(initial)})
     return EngineNode(
         "native", "monolithic", node, register_native_glycolysis,
         emit={"species": "map[float]"}, emit_inputs={"species": ["species"]},
-        stores={"species": dict(initial_concentrations())})
+        stores={"species": dict(initial)})
 
 
 def _subset(engine, model, reactions, interval, species_path) -> EngineNode:
@@ -221,12 +235,14 @@ def _subset(engine, model, reactions, interval, species_path) -> EngineNode:
 def engine_node(engine: str, model: str, *, interval: float,
                 reactions: Optional[Sequence[str]] = None,
                 species_path: Sequence[str] = ("species",),
-                parameter_overrides: Optional[dict] = None) -> EngineNode:
+                parameter_overrides: Optional[dict] = None,
+                native_leaf: str = "scalar") -> EngineNode:
     """Dispatch ``engine`` -> :class:`EngineNode` for the monolithic or subset role.
 
     ``reactions=None`` -> monolithic (whole ``model``); a reaction list -> subset
     (delta onto the shared ``species_path`` store). ``parameter_overrides`` applies
-    to the tellurium monolith only.
+    to the tellurium monolith only; ``native_leaf`` (``scalar`` | ``array``) to the
+    native monolith only.
     """
     if engine not in ENGINES:
         raise ValueError(f"unknown engine {engine!r}; expected one of {ENGINES}")
@@ -238,7 +254,7 @@ def engine_node(engine: str, model: str, *, interval: float,
         return _tellurium_monolithic(model, interval, parameter_overrides)
     if engine == "copasi":
         return _copasi_monolithic(model, interval)
-    return _native_monolithic(model, interval)
+    return _native_monolithic(model, interval, native_leaf)
 
 
 # --------------------------------------------------------------------------- #

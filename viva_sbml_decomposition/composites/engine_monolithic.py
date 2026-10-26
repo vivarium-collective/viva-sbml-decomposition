@@ -24,7 +24,7 @@ from viva_sbml_decomposition.models.glycolysis import GLYCOLYSIS_ANTIMONY, GLYCO
 from ._emit import strip_emitter
 from ._engine import (ENGINES, EngineNode, engine_node, register_engines,
                       run_in_subprocess_with_retry, tellurium_species_order)
-from ._run import extract_run
+from ._run import extract_run, extract_run_timed
 
 DEFAULT_N_STEPS = 300
 DEFAULT_T_END = 10.0
@@ -34,8 +34,8 @@ T_END_BY_MODEL = {"glycolysis": GLYCOLYSIS_META["t_end"], "multiorgan_scaled": 1
 
 def resolve_model(model: str):
     """Return ``(model_id_or_None, antimony)`` for a registry id or raw Antimony."""
-    # Lazy: models.registry imports composites.arm8/arm9, so a top-level import
-    # here would be circular when the registry is imported first.
+    # Lazy: models.registry imports composites.abm, so a top-level import here
+    # would be circular when the registry is imported first.
     from ..models.registry import MODELS
 
     if model in MODELS:
@@ -45,12 +45,12 @@ def resolve_model(model: str):
     raise KeyError(f"unknown model {model!r}; registry ids: {sorted(MODELS)}")
 
 
-def _build(model, engine, n_steps, t_end, parameter_overrides=None):
+def _build(model, engine, n_steps, t_end, parameter_overrides=None, native_leaf="scalar"):
     model_id, antimony = resolve_model(model)
     if t_end is None:
         t_end = T_END_BY_MODEL.get(model_id, DEFAULT_T_END)
     en = engine_node(engine, antimony, interval=t_end / n_steps,
-                     parameter_overrides=parameter_overrides)
+                     parameter_overrides=parameter_overrides, native_leaf=native_leaf)
     return en, t_end
 
 
@@ -155,3 +155,20 @@ def run_engine_monolithic(model="glycolysis", engine="tellurium",
 
 def run_native_composite(model="glycolysis", n_steps=DEFAULT_N_STEPS, t_end=None):
     return run_engine_monolithic(model, "native", n_steps, t_end)
+
+
+def time_engine_monolithic(model="glycolysis", engine="tellurium", n_steps=DEFAULT_N_STEPS,
+                           t_end=None, *, detail=True, native_leaf="scalar"):
+    """Run the monolith in-process and return ``(traj, t, RunTiming)``.
+
+    The process-vs-framework timing split behind the overhead figures
+    (``detail=True`` also fills ``timing.per_process``). In-process, so not for COPASI.
+    """
+    en, t_end = _build(model, engine, n_steps, t_end, native_leaf=native_leaf)
+    _, antimony = resolve_model(model)
+    core = allocate_core()
+    en.register(core)
+    register_engines(core)
+    return extract_run_timed(_document(en), core, t_end, _species_ids(en, antimony),
+                             detail=detail,
+                             species_order=list(en.species_order) if en.species_order else None)

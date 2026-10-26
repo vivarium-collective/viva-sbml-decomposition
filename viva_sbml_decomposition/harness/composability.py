@@ -58,7 +58,7 @@ and ``False`` for arms 1-5. Arms 1-5 each have a monolithic reference (arm 1) an
 so carry a measured accuracy; arm 6 is the composability EXISTENCE PROOF and has
 no dedicated accuracy benchmark of its own, so it is kept off the accuracy axis by
 design. (The exemption is NOT because arm 6's numbers differ — it solves the same
-ODEs and reproduces arm 3 to ~1e-7; see ``arm6_coupling``.)
+ODEs and reproduces arm 3 to ~1e-7; see ``reaction_split``.)
 
 The ``accuracy`` field here is a **placeholder** (``None`` for every arm): this
 module scores composability only. The real per-arm accuracy numbers come from the
