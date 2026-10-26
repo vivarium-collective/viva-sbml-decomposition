@@ -3356,7 +3356,7 @@ provides-extras = ["dev", "cli"]
 [[package]]
 name = "viva-superpowers"
 version = "0.24.0"
-source = { git = "https://github.com/vivarium-collective/viva-superpowers.git?branch=main#f67ff2b1004021fb9542d2c479961c1d83de00b5" }
+source = { git = "https://github.com/vivarium-collective/viva-superpowers.git?branch=main#d2867783f413265b3d89e26a07240458f3b32cc5" }
 dependencies = [
     { name = "bigraph-schema" },
     { name = "click" },
@@ -3380,7 +3380,7 @@ evaluator = [
 [[package]]
 name = "viva-tellurium"
 version = "0.1.2"
-source = { git = "https://github.com/vivarium-collective/viva-tellurium.git?branch=main#164c67038d6fecc0195eb70fb6585ad17a4d0259" }
+source = { git = "https://github.com/vivarium-collective/viva-tellurium.git?branch=main#82e911d2f1249177df894b3417deb0d02e604df9" }
 dependencies = [
     { name = "bigraph-schema" },
     { name = "libroadrunner" },
@@ -3403,7 +3403,7 @@ dependencies = [
 [[package]]
 name = "vivarium-workbench"
 version = "0.4.1"
-source = { git = "https://github.com/vivarium-collective/vivarium-workbench.git?branch=main#7c1132a70b128c8dc52d07ea71a16fb32cae838e" }
+source = { git = "https://github.com/vivarium-collective/vivarium-workbench.git?branch=main#1ea4b96a17668a22ad8e45b1e59a49954efd5c3f" }
 dependencies = [
     { name = "bigraph-schema" },
     { name = "boto3" },

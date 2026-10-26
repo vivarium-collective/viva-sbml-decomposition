@@ -51,6 +51,7 @@ from viva_sbml_decomposition.processes.predator_prey_abm import (
 )
 
 from ._emit import strip_emitter
+from ._engine import tellurium_species_order
 from ._run import extract_run
 
 MEANFIELD_SPECIES = ["Prey", "Pred"]
@@ -185,7 +186,12 @@ def meanfield_trajectory(core=None, scale: int = LARGE_SCALE,
         core = allocate_core()
     register_tellurium(core)
     doc = _build_meanfield_document(scale, t_end, n_points)
-    return extract_run(doc, core, t_end, MEANFIELD_SPECIES)
+    # viva-tellurium #26 made ``bulk_species`` the default, so make_tellurium_document
+    # emits ``species`` as a single ordered Array leaf (getFloatingSpeciesIds order)
+    # rather than a string-keyed map. Hand extract_run that order so it slices
+    # Prey/Pred out of the array column (the glycolysis arms already do this).
+    order = list(tellurium_species_order(build_lv_antimony(scale)))
+    return extract_run(doc, core, t_end, MEANFIELD_SPECIES, species_order=order)
 
 
 # Single-name interface for the ensemble helper (re-exported for symmetry with
