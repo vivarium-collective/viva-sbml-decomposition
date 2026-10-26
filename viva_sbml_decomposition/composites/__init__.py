@@ -17,3 +17,8 @@ from . import arm9_abm  # noqa: F401  predator_prey_abm / predator_prey_meanfiel
 from . import arm10_copasi  # noqa: F401  glycolysis_copasi_mono / glycolysis_cross_engine (COPASI second engine)
 from . import engine_monolithic  # noqa: F401  engine_monolithic / native_composite (generic, model-as-data)
 from . import reaction_split  # noqa: F401  reaction_split (generic, two-engine reaction partition)
+from . import ensemble  # noqa: F401  ensemble (generic, same-rate + multi-rate #270)
+# Stable names for the consolidated composite set: the ABM arm is re-exported
+# unchanged (thin aliases of the arm-9 generators; arm 9 is not reimplemented).
+from .arm9_abm import predator_prey_abm as abm  # noqa: F401,E402
+from .arm9_abm import predator_prey_meanfield as abm_meanfield  # noqa: F401,E402
