@@ -2271,7 +2271,7 @@ wheels = [
 [[package]]
 name = "process-bigraph"
 version = "1.10.1"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/vivarium-collective/process-bigraph.git?branch=main#3d528485a729c88cbb64c3f27f9ff6b14f01d077" }
 dependencies = [
     { name = "bigraph-schema" },
     { name = "matplotlib" },
@@ -2282,10 +2282,6 @@ dependencies = [
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "sympy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ef/80/0571e9030457043ac285b2090732413f3586faae2eb93752f0eba86424ce/process_bigraph-1.10.1.tar.gz", hash = "sha256:7348eaae39da99a07ff28f781da7728b5dba8fc76ddbbf0b1adae209308ad777", size = 265746, upload-time = "2026-10-25T18:45:36.348Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/56/2b/c8786628416df2dae41afc4ec4e7e577054211bad450faa438a5bcc17aa9/process_bigraph-1.10.1-py3-none-any.whl", hash = "sha256:617a4d682dc3f2a78f12d2ae9f67106c6ce2bf88319ab5d95b392f54d8497f40", size = 286175, upload-time = "2026-10-25T18:45:34.626Z" },
 ]
 
 [[package]]
@@ -3368,7 +3364,7 @@ requires-dist = [
     { name = "jsonschema", extras = ["format-nongpl"], specifier = ">=4.21" },
     { name = "matplotlib" },
     { name = "plotly" },
-    { name = "process-bigraph", specifier = ">=1.8.5" },
+    { name = "process-bigraph", git = "https://github.com/vivarium-collective/process-bigraph.git?branch=main" },
     { name = "pypdf", specifier = ">=4.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4" },
     { name = "pyyaml", specifier = ">=6.0" },

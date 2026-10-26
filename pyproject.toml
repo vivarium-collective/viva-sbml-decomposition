@@ -56,3 +56,6 @@ packages = ["viva_sbml_decomposition"]
 [tool.uv.sources]
 vivarium-workbench = { git = "https://github.com/vivarium-collective/vivarium-workbench.git", branch = "main" }
 viva-tellurium = { git = "https://github.com/vivarium-collective/viva-tellurium.git", branch = "main" }
+# process-bigraph main carries #270 (event-heap multi-rate scheduler, scheduler=auto/heap/scan)
+# — not yet in a PyPI release; the multi-rate arm needs it.
+process-bigraph = { git = "https://github.com/vivarium-collective/process-bigraph.git", branch = "main" }
