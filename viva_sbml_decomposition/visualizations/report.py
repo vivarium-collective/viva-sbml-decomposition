@@ -54,6 +54,32 @@ def _fig_html(cls) -> str:
     return inst.update(None)["html"]
 
 
+# Per-study "hero" figures — each study page leads with the figures that capture
+# ITS main point (a curated slice of the suite; matches the study.yaml viz blocks).
+_STUDY_FIGURES = {
+    "arm1-monolithic-tellurium": [
+        ("The glycolysis trajectory this arm runs exactly", SpeciesDynamics),
+        ("Runtime — framework share per arm", RuntimeComparison),
+        ("Where the time goes — process vs framework", OverheadBreakdown)],
+    "arm2-operator-split": [
+        ("Splitting error shrinks with the coupling interval", ConvergenceCurves),
+        ("Accuracy vs the monolithic reference", AccuracyDivergence)],
+    "arm3-modular-submodels": [
+        ("Convergence of the biological-seam decomposition", ConvergenceCurves),
+        ("Composability — this is where it climbs", ComposabilityScorecard)],
+    "arm4-native-pbg": [
+        ("Reference fidelity of the native port (~1e-7)", AccuracyDivergence),
+        ("Runtime — framework share per arm", RuntimeComparison)],
+    "arm5-ensemble-ray": [
+        ("The parallel win — serial vs Ray", EnsembleScaling),
+        ("Runtime — framework share per arm", RuntimeComparison)],
+    "arm6-coupling-demo": [
+        ("Composability — the cross-engine arm tops the axis", ComposabilityScorecard),
+        ("The 3-way tradeoff (arm 6 off the accuracy axis)", TradeoffMap),
+        ("Decision guide", DecisionTable)],
+}
+
+
 def _esc(s: str) -> str:
     return (str(s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
 
@@ -102,8 +128,58 @@ def build_report(out_path: str) -> str:
     return out_path
 
 
+def build_study_reports() -> list:
+    """Emit a committed per-study report page (studies/<slug>/report.html) for each
+    member study: its question/claim, hero figures, findings, and the Antimony model
+    it runs. Durable (survives a fresh clone + the PR), unlike the run-coupled
+    workbench gallery. Returns the list of written paths."""
+    from ..models.glycolysis import GLYCOLYSIS_ANTIMONY, GLYCOLYSIS_META
+    studies_dir = os.path.join(os.path.dirname(_INV), "studies")
+    written = []
+    for slug, figs in _STUDY_FIGURES.items():
+        spath = os.path.join(studies_dir, slug, "study.yaml")
+        if not os.path.isfile(spath):
+            continue
+        s = yaml.safe_load(open(spath))
+        findings = "".join(
+            f"<li>{_esc(f.get('summary'))}</li>" for f in (s.get("findings") or [])
+            if isinstance(f, dict) and f.get("summary"))
+        fig_html = "".join(
+            f'<h3>{_esc(h)}</h3><div class="fig">{_fig_html(c)}</div>' for h, c in figs)
+        html = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{_esc(s.get('title') or slug)}</title>
+<style>
+ :root {{ color-scheme: light dark; --fg:#1a1a1a; --muted:#666; --bg:#fff; --card:#f7f7f9; --accent:#2563eb; }}
+ @media (prefers-color-scheme: dark) {{ :root {{ --fg:#e8e8ea; --muted:#9a9aa2; --bg:#141417; --card:#1e1e24; --accent:#6ea8ff; }} }}
+ body {{ font:16px/1.6 -apple-system,Segoe UI,Roboto,sans-serif; color:var(--fg); background:var(--bg); max-width:980px; margin:0 auto; padding:24px 16px; }}
+ h1 {{ font-size:1.5rem; }} .claim {{ background:var(--card); border-left:4px solid var(--accent); padding:12px 16px; border-radius:8px; }}
+ .fig {{ background:var(--card); border-radius:10px; padding:12px; margin:10px 0 26px; }} .muted {{ color:var(--muted); }}
+ pre {{ background:var(--card); padding:12px; border-radius:8px; overflow:auto; font-size:12px; }}
+</style></head><body>
+<p class="muted"><a href="../../report.html">&larr; investigation report</a></p>
+<h1>{_esc(s.get('title') or slug)}</h1>
+<p class="muted">{_esc(s.get('question'))}</p>
+<div class="claim"><strong>Claim.</strong> {_esc(s.get('claim'))}</div>
+<h2>What this arm shows</h2>{fig_html}
+<h2>Findings</h2><ul>{findings}</ul>
+<h2>Model (Teusink glycolysis, {_esc(GLYCOLYSIS_META.get('biomodels_id'))}) — inline Antimony</h2>
+<details><summary>Show the Antimony source ({len(GLYCOLYSIS_META.get('species') or [])} floating species)</summary>
+<pre>{_esc(GLYCOLYSIS_ANTIMONY)}</pre></details>
+</body></html>"""
+        out = os.path.join(studies_dir, slug, "report.html")
+        tmp = out + ".tmp"
+        with open(tmp, "w") as f:
+            f.write(html)
+        os.replace(tmp, out)
+        written.append(out)
+    return written
+
+
 if __name__ == "__main__":
     import sys
     default = os.path.join(os.path.dirname(_INV), "report.html")
     out = sys.argv[1] if len(sys.argv) > 1 else default
     print("wrote", build_report(out))
+    for p in build_study_reports():
+        print("wrote", p)
