@@ -65,6 +65,22 @@ composites and investigations; regenerate any time with
 | `predator_prey_meanfield` | Arm 9 (mean-field reduction): the deterministic Lotka-Volterra ODE as Antimony integrated by libroadrunner/CVODE in a TelluriumProcess — the SBML reduction of the stochastic ABM. Faithful only in the… |
 <!-- END:composites -->
 
+> **COPASI engine caveat (arm 10: `glycolysis_copasi_mono`,
+> `glycolysis_cross_engine`).** These use COPASI/basico as a second SBML engine.
+> On the current `python-copasi` build COPASI's model *loader* (both the SBML
+> importer and the native `.cps` load) aborts the process **nondeterministically**
+> (~1-in-6; an uncatchable C++ `abort`/segfault). Mitigations: *building* an
+> arm-10 composite doc and *registering* the process never load COPASI (so
+> dashboard rendering / study-run build is abort-safe), models are disk-cached as
+> `.cps` (keyed by SBML hash), and the local run/measurement helpers
+> (`run_copasi_mono`, `run_cross_engine`, `measure_copasi`) execute the real
+> COPASI composite in a **retrying subprocess** so an abort just retries. The one
+> path still exposed is the dashboard's own *in-process* run of an arm-10
+> composite (Model-tab simulate / study-run baseline) — it carries the residual
+> ~1-in-6 abort risk; wrap it in the subprocess runner if that becomes a problem.
+> COPASI also holds the GIL on its solve and is not thread-safe, so a COPASI
+> ensemble must use Ray separate processes (see arm 5), not in-process threads.
+
 ### Investigations
 
 <!-- BEGIN:investigations -->
