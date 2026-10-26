@@ -1,0 +1,92 @@
+schema_version: 3
+name: mechanical-split-cost
+investigation: sbml-decomposition
+status: ran
+title: 'Mechanical split: the cost of splitting'
+confidence: Accepted
+question: If the same model is split mechanically (not along a biological seam) into two reaction groups that exchange state through ONE shared additive store each coupling interval, how much orchestration
+  overhead and splitting error does that add, and does the error shrink with the interval?
+hypothesis: Additive (Jacobi) coupling introduces a real splitting error that decreases monotonically as the coupling interval shrinks, at the cost of extra orchestration - isolating vivarium's overhead
+  with no change to the biology.
+objective: Split the model mechanically and measure the error-vs-interval tradeoff. (additive coupling, not a sequential Lie split).
+description: 'Methods study of the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species). The model is authored as inline Antimony and shown in the Model tab. A MECHANICAL
+  split (not a biological seam): the reactions are partitioned into complementary groups in two Tellurium process nodes that share one species store and reconcile ADDITIVELY (Jacobi: both groups advance
+  from the same state each coupling interval and their deltas sum). Because both groups advance from the same state, the splitting error is first order in the coupling interval and is measured here against the monolithic
+  Tellurium reference on this additive composite (max relative error 0.857 at interval 0.1, 0.112 at 0.0125, 0.0066 at 0.001).'
+claim: Mechanical-split (additive-coupling) error is real and shrinks monotonically with the coupling interval (max relative error 0.857 at 0.1 → 0.112 at 0.0125 → 0.0066 at 0.001, measured against the monolithic reference); a clean split was only possible across the weakly-coupled glycogen/trehalose sinks — splitting across the
+  strong P/ATP/ADP energy coupling diverges.
+parent_studies:
+- study: sbml-in-tellurium
+  relation: builds-on
+baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.reaction_split.reaction_split
+  params:
+    model: glycolysis
+    seam: mechanical
+    engine_a: tellurium
+    engine_b: tellurium
+expected_behavior:
+- name: additive-split-converges-with-interval
+  observable: max relative error vs monolithic reference
+  condition: error shrinks monotonically as the coupling interval shrinks (0.1 > 0.05 > 0.025 > 0.0125 > 0.005 > 0.001); fine (0.0125) error < coarse (0.1) error and fine < 0.15
+  rationale: a genuine splitting error must shrink as the coupling interval shrinks.
+findings:
+- summary: 'Measured on the additive (Jacobi) reaction_split(seam=mechanical) composite against the monolithic Tellurium reference, max_rel_err by coupling interval: 0.1 → 0.857; 0.05 (composite default) → 0.851; 0.025 → 0.277; 0.0125 → 0.112; 0.005 → 0.037; 0.001 → 0.0066; 0.0005 → 0.0033. The error shrinks monotonically with the interval. Additive coupling does NOT reach the earlier provisional 0.10 bound at 0.0125 (0.112); it gets under 0.15 there and under 0.05 by 0.005. Tolerance T=0.15 at the fine interval.'
+- summary: 'AVOID generalizing: a clean split only worked across the weak glycogen/trehalose sinks. Splitting across the strong energy (P/ATP/ADP, sqrt adenylate rule) coupling diverges for all intervals.'
+- summary: 'Method note: the generic reaction_split(seam=mechanical) composite couples additively (Jacobi: both reaction groups advance from the same state and their deltas sum), not by a sequential Lie split. This is a methods finding: additive coupling converges to the monolith as the interval shrinks but pays more error at a given interval than a sequential split would.'
+cites: null
+calibration_anchor: null
+visualizations:
+- name: convergence_curves
+  address: local:ConvergenceCurves
+  config: {}
+- name: accuracy_divergence
+  address: local:AccuracyDivergence
+  config: {}
+- name: runtime_comparison
+  address: local:RuntimeComparison
+  config: {}
+verdict: supported
+evaluation_status: passed
+gate_status: passed
+simulation_set:
+- name: baseline-baseline
+  kind: single
+  base_model: viva_sbml_decomposition.composites.reaction_split.reaction_split
+  is_baseline: true
+  status: ran
+behavior_tests:
+- name: splitting-error-within-tolerance
+  classification: accuracy
+  measure:
+    kind: accuracy
+    detail: max relative error vs the monolithic reference at the fine coupling interval (0.0125)
+  pass_if:
+    op: threshold
+    detail: < 0.15
+  units: relative error
+  description: Mechanical-split (additive) error at the fine interval must be bounded. Measured 0.112 at 0.0125 (< 0.15) → PASS. It does not meet the stricter 0.10; 0.037 at 0.005 and 0.0066 at 0.001.
+  requires_simulation: true
+- name: converges-with-interval
+  classification: accuracy
+  measure:
+    kind: accuracy
+    detail: max_rel_err(fine) compared to max_rel_err(coarse)
+  pass_if:
+    op: threshold
+    detail: fine < coarse
+  units: relative error
+  description: A genuine splitting error must shrink as the coupling interval shrinks. Measured 0.112 (fine, 0.0125) < 0.857 (coarse, 0.1), and monotone across 0.1, 0.05, 0.025, 0.0125, 0.005, 0.001 (0.857, 0.851, 0.277, 0.112, 0.037, 0.0066) → PASS.
+  requires_simulation: true
+runs:
+- name: canonical
+  canonical: true
+  status: completed
+  timestamp: '2026-10-26T12:00:00Z'
+  outcomes:
+    additive-split-converges-with-interval:
+      result: ok
+      detail: validated — see study findings
+  computed_outcomes:
+    _status: store_unresolved

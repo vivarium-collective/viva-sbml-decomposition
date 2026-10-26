@@ -1,8 +1,8 @@
 [project]
-name = "sbml-decomposition"
+name = "viva-sbml-decomposition"
 version = "0.0.0"
 description = "Process-bigraph research workspace"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     # Floor: 1.8.5 ships the composite `core_extensions` mechanism (1.8.0) the
     # dashboard relies on AND the emitter fix (#217) + `requests`/`fire` server
@@ -17,6 +17,18 @@ dependencies = [
     "pypdf>=4.0",
     "matplotlib",
     "plotly",
+    # Real libroadrunner/CVODE SBML integration, wrapped as a process-bigraph
+    # Process (monolithic, split, modular and cross-engine studies). Inline Antimony via
+    # make_tellurium_document(model=..., model_format="antimony").
+    "viva-tellurium",
+    # Parallel backend for the ensemble study — real concurrent execution
+    # so a throughput speedup is actually measurable.
+    "ray",
+    # Second SBML engine (COPASI) for the cross-engine study. The import name is
+    # ``basico``; the distribution is ``copasi-basico`` (COPASI's own binding,
+    # which pulls ``python-copasi``). The bare ``basico`` name on PyPI is an
+    # unrelated 2019 project, so it must NOT be used here.
+    "copasi-basico",
     # Web-based workspace dashboard (server + templates + assets + lib helpers).
     # Extracted from viva-template as of v0.4.16; provides the `vivarium-workbench
     # serve` CLI invoked by scripts/serve.sh.
@@ -29,6 +41,15 @@ cli = ["typer", "rich"]
 
 [project.scripts]
 sbml-decomposition = "viva_sbml_decomposition.cli.__main__:main"
+
+[tool.pytest.ini_options]
+# `slow` is deselected by default so the suite isn't always ~3 min (the COPASI
+# fine-interval convergence + measurement tests dominate). Run them with
+# `pytest -m slow`, or the whole suite with `pytest -m "slow or not slow"`.
+addopts = "-m 'not slow'"
+markers = [
+    "slow: long-running tests (e.g. COPASI fine-interval convergence / measurement); deselected by default",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -48,3 +69,7 @@ packages = ["viva_sbml_decomposition"]
 
 [tool.uv.sources]
 vivarium-workbench = { git = "https://github.com/vivarium-collective/vivarium-workbench.git", branch = "main" }
+viva-tellurium = { git = "https://github.com/vivarium-collective/viva-tellurium.git", branch = "main" }
+# process-bigraph main carries #270 (event-heap multi-rate scheduler, scheduler=auto/heap/scan)
+# — not yet in a PyPI release; the multi-rate study needs it.
+process-bigraph = { git = "https://github.com/vivarium-collective/process-bigraph.git", branch = "main" }

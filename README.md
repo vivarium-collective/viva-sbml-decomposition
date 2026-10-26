@@ -52,7 +52,28 @@ composites and investigations; regenerate any time with
 
 | Composite | What it is |
 |---|---|
+| `engine_monolithic` | Generic monolith: a whole SBML/Antimony model (registry id or raw Antimony) in ONE process node of the chosen engine — tellurium (libroadrunner/CVODE, bulk species), copasi (COPASI/basico LSODA, over… |
+| `ensemble` | Generic ensemble: N independent whole-model instances of any registry model/engine. intervals=None is the same-rate ensemble (Ray-parallel runner, optional per-instance parameter draws); intervals='g… |
+| `native_composite` | The fully-native pbg reference: the glycolysis ODE network as a hand-ported NativeGlycolysisProcess (scalar map[float] leaf, scipy LSODA, no simulator at runtime). The engine='native' monolith; glyco… |
+| `predator_prey_abm` | Agent-based model: a well-mixed stochastic Lotka-Volterra predator-prey model as a population of DISCRETE individuals with stochastic birth/predation/death events, advanced by the exact Gillespie SSA… |
+| `predator_prey_meanfield` | Mean-field reduction: the deterministic Lotka-Volterra ODE as Antimony integrated by libroadrunner/CVODE in a TelluriumProcess — the SBML reduction of the stochastic ABM. Faithful only in the large-p… |
+| `reaction_split` | Generic reaction split: a model's reactions partitioned by `seam` (aldolase \| mechanical \| explicit upper/lower lists) into two process nodes, each in its own engine (tellurium \| copasi \| native), co… |
 <!-- END:composites -->
+
+> **COPASI engine caveat (`engine_monolithic` / `reaction_split` with
+> `engine="copasi"`).** These use COPASI/basico as a second SBML engine.
+> On the current `python-copasi` build COPASI's model *loader* (both the SBML
+> importer and the native `.cps` load) aborts the process **nondeterministically**
+> (~1-in-6; an uncatchable C++ `abort`/segfault). Mitigations: *building* a
+> COPASI composite doc and *registering* the process never load COPASI (so
+> dashboard rendering / study-run build is abort-safe), models are disk-cached as
+> `.cps` (keyed by SBML hash), and the local run/measurement helpers
+> (`run_engine_monolithic`, `run_reaction_split`) execute the real COPASI
+> composite in a **retrying subprocess** so an abort just retries. The one path
+> still exposed is the dashboard's own *in-process* run of a COPASI composite
+> (Model-tab simulate / study-run baseline) — it carries the residual ~1-in-6
+> abort risk. COPASI also holds the GIL on its solve and is not thread-safe, so a
+> COPASI ensemble must use Ray separate processes, not in-process threads.
 
 ### Investigations
 
@@ -61,6 +82,7 @@ composites and investigations; regenerate any time with
 
 | Investigation | Research question |
 |---|---|
+| [SBML in Tellurium vs process-bigraph decomposition — speed × accuracy × composability, and the limits of SBML itself _(complete)_](https://vivarium-collective.github.io/viva-sbml-decomposition/investigations/sbml-decomposition.html) | When you have a biochemical model, when should you run it monolithically in Tellurium (libroadrunner/CVODE) and when is it worth decomposing it into vivarium / process-bigraph sub-processes — and wha… |
 <!-- END:investigations -->
 
 ## Layout
