@@ -12,3 +12,4 @@ from . import arm4_native  # noqa: F401  glycolysis_native_scalar / _array
 from . import arm5_ensemble  # noqa: F401  glycolysis_ensemble (runner, no generator)
 from . import arm6_coupling  # noqa: F401  glycolysis_coupled
 from . import arm7_multirate  # noqa: F401  glycolysis_multirate
+from . import arm8_multiorgan  # noqa: F401  glycolysis_multiorgan_mono / _decomposed

@@ -23,6 +23,7 @@ from .convergence_curves import ConvergenceCurves
 from .decision_table import DecisionTable
 from .ensemble_scaling import EnsembleScaling
 from .multirate_scaling import MultirateScaling
+from .multiorgan_scaling import MultiorganScaling
 from .overhead_breakdown import OverheadBreakdown
 from .runtime_comparison import RuntimeComparison
 from .species_dynamics import SpeciesDynamics
@@ -41,6 +42,7 @@ _FIGURES = [
     ("Operator-split / modular convergence vs coupling interval", ConvergenceCurves),
     ("Ensemble — serial vs Ray throughput", EnsembleScaling),
     ("Multi-rate scheduler — event-heap (#270) vs stock scan", MultirateScaling),
+    ("Multi-organ scaling — where monolithic Tellurium strains", MultiorganScaling),
     ("Composability scorecard", ComposabilityScorecard),
     ("The 3-way tradeoff map (speed × accuracy × composability)", TradeoffMap),
     ("Decision guide", DecisionTable),
@@ -82,6 +84,9 @@ _STUDY_FIGURES = {
     "arm7-multirate": [
         ("Event-heap scheduler (#270) vs stock scan on a many-rate composite", MultirateScaling),
         ("Runtime — framework share per arm (context)", RuntimeComparison)],
+    "arm8-multiorgan": [
+        ("The strain curve — monolithic compile explodes, decomposition stays cheap", MultiorganScaling),
+        ("Composability — why decomposition is the way out at scale", ComposabilityScorecard)],
 }
 
 

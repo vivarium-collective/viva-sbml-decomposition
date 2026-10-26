@@ -217,6 +217,11 @@ at_a_glance:
   role: genuinely multi-rate composite (N independent monoliths, geometric intervals) — exercises +
     measures the process-bigraph event-heap scheduler from PR-270 (O(P log P) vs the stock scan's
     O(P^2)), bit-identical results, the one arm that stress-tests the scheduler instead of the biology
+- study: arm8-multiorgan
+  role: synthetic N-organ scaling knob (species=3N+1, shared blood pool) — stretches a monolithic
+    libroadrunner/CVODE instance past the fixed 17-species model to its strain point (the compile is
+    superlinear in reactions), showing where decomposition into N per-organ processes wins on build cost
+    at scale
 how_to_read: 'Start with arm 1 (the reference), then read arms 2→4 as increasing decomposition
 
   (watch accuracy degrade and composability rise), then arm 5 (the parallel win) and
@@ -253,6 +258,7 @@ studies:
 - arm5-ensemble-ray
 - arm6-coupling-demo
 - arm7-multirate
+- arm8-multiorgan
 expert_docs: []
 acceptance_criteria:
 - study: arm1-monolithic-tellurium
@@ -269,6 +275,8 @@ acceptance_criteria:
   behavior: arm6-cross-engine-composition-runs
 - study: arm7-multirate
   behavior: arm7-heap-beats-scan-at-scale
+- study: arm8-multiorgan
+  behavior: arm8-monolith-strains-decomposition-scales
 adversarial_coverage_skip: true
 adversarial_coverage_skip_reason: 'Methods tradeoff investigation, not a discovery study with biological
   negative controls. The adversarial content is integral and documented as the ''avoid'' findings: a mechanical
