@@ -26,9 +26,9 @@ bit-identical; only the wall-clock differs.
 
 **Honesty.** The separation at the ``N`` a unit test can afford (``<=64`` real
 libroadrunner/CVODE instances) is modest — the per-process CVODE update dominates
-the per-tick Python scan until ``P`` is in the low hundreds (the crossover is
-``~P=100``; see :func:`multirate_scaling` and the study findings for the measured
-curve). The speedup grows monotonically with ``P`` and is reported as measured —
+the per-tick Python scan at small ``P`` (the measured crossover where heap
+overtakes scan is ``~P=50-64``; see :func:`multirate_scaling` and the study
+findings for the measured curve). The speedup grows monotonically with ``P`` and is reported as measured —
 never fabricated. #270's own micro-benchmark on cheap processes (where the
 scheduler, not the integrator, is the whole cost) is ``4.8x`` at ``P=100`` rising
 to ``46x`` at ``P=1000``; arm 7 reproduces the *trend* with real integrator
@@ -160,9 +160,11 @@ def glycolysis_multirate(core=None, n_instances: int = DEFAULT_N_INSTANCES,
                          scheduler: str = DEFAULT_SCHEDULER):
     """N independent multi-rate glycolysis monoliths (emitter-free; stripped).
 
-    ``scheduler`` is recorded for discoverability; the actual scan-vs-heap timing
-    is driven by :func:`multirate_scaling`, which constructs the ``Composite`` with
-    the chosen ``scheduler`` config field (#270's API).
+    ``scheduler`` is a NO-OP here, carried only for discoverability (it labels the
+    #270 strategy this arm is about). The generator returns a plain document; the
+    scheduler is NOT selectable at this layer — the scan-vs-heap comparison is
+    driven by :func:`multirate_scaling`, which sets the ``"scheduler"`` **config
+    field** when it constructs the ``Composite`` (#270's API).
     """
     return strip_emitter(build_document(n_instances))
 
@@ -217,14 +219,24 @@ def multirate_scaling(ns: Sequence[int] = (4, 16, 64), *,
     For each ``n`` in ``ns``, constructs the composite once per scheduler and uses
     the Task-4 :func:`time_run` harness (median of ``repeats``, one warmup) to time
     ``run()`` ALONE (construction excluded via :func:`_reset`). Returns
-    ``[{n, scan_s, heap_s, speedup}]`` with ``speedup = scan_s / heap_s``.
+    ``[{n, scan_s, heap_s, speedup, bit_identical}]`` with
+    ``speedup = scan_s / heap_s``.
+
+    ``bit_identical`` is computed per ``n`` by comparing the two schedulers' final
+    per-instance state (``_final_state``, ``np.array_equal`` across every instance
+    store): the schedulers run the SAME math in a different tick order, so this must
+    be ``True`` at every ``n`` — it backs the scan==heap claim across the measured
+    range, not just the small-N unit test.
 
     Honest: ``speedup`` is whatever was measured. With real CVODE instances the
-    per-process integration dominates the per-tick scan until ``P`` reaches the low
-    hundreds, so ``speedup`` is modest (slightly above 1) at ``n<=64`` and climbs
+    per-process integration dominates the per-tick scan at small ``P`` (measured
+    crossover ``~P=50-64``), so ``speedup`` is modest (even slightly below 1 at
+    tiny ``n``, where the heap bookkeeping has nothing to gain) and climbs
     monotonically with ``n``; the regime where it grows large (``P`` in the
     hundreds-to-thousands, cheap processes) is documented, not faked.
     """
+    import numpy as np
+
     out: List[dict] = []
     for n in ns:
         comp_scan = _make_composite(n, "scan", horizon)
@@ -234,10 +246,16 @@ def multirate_scaling(ns: Sequence[int] = (4, 16, 64), *,
         heap = time_run(lambda c=comp_heap: (_reset(c), c.run(horizon)),
                         repeats=repeats, warmup=True)
         scan_s, heap_s = scan.median_s, heap.median_s
+        # The last timed run leaves each composite's final state in place; the
+        # schedulers must agree to the bit (same math, different tick order).
+        fs_scan, fs_heap = _final_state(comp_scan), _final_state(comp_heap)
+        bit_identical = (set(fs_scan) == set(fs_heap)
+                         and all(np.array_equal(fs_scan[k], fs_heap[k]) for k in fs_scan))
         out.append({
             "n": int(n),
             "scan_s": float(scan_s),
             "heap_s": float(heap_s),
             "speedup": float(scan_s / heap_s) if heap_s > 0 else float("nan"),
+            "bit_identical": bool(bit_identical),
         })
     return out

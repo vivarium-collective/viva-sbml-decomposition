@@ -45,10 +45,12 @@ expected_behavior:
   rationale: a many-rate composite is exactly the O(P^2) case the event-heap scheduler was built to fix;
     because only the tick ordering changes, correctness must be identical and only wall-clock may differ.
 findings:
-- summary: 'Scan and heap are bit-identical at every P (verified final-state np.array_equal across all
-    instances) — #270 changes only the order in which due processes are popped, never the math. The
-    multi-rate composite is uncoupled (independent monoliths, empty inputs), so there is no operator-
-    splitting divergence to confound the timing.'
+- summary: 'Scan and heap are bit-identical at every measured P — multirate_scaling records a per-N
+    bit_identical flag (np.array_equal of the two schedulers'' final state across every instance store),
+    True at each of P=4..256, and a dedicated test asserts it across the measured Ns (not just the small-N
+    case). #270 changes only the order in which due processes are popped, never the math. The multi-rate
+    composite is uncoupled (independent monoliths, empty inputs), so there is no operator-splitting
+    divergence to confound the timing.'
 - summary: 'Measured scan vs heap run() wall-clock (median of 3, construction excluded), geometric
     intervals i_fast=H/(3P)..i_slow=3H, H=20: P=4 scan=0.0082s heap=0.0083s (0.98x); P=16 0.0468s /
     0.0492s (0.95x); P=64 0.419s / 0.371s (1.13x); P=128 1.555s / 1.280s (1.22x); P=256 6.598s /
@@ -56,7 +58,7 @@ findings:
 - summary: 'Honesty: heap is ~5% SLOWER at tiny P (P=4,16) — the event-heap bookkeeping has nothing to
     gain when the per-tick scan is trivially short — exactly #270''s documented single-rate penalty. The
     win is modest (<=1.64x) at the P a test can afford because the real libroadrunner/CVODE update per
-    due process dominates the per-tick Python scan until P reaches the low hundreds (crossover ~P=100).
+    due process dominates the per-tick Python scan at small P (measured crossover ~P=50-64).
     #270''s cheap-process micro-benchmark (where the scheduler is the whole cost) is 4.8x@P=100 rising
     to 46x@P=1000; arm 7 reproduces the TREND with real integrator instances, not those multipliers.'
 - summary: 'Scheduler API used (#270): the strategy is the "scheduler" CONFIG FIELD on the Composite

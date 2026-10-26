@@ -68,10 +68,10 @@ class MultirateScaling(PlotlyVisualization):
              "font": {"size": 13}},
             caption("Same math, different tick scheduler &rarr; results bit-identical; only "
                     "wall-clock differs. Real libroadrunner/CVODE instances: the per-process "
-                    "integration dominates the per-tick scan until P reaches the low hundreds "
-                    "(heap is ~5% slower at tiny N — bookkeeping with nothing to gain — and "
-                    "crosses over near P~50-64). The multiplier grows with P; #270's cheap-process "
-                    "micro-benchmark is 4.8× at P=100 rising to 46× at P=1000.", -0.30),
+                    "integration dominates the per-tick scan at small P, so heap is ~5% slower "
+                    "at tiny N (bookkeeping with nothing to gain) and crosses over near P~50-64. "
+                    "The multiplier keeps growing with P (into the hundreds here); #270's "
+                    "cheap-process micro-benchmark is 4.8× at P=100 rising to 46× at P=1000.", -0.30),
         ]
         return {"data": data, "layout": layout(
             "Multi-rate scheduler: event-heap (#270) vs stock scan",
