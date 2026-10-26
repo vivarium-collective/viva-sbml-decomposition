@@ -34,3 +34,10 @@ findings:
     so Ray's separate OS processes are the only path; in-process parallel_processes backfires for this
     CVODE-wrapping work.
 runs: []
+visualizations:
+- name: ensemble_scaling
+  address: local:EnsembleScaling
+  config: {}
+- name: runtime_comparison
+  address: local:RuntimeComparison
+  config: {}

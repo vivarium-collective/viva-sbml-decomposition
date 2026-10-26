@@ -24,7 +24,12 @@ class PlotlyVisualization(Visualization):
     def figure(self, state):
         raise NotImplementedError
 
-    def update(self, state):
-        spec = self.figure(state)
+    def update(self, state=None):
+        # These are self-contained comparative figures: all data comes from the
+        # committed metrics artifact via generate_state(). We ignore any state the
+        # workbench passes (its demo/preview path synthesizes an EMPTY state from
+        # inputs(), which would blank the figure) so the figure renders identically
+        # in preview, study, and investigation contexts.
+        spec = self.figure(type(self).generate_state())
         return {"html": plotly_html(spec["data"], spec["layout"],
                                     div_id=f"viva_{type(self).__name__}")}

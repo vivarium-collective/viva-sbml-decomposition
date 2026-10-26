@@ -38,3 +38,13 @@ findings:
 - summary: 'overhead_fraction ~0.05 (far below the monolith''s 0.32): the decomposed arm spends more wall-clock
     inside the processes, so the framework is a smaller share.'
 runs: []
+visualizations:
+- name: convergence_curves
+  address: local:ConvergenceCurves
+  config: {}
+- name: overhead_breakdown
+  address: local:OverheadBreakdown
+  config: {}
+- name: composability_scorecard
+  address: local:ComposabilityScorecard
+  config: {}

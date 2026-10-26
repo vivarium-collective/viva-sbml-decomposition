@@ -40,3 +40,13 @@ findings:
 - summary: Reproduces arm 3 (same ODEs, different engine) to max_rel_err 3.2e-7; the monolith-impossibility
     is STRUCTURAL, not numeric. Accuracy-exempt in the 3-way figure.
 runs: []
+visualizations:
+- name: composability_scorecard
+  address: local:ComposabilityScorecard
+  config: {}
+- name: tradeoff_map
+  address: local:TradeoffMap
+  config: {}
+- name: decision_table
+  address: local:DecisionTable
+  config: {}

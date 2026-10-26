@@ -36,3 +36,13 @@ findings:
     leaf-crossing ~6.8ms vs 6.7ms, swamped by the ~289ms LSODA integration. The scalar-dict framework
     tax is linear in element count and only matters at large state.
 runs: []
+visualizations:
+- name: accuracy_divergence
+  address: local:AccuracyDivergence
+  config: {}
+- name: runtime_comparison
+  address: local:RuntimeComparison
+  config: {}
+- name: composability_scorecard
+  address: local:ComposabilityScorecard
+  config: {}
