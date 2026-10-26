@@ -82,7 +82,7 @@ composites and investigations; regenerate any time with
 
 | Investigation | Research question |
 |---|---|
-| [sbml-decomposition](https://vivarium-collective.github.io/viva-sbml-decomposition/investigations/sbml-decomposition.html) |  |
+| [SBML in Tellurium vs process-bigraph decomposition — speed × accuracy × composability, and the limits of SBML itself _(complete)_](https://vivarium-collective.github.io/viva-sbml-decomposition/investigations/sbml-decomposition.html) | When you have a biochemical model, when should you run it monolithically in Tellurium (libroadrunner/CVODE) and when is it worth decomposing it into vivarium / process-bigraph sub-processes — and wha… |
 <!-- END:investigations -->
 
 ## Layout
