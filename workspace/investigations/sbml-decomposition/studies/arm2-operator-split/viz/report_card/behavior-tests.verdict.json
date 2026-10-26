@@ -5,23 +5,23 @@
       "pass": 0,
       "total": 0
     },
-    "committed_rerunnable": 0,
+    "committed_rerunnable": 2,
     "expected_fail": {
       "behaved": 0,
       "total": 0
     },
-    "label": "pins: 0/0; acceptance: 0/0; narrated: 1",
-    "narrated": 1,
+    "label": "pins: 0/0; acceptance: 0/0; unclassified: 2",
+    "narrated": 0,
     "regression_pins": {
       "fail": 0,
       "pass": 0,
       "total": 0
     },
-    "unclassified": 0
+    "unclassified": 2
   },
   "n_fail": 0,
   "n_pass": 0,
-  "n_total": 1,
+  "n_total": 2,
   "overall": "drift",
   "schema": "behavior_test_card/v1",
   "tests": [
@@ -29,17 +29,34 @@
       "band": "",
       "band_basis": "",
       "cites": [],
-      "detail": "validated \u2014 see study findings",
-      "en": "",
+      "detail": "",
+      "en": "Operator-splitting error at the fine interval must be bounded. Measured 0.067 \u2192 PASS.",
       "expected_fail": false,
       "gate_class": null,
       "margin": null,
       "measured_value": null,
       "meter": null,
-      "name": "arm2-converges-with-interval",
-      "result": "OK",
+      "name": "splitting-error-within-tolerance",
+      "result": "PENDING",
       "severity": null,
-      "units": "",
+      "units": "relative error",
+      "verdict": null
+    },
+    {
+      "band": "",
+      "band_basis": "",
+      "cites": [],
+      "detail": "",
+      "en": "A genuine splitting error must shrink as the coupling interval shrinks. Measured 0.067 (fine) < 0.587 (coarse) \u2192 PASS.",
+      "expected_fail": false,
+      "gate_class": null,
+      "margin": null,
+      "measured_value": null,
+      "meter": null,
+      "name": "converges-with-interval",
+      "result": "PENDING",
+      "severity": null,
+      "units": "relative error",
       "verdict": null
     }
   ]

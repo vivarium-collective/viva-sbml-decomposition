@@ -4,20 +4,11 @@ investigation: sbml-decomposition
 status: ran
 title: Arm 3 — Modular submodels (biological seam)
 confidence: Accepted
-question: If the model is partitioned along a biological seam (upper vs lower glycolysis at aldolase/F16P)
-  into two coupled process nodes sharing a store, does it still reproduce the reference, and is this a
-  genuine multi-process composition?
-hypothesis: A biological upper/lower partition, reconciled additively through the real process-bigraph
-  apply path, reproduces the reference within tolerance and is genuinely composable (two independent process
-  nodes, not one process with an internal loop).
+question: If the model is partitioned along a biological seam (upper vs lower glycolysis at aldolase/F16P) into two coupled process nodes sharing a store, does it still reproduce the reference, and is this a genuine multi-process composition?
+hypothesis: A biological upper/lower partition, reconciled additively through the real process-bigraph apply path, reproduces the reference within tolerance and is genuinely composable (two independent process nodes, not one process with an internal loop).
 objective: Decompose the model along a biological seam into coupled process nodes and verify genuine composability.
-description: Methods arm of the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064,
-  17 floating species). The model is authored as inline Antimony and shown in the Model tab. Two SubmodelProcess
-  nodes (upper/lower glycolysis) + an EnergyStep share ONE species store and reconcile additive deltas
-  through the real bigraph apply/reconcile path.
-claim: A biological-seam decomposition reproduces the reference (0.468 → 0.100 as the coupling step shrinks,
-  T=0.15) as a GENUINE multi-process composition — the first point on the spectrum where the model is
-  composable.
+description: Methods arm of the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species). The model is authored as inline Antimony and shown in the Model tab. Two SubmodelProcess nodes (upper/lower glycolysis) + an EnergyStep share ONE species store and reconcile additive deltas through the real bigraph apply/reconcile path.
+claim: A biological-seam decomposition reproduces the reference (0.468 → 0.100 as the coupling step shrinks, T=0.15) as a GENUINE multi-process composition — the first point on the spectrum where the model is composable.
 parent_studies:
 - study: arm1-monolithic-tellurium
   relation: leads-to
@@ -30,13 +21,9 @@ expected_behavior:
   condition: status ok and max_rel_err within T=0.15, with error shrinking as the coupling step shrinks
   rationale: a biological decomposition must stay faithful while being genuinely composable.
 findings:
-- summary: 'Two process nodes share one species store, reconciling additively through the bigraph apply
-    path (verified: core.apply/reconcile sum the deltas, not a local loop). Reproduces the operator-split
-    reference exactly.'
-- summary: coupling step 0.002 → max_rel_err 0.468; 0.0005 → 0.100 (T=0.15). Looser than arm 2 because
-    this seam crosses the strong energy coupling; divergence is guarded to status=diverged.
-- summary: 'overhead_fraction ~0.05 (far below the monolith''s 0.32): the decomposed arm spends more wall-clock
-    inside the processes, so the framework is a smaller share.'
+- summary: 'Two process nodes share one species store, reconciling additively through the bigraph apply path (verified: core.apply/reconcile sum the deltas, not a local loop). Reproduces the operator-split reference exactly.'
+- summary: coupling step 0.002 → max_rel_err 0.468; 0.0005 → 0.100 (T=0.15). Looser than arm 2 because this seam crosses the strong energy coupling; divergence is guarded to status=diverged.
+- summary: 'overhead_fraction ~0.05 (far below the monolith''s 0.32): the decomposed arm spends more wall-clock inside the processes, so the framework is a smaller share.'
 runs:
 - name: canonical
   canonical: true
@@ -64,6 +51,22 @@ runs:
         source: resolved
     params_captured_at: '2026-10-25'
     params_source: dashboard-runner
+- name: viva_sbml_decomposition.composites.arm3_modular.glycolysis_modular__1793016429__fd1a8b
+  status: completed
+  timestamp: 1793016445.409167
+  emitter:
+    kind: unknown
+  env_id: 612a0f30c7c3ca08
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+  provenance:
+    params:
+      n_steps:
+        value: 20
+        source: resolved
+    params_captured_at: '2026-10-26'
+    params_source: dashboard-runner
 visualizations:
 - name: convergence_curves
   address: local:ConvergenceCurves
@@ -85,25 +88,32 @@ simulation_set:
   status: ran
 pipeline_gate:
   gate_evaluator:
-    result: passed
-    blocked_by: []
+    result: blocked
+    blocked_by:
+    - biological-seam-within-tolerance
+    - genuine-multi-process
     evaluated_by: code
-    diverges_from_authored: false
+    diverges_from_authored: true
 behavior_tests:
 - name: biological-seam-within-tolerance
   classification: accuracy
-  measure: max relative error vs the monolithic reference at the fine coupling step
-  pass_if: < 0.15
+  measure:
+    kind: accuracy
+    detail: max relative error vs the monolithic reference at the fine coupling step
+  pass_if:
+    op: threshold
+    detail: < 0.15
   units: relative error
-  description: The biological-seam decomposition must stay faithful. Measured 0.100 at the fine step (T=0.15)
-    → PASS. Looser than arm 2 because the seam crosses the strong energy coupling.
+  description: The biological-seam decomposition must stay faithful. Measured 0.100 at the fine step (T=0.15) → PASS. Looser than arm 2 because the seam crosses the strong energy coupling.
   requires_simulation: true
 - name: genuine-multi-process
   classification: composability
-  measure: two independent process nodes reconciling additively through the bigraph apply path (not one
-    internal loop)
-  pass_if: == true
+  measure:
+    kind: composability
+    detail: two independent process nodes reconciling additively through the bigraph apply path (not one internal loop)
+  pass_if:
+    op: threshold
+    detail: == true
   units: boolean
-  description: 'Verified: core.apply/reconcile sum the submodel deltas; two SubmodelProcess nodes + EnergyStep
-    share one store → PASS.'
+  description: 'Verified: core.apply/reconcile sum the submodel deltas; two SubmodelProcess nodes + EnergyStep share one store → PASS.'
   requires_simulation: true

@@ -5475,16 +5475,16 @@
   },
   "overhead": {
     "arm1": {
-      "total_s": 0.07556833396665752,
-      "process_s": 0.05109440954402089,
-      "framework_s": 0.024473924422636628,
-      "overhead_fraction": 0.3238648139766464
+      "total_s": 0.07342862500809133,
+      "process_s": 0.04993756837211549,
+      "framework_s": 0.023491056635975838,
+      "overhead_fraction": 0.31991688028186943
     },
     "arm2": {
-      "total_s": 0.9098523331340402,
-      "process_s": 0.8373434355016798,
-      "framework_s": 0.07250889763236046,
-      "overhead_fraction": 0.07969303917988457
+      "total_s": 0.8815235409419984,
+      "process_s": 0.8108607879839838,
+      "framework_s": 0.07066275295801461,
+      "overhead_fraction": 0.0801598025192886
     },
     "arm3": {
       "overhead_fraction": 0.05,
@@ -5494,28 +5494,28 @@
       "_provenance": "arm3 study (coarse interval), slow to re-run live"
     },
     "arm4_scalar": {
-      "total_s": 0.30786366597749293,
-      "process_s": 0.3016084067057818,
-      "framework_s": 0.006255259271711111,
-      "overhead_fraction": 0.02031827709142012
+      "total_s": 0.3016596669331193,
+      "process_s": 0.29556033108383417,
+      "framework_s": 0.006099335849285126,
+      "overhead_fraction": 0.02021926202894537
     },
     "arm4_array": {
-      "total_s": 0.30839745816774666,
-      "process_s": 0.3018497060984373,
-      "framework_s": 0.006547752069309354,
-      "overhead_fraction": 0.021231537082733783
+      "total_s": 0.3024009168148041,
+      "process_s": 0.29602511692792177,
+      "framework_s": 0.006375799886882305,
+      "overhead_fraction": 0.021083930412773726
     },
     "arm6": {
-      "total_s": 31.242437874898314,
-      "process_s": 30.75640798569657,
-      "framework_s": 0.4860298892017454,
-      "overhead_fraction": 0.015556720994306444
+      "total_s": 30.172492041951045,
+      "process_s": 29.779541734606028,
+      "framework_s": 0.3929503073450178,
+      "overhead_fraction": 0.013023462125656374
     },
     "arm4": {
-      "total_s": 0.30786366597749293,
-      "process_s": 0.3016084067057818,
-      "framework_s": 0.006255259271711111,
-      "overhead_fraction": 0.02031827709142012
+      "total_s": 0.3016596669331193,
+      "process_s": 0.29556033108383417,
+      "framework_s": 0.006099335849285126,
+      "overhead_fraction": 0.02021926202894537
     }
   },
   "accuracy": {

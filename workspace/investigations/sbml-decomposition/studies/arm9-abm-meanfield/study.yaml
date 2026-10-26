@@ -5,57 +5,11 @@ study_type: adversarial
 status: ran
 title: Arm 9 — Agent-based model vs its mean-field SBML reduction (the adversarial arm)
 confidence: Investigating
-question: The whole investigation assumes the model you start with is an SBML/ODE network. But can an
-  AGENT-BASED model — a population of discrete individuals with stochastic interactions — even BE an SBML/Tellurium
-  model? If you reduce it to a mean-field ODE and run it in libroadrunner/CVODE, where does that reduction
-  hold and where does it structurally break?
-hypothesis: 'A well-mixed stochastic Lotka-Volterra predator-prey ABM (integer counts, Gillespie-SSA birth/predation/death
-  events) reduces to the deterministic Lotka-Volterra ODE — a valid SBML/Tellurium model — ONLY in the
-  large-population limit (Kurtz/van Kampen): as the system size K grows the SSA ensemble mean converges
-  to the ODE, but at small K demographic stochasticity, discreteness and EXTINCTION (predators collapse;
-  with prey extinction the whole system dies out — absorbing states the neutrally-stable ODE orbits can
-  never reach) dominate and the ODE misses the dynamics entirely. The ODE can represent neither the variance
-  nor the extinction probability at any K.'
-objective: Build the ABM as a genuine model (native Gillespie-SSA process over integer populations), build
-  its mean-field ODE reduction as real Antimony integrated by libroadrunner/CVODE, and QUANTIFY the divergence
-  at a large vs a small population scale — relative error of the SSA ensemble mean against the ODE, and
-  the fraction of SSA runs in which the predators collapse / the whole system goes extinct (which the
-  ODE can never show) — to answer "can it even be SBML?" honestly, with numbers.
-description: 'The adversarial / ablation arm of the SBML-decomposition investigation: the case built to
-  BREAK the naive "any model is an SBML model" claim that arms 1-8 implicitly rest on. The SAME Lotka-Volterra
-  predator-prey system is realised two ways. (1) THE ABM — a well-mixed population of DISCRETE individuals
-  (integer prey/predator counts) whose prey birth (propensity r*X), predation (a/K*X*Y), predator birth
-  (b/K*X*Y) and predator death (m*Y) are STOCHASTIC EVENTS, advanced by the exact Gillespie SSA (direct
-  method) in a native process-bigraph PredatorPreyABMProcess. There is no continuous RHS for CVODE; one
-  run is one stochastic realisation, so an ensemble is needed for statistics. This model is NOT an SBML
-  model. (2) THE MEAN-FIELD REDUCTION — the deterministic Lotka-Volterra ODE (dx/dt = r*x - a*x*y, dy/dt
-  = b*x*y - m*y) as Antimony integrated by libroadrunner/CVODE in a TelluriumProcess, carried on the predator_prey_meanfield
-  generator''s config.model so the Model page shows exactly what the SBML reduction is. The 1/K system-size
-  factor on the quadratic propensities makes the density X/K obey the same scale-free ODE at every K,
-  so K is a clean knob from "stochastic handful of individuals" (K=8) to "effectively continuous" (K=400).
-  EXTINCTION is handled exactly and reported as TWO fractions, because only PREY extinction is absorbing:
-  when predators go extinct (Pred=0) but prey remain, the prey keep reproducing (pure birth r*X) — the
-  SSA is NOT frozen — bounded only by a documented population cap (25*K) that halts the unbounded runaway;
-  when PREY go extinct the predators then starve to 0 (total extinction). predator_extinct_fraction (the
-  LV collapse the ODE never shows) is the headline, total_extinct_fraction (both zero) is reported alongside.
-  abm_ensemble measures, per scale, the SSA ensemble mean/variance + both extinction fractions over ALL
-  runs (extinct and capped runs held at their terminal state, nothing dropped); the finding compares the
-  mean (in density units) to the ODE. Nothing is tuned to make the ABM match the ODE — the small-K collapse
-  is the point.'
-claim: 'An agent-based model reduces to an SBML/Tellurium mean-field ODE ONLY in the large-population,
-  well-mixed, deterministic limit; it structurally cannot capture stochasticity, discreteness, extinction,
-  or individual heterogeneity. MEASURED (Lotka-Volterra, base rates r=a=b=m=1, start density (1.8, 1.0),
-  horizon ~2 periods, seed 0): at a LARGE population scale K=400 (80 SSA runs) the mean-field ODE reproduces
-  the SSA ensemble mean to a max relative error of 4.9% with 0% of runs seeing predator or total extinction
-  — the reduction is VALID. At a SMALL scale K=8 (200 SSA runs) the stochastic system collapses: the PREDATORS
-  go extinct in 86.5% of runs and BOTH species in 51.0%, hitting absorbing states that the neutrally-stable
-  ODE — which simply orbits forever, 0% extinction of either species at any K — can never reach, and the
-  ensemble mean diverges several-fold from the ODE (predator-extinct runs let the prey escape, so the
-  mean no longer resembles the bounded ODE cycle). The ODE additionally cannot represent the ensemble
-  variance at ANY K. So "can an ABM be an SBML model?" has an honest, quantified answer: yes, but only
-  as its large-population mean-field limit, and that reduction silently discards exactly the stochastic/discrete
-  phenomena (extinction, demographic noise) that are often the biological point. This breaks the naive
-  "just write it as SBML" claim.'
+question: The whole investigation assumes the model you start with is an SBML/ODE network. But can an AGENT-BASED model — a population of discrete individuals with stochastic interactions — even BE an SBML/Tellurium model? If you reduce it to a mean-field ODE and run it in libroadrunner/CVODE, where does that reduction hold and where does it structurally break?
+hypothesis: 'A well-mixed stochastic Lotka-Volterra predator-prey ABM (integer counts, Gillespie-SSA birth/predation/death events) reduces to the deterministic Lotka-Volterra ODE — a valid SBML/Tellurium model — ONLY in the large-population limit (Kurtz/van Kampen): as the system size K grows the SSA ensemble mean converges to the ODE, but at small K demographic stochasticity, discreteness and EXTINCTION (predators collapse; with prey extinction the whole system dies out — absorbing states the neutrally-stable ODE orbits can never reach) dominate and the ODE misses the dynamics entirely. The ODE can represent neither the variance nor the extinction probability at any K.'
+objective: Build the ABM as a genuine model (native Gillespie-SSA process over integer populations), build its mean-field ODE reduction as real Antimony integrated by libroadrunner/CVODE, and QUANTIFY the divergence at a large vs a small population scale — relative error of the SSA ensemble mean against the ODE, and the fraction of SSA runs in which the predators collapse / the whole system goes extinct (which the ODE can never show) — to answer "can it even be SBML?" honestly, with numbers.
+description: 'The adversarial / ablation arm of the SBML-decomposition investigation: the case built to BREAK the naive "any model is an SBML model" claim that arms 1-8 implicitly rest on. The SAME Lotka-Volterra predator-prey system is realised two ways. (1) THE ABM — a well-mixed population of DISCRETE individuals (integer prey/predator counts) whose prey birth (propensity r*X), predation (a/K*X*Y), predator birth (b/K*X*Y) and predator death (m*Y) are STOCHASTIC EVENTS, advanced by the exact Gillespie SSA (direct method) in a native process-bigraph PredatorPreyABMProcess. There is no continuous RHS for CVODE; one run is one stochastic realisation, so an ensemble is needed for statistics. This model is NOT an SBML model. (2) THE MEAN-FIELD REDUCTION — the deterministic Lotka-Volterra ODE (dx/dt = r*x - a*x*y, dy/dt = b*x*y - m*y) as Antimony integrated by libroadrunner/CVODE in a TelluriumProcess, carried on the predator_prey_meanfield generator''s config.model so the Model page shows exactly what the SBML reduction is. The 1/K system-size factor on the quadratic propensities makes the density X/K obey the same scale-free ODE at every K, so K is a clean knob from "stochastic handful of individuals" (K=8) to "effectively continuous" (K=400). EXTINCTION is handled exactly and reported as TWO fractions, because only PREY extinction is absorbing: when predators go extinct (Pred=0) but prey remain, the prey keep reproducing (pure birth r*X) — the SSA is NOT frozen — bounded only by a documented population cap (25*K) that halts the unbounded runaway; when PREY go extinct the predators then starve to 0 (total extinction). predator_extinct_fraction (the LV collapse the ODE never shows) is the headline, total_extinct_fraction (both zero) is reported alongside. abm_ensemble measures, per scale, the SSA ensemble mean/variance + both extinction fractions over ALL runs (extinct and capped runs held at their terminal state, nothing dropped); the finding compares the mean (in density units) to the ODE. Nothing is tuned to make the ABM match the ODE — the small-K collapse is the point.'
+claim: 'An agent-based model reduces to an SBML/Tellurium mean-field ODE ONLY in the large-population, well-mixed, deterministic limit; it structurally cannot capture stochasticity, discreteness, extinction, or individual heterogeneity. MEASURED (Lotka-Volterra, base rates r=a=b=m=1, start density (1.8, 1.0), horizon ~2 periods, seed 0): at a LARGE population scale K=400 (80 SSA runs) the mean-field ODE reproduces the SSA ensemble mean to a max relative error of 4.9% with 0% of runs seeing predator or total extinction — the reduction is VALID. At a SMALL scale K=8 (200 SSA runs) the stochastic system collapses: the PREDATORS go extinct in 86.5% of runs and BOTH species in 51.0%, hitting absorbing states that the neutrally-stable ODE — which simply orbits forever, 0% extinction of either species at any K — can never reach, and the ensemble mean diverges several-fold from the ODE (predator-extinct runs let the prey escape, so the mean no longer resembles the bounded ODE cycle). The ODE additionally cannot represent the ensemble variance at ANY K. So "can an ABM be an SBML model?" has an honest, quantified answer: yes, but only as its large-population mean-field limit, and that reduction silently discards exactly the stochastic/discrete phenomena (extinction, demographic noise) that are often the biological point. This breaks the naive "just write it as SBML" claim.'
 parent_studies:
 - study: arm4-native-pbg
   relation: leads-to
@@ -64,58 +18,15 @@ baseline:
   composite: viva_sbml_decomposition.composites.arm9_abm.predator_prey_meanfield
 expected_behavior:
 - name: arm9-meanfield-valid-only-at-large-N
-  observable: relative error of the Gillespie-SSA ABM ensemble mean against the mean-field Lotka-Volterra
-    ODE (libroadrunner/CVODE), and the predator-extinction / total-extinction fractions of the SSA runs,
-    at a large (K=400) vs a small (K=8) population scale
-  condition: at the LARGE scale the ODE matches the SSA ensemble mean within tolerance (max relative error
-    < 0.12; measured 0.049) with no extinction (predator_extinct_fraction == 0 and total_extinct_fraction
-    == 0), AND at the SMALL scale the reduction demonstrably breaks — the predators collapse in a large
-    fraction of runs (predator_extinct_fraction > 0.4; measured 0.865) with substantial total extinction
-    (total_extinct_fraction > 0.2; measured 0.510) while the ODE persists (never extinct, either species,
-    at any K), and the ensemble mean diverges markedly from the ODE (max relative error several-fold,
-    far larger than at the large scale).
-  rationale: 'The Kurtz/van Kampen large-population limit guarantees the SSA ensemble mean converges to
-    the mean-field ODE as the system size grows, so a faithful ABM + a correct ODE reduction MUST agree
-    at large K; the stochastic Lotka-Volterra system is not persistent (it reaches an absorbing extinction
-    state with probability 1 at finite size — predators collapse at a trough, and prey extinction kills
-    the whole system), so a small-K ensemble MUST show extinction the deterministic ODE cannot. The behavior
-    therefore gates the exact adversarial claim: reduction valid at large N, structurally invalid (collapse
-    + divergence) at small N. Extinction is split into predator vs total because only prey extinction
-    is absorbing — the honest metric distinguishes real LV predator collapse from the prey-escape it triggers.'
+  observable: relative error of the Gillespie-SSA ABM ensemble mean against the mean-field Lotka-Volterra ODE (libroadrunner/CVODE), and the predator-extinction / total-extinction fractions of the SSA runs, at a large (K=400) vs a small (K=8) population scale
+  condition: at the LARGE scale the ODE matches the SSA ensemble mean within tolerance (max relative error < 0.12; measured 0.049) with no extinction (predator_extinct_fraction == 0 and total_extinct_fraction == 0), AND at the SMALL scale the reduction demonstrably breaks — the predators collapse in a large fraction of runs (predator_extinct_fraction > 0.4; measured 0.865) with substantial total extinction (total_extinct_fraction > 0.2; measured 0.510) while the ODE persists (never extinct, either species, at any K), and the ensemble mean diverges markedly from the ODE (max relative error several-fold, far larger than at the large scale).
+  rationale: 'The Kurtz/van Kampen large-population limit guarantees the SSA ensemble mean converges to the mean-field ODE as the system size grows, so a faithful ABM + a correct ODE reduction MUST agree at large K; the stochastic Lotka-Volterra system is not persistent (it reaches an absorbing extinction state with probability 1 at finite size — predators collapse at a trough, and prey extinction kills the whole system), so a small-K ensemble MUST show extinction the deterministic ODE cannot. The behavior therefore gates the exact adversarial claim: reduction valid at large N, structurally invalid (collapse + divergence) at small N. Extinction is split into predator vs total because only prey extinction is absorbing — the honest metric distinguishes real LV predator collapse from the prey-escape it triggers.'
 findings:
-- summary: 'REDUCTION VALID AT LARGE N — at population scale K=400 (80 Gillespie-SSA runs, ~2 Lotka-Volterra
-    periods, seed 0) the mean-field ODE integrated by libroadrunner/CVODE reproduces the SSA ensemble
-    mean to a max relative error of 4.9% (mean 1.0%), with 0% predator extinction and 0% total extinction
-    (robust across seeds: max rel err 0.033-0.056, extinction always 0). This is the Kurtz large-population
-    limit in action: at enough individuals the discrete stochastic model and its continuous deterministic
-    SBML reduction agree, so the ABM genuinely DOES reduce to an SBML model here.'
-- summary: 'REDUCTION INVALID AT SMALL N — at scale K=8 (200 SSA runs, seed 0) the stochastic system COLLAPSES:
-    the PREDATORS go extinct in 86.5% of runs and BOTH species in 51.0% (prey extinction, which is absorbing,
-    then starves the predators), while the mean-field ODE — neutrally stable closed orbits — simply cycles
-    forever and NEVER goes extinct (0% of either species, at any K). The ensemble mean diverges several-fold
-    from the ODE (predator-extinct runs let the prey escape, so the mean bears no resemblance to the bounded
-    ODE cycle). Robust across seeds (predator extinction 0.845-0.865, total 0.485-0.530). The deterministic
-    SBML reduction misses the single most important qualitative behaviour of the small-population system
-    — that the predators crash and the system can die out.'
-- summary: HONEST EXTINCTION ACCOUNTING — only PREY extinction is truly absorbing; when the predators
-    die but prey survive, the prey keep reproducing (pure birth r*X), so the SSA is NOT frozen on predator
-    extinction (an earlier freeze inflated the single "extinction" number to 0.94 — the corrected, split
-    numbers are 86.5% predator / 51.0% total). Prey that escape after their predators are gone are bounded
-    by a documented population cap (25*K) that halts the unbounded runaway; the cap sits far above the
-    deterministic orbit peak (~1.8 in density) so it never triggers while both species coexist. The headline
-    metric is predator_extinct_fraction (the LV collapse the ODE can never show); total_extinct_fraction
-    is reported alongside.
-- summary: STRUCTURAL LIMIT, NOT A TOLERANCE — the gap is not something a finer integrator or looser tolerance
-    closes. The ODE state is (prey, predator) concentrations; it has no representation of integer discreteness,
-    of demographic noise variance, or of the extinction probability, at ANY K. Those are properties of
-    the ensemble and the absorbing boundary, which a single deterministic trajectory cannot carry. The
-    ABM was NOT tuned to match the ODE — the large-N agreement and the small-N collapse are both measured.
-- summary: 'FEASIBILITY STATEMENT — "can an ABM even be an SBML/Tellurium model?" Answer: yes, but ONLY
-    as its large-population, well-mixed, deterministic mean-field limit. That reduction is a real, runnable
-    SBML model (the predator_prey_meanfield composite''s Antimony) and is faithful when individuals are
-    many; it silently discards stochasticity, discreteness, extinction and individual heterogeneity, which
-    at small population size ARE the behaviour. This is the adversarial result that breaks the naive "just
-    decompose/rewrite any model as SBML" claim the rest of the investigation operates under.'
+- summary: 'REDUCTION VALID AT LARGE N — at population scale K=400 (80 Gillespie-SSA runs, ~2 Lotka-Volterra periods, seed 0) the mean-field ODE integrated by libroadrunner/CVODE reproduces the SSA ensemble mean to a max relative error of 4.9% (mean 1.0%), with 0% predator extinction and 0% total extinction (robust across seeds: max rel err 0.033-0.056, extinction always 0). This is the Kurtz large-population limit in action: at enough individuals the discrete stochastic model and its continuous deterministic SBML reduction agree, so the ABM genuinely DOES reduce to an SBML model here.'
+- summary: 'REDUCTION INVALID AT SMALL N — at scale K=8 (200 SSA runs, seed 0) the stochastic system COLLAPSES: the PREDATORS go extinct in 86.5% of runs and BOTH species in 51.0% (prey extinction, which is absorbing, then starves the predators), while the mean-field ODE — neutrally stable closed orbits — simply cycles forever and NEVER goes extinct (0% of either species, at any K). The ensemble mean diverges several-fold from the ODE (predator-extinct runs let the prey escape, so the mean bears no resemblance to the bounded ODE cycle). Robust across seeds (predator extinction 0.845-0.865, total 0.485-0.530). The deterministic SBML reduction misses the single most important qualitative behaviour of the small-population system — that the predators crash and the system can die out.'
+- summary: HONEST EXTINCTION ACCOUNTING — only PREY extinction is truly absorbing; when the predators die but prey survive, the prey keep reproducing (pure birth r*X), so the SSA is NOT frozen on predator extinction (an earlier freeze inflated the single "extinction" number to 0.94 — the corrected, split numbers are 86.5% predator / 51.0% total). Prey that escape after their predators are gone are bounded by a documented population cap (25*K) that halts the unbounded runaway; the cap sits far above the deterministic orbit peak (~1.8 in density) so it never triggers while both species coexist. The headline metric is predator_extinct_fraction (the LV collapse the ODE can never show); total_extinct_fraction is reported alongside.
+- summary: STRUCTURAL LIMIT, NOT A TOLERANCE — the gap is not something a finer integrator or looser tolerance closes. The ODE state is (prey, predator) concentrations; it has no representation of integer discreteness, of demographic noise variance, or of the extinction probability, at ANY K. Those are properties of the ensemble and the absorbing boundary, which a single deterministic trajectory cannot carry. The ABM was NOT tuned to match the ODE — the large-N agreement and the small-N collapse are both measured.
+- summary: 'FEASIBILITY STATEMENT — "can an ABM even be an SBML/Tellurium model?" Answer: yes, but ONLY as its large-population, well-mixed, deterministic mean-field limit. That reduction is a real, runnable SBML model (the predator_prey_meanfield composite''s Antimony) and is faithful when individuals are many; it silently discards stochasticity, discreteness, extinction and individual heterogeneity, which at small population size ARE the behaviour. This is the adversarial result that breaks the naive "just decompose/rewrite any model as SBML" claim the rest of the investigation operates under.'
 runs:
 - name: canonical
   canonical: true
@@ -124,36 +35,49 @@ runs:
   outcomes:
     arm9-meanfield-valid-only-at-large-N:
       result: ok
-      detail: 'LARGE K=400 (80 SSA runs, seed 0): ODE matches SSA ensemble mean to max rel err 0.049,
-        predator/total extinction 0.00 — reduction VALID. SMALL K=8 (200 SSA runs, seed 0): predator_extinct_fraction
-        0.865, total_extinct_fraction 0.510 (ODE never extinct, either species, at any K), ensemble mean
-        diverges several-fold — reduction INVALID. Measured, real Gillespie SSA + real libroadrunner/CVODE
-        ODE; predator-only extinction not frozen (prey escape, capped at 25*K); ABM not tuned to the ODE.'
+      detail: 'LARGE K=400 (80 SSA runs, seed 0): ODE matches SSA ensemble mean to max rel err 0.049, predator/total extinction 0.00 — reduction VALID. SMALL K=8 (200 SSA runs, seed 0): predator_extinct_fraction 0.865, total_extinct_fraction 0.510 (ODE never extinct, either species, at any K), ensemble mean diverges several-fold — reduction INVALID. Measured, real Gillespie SSA + real libroadrunner/CVODE ODE; predator-only extinction not frozen (prey escape, capped at 25*K); ABM not tuned to the ODE.'
   computed_outcomes:
     _status: store_unresolved
-verdict: 'Passing — the adversarial claim is confirmed with honest numbers: the ABM reduces to its mean-field
-  SBML/Tellurium ODE (4.9% max rel err, 0% extinction) only at large population (K=400), and the reduction
-  structurally breaks at small population (K=8: predators collapse in 86.5% of runs, both species in 51.0%
-  — extinction the ODE can never show, which cycles forever — and the ensemble mean diverges several-fold).
-  An ABM CAN be an SBML model, but only as its large-population deterministic limit, which discards the
-  stochasticity/discreteness/extinction that is often the point.'
+- name: viva_sbml_decomposition.composites.arm9_abm.predator_prey_meanfield__1793016403__2abc82
+  status: completed
+  timestamp: 1793016406.754102
+  emitter:
+    kind: unknown
+  env_id: 612a0f30c7c3ca08
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+  provenance:
+    params:
+      n_steps:
+        value: 20
+        source: resolved
+    params_captured_at: '2026-10-26'
+    params_source: dashboard-runner
+- name: viva_sbml_decomposition.composites.arm9_abm.predator_prey_meanfield__1793016486__60a6d9
+  status: completed
+  timestamp: 1793016489.7991529
+  emitter:
+    kind: unknown
+  env_id: 612a0f30c7c3ca08
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+  provenance:
+    params:
+      n_steps:
+        value: 20
+        source: resolved
+    params_captured_at: '2026-10-26'
+    params_source: dashboard-runner
+verdict: 'Passing — the adversarial claim is confirmed with honest numbers: the ABM reduces to its mean-field SBML/Tellurium ODE (4.9% max rel err, 0% extinction) only at large population (K=400), and the reduction structurally breaks at small population (K=8: predators collapse in 86.5% of runs, both species in 51.0% — extinction the ODE can never show, which cycles forever — and the ensemble mean diverges several-fold). An ABM CAN be an SBML model, but only as its large-population deterministic limit, which discards the stochasticity/discreteness/extinction that is often the point.'
 evaluation_status: passed
 gate_status: passed
 caveats:
-- The mean-field ODE IS a faithful SBML reduction at large population — the arm is not an argument against
-  SBML, but a quantification of the limit (large N, well-mixed, deterministic) in which the reduction
-  is valid.
-- The specific extinction fractions (0% at K=400; 86.5% predator / 51.0% total at K=8) are for this Lotka-Volterra
-  parameterisation and horizon (~2 periods); the qualitative result (valid at large N, collapse-dominated
-  at small N) is the Kurtz/van-Kampen limit and is parameterisation-independent, but the exact crossover
-  scale is model-specific.
-- Extinction is split into predator vs total because only PREY extinction is absorbing; predator-only
-  extinction leaves the prey to grow (pure birth), so the SSA is not frozen and the prey are bounded by
-  a numerical population cap (25*K). The max-relative-error metric at small K is therefore sensitive to
-  that cap (escaped prey dominate the ensemble mean); the robust, cap-independent headline is the extinction
-  fractions, not the rel-err magnitude.
-- The ABM here is WELL-MIXED (no spatial grid); spatial/heterogeneous ABMs are even further from an ODE
-  reduction, so this is the FAVOURABLE case for SBML and still breaks at small N.
+- The mean-field ODE IS a faithful SBML reduction at large population — the arm is not an argument against SBML, but a quantification of the limit (large N, well-mixed, deterministic) in which the reduction is valid.
+- The specific extinction fractions (0% at K=400; 86.5% predator / 51.0% total at K=8) are for this Lotka-Volterra parameterisation and horizon (~2 periods); the qualitative result (valid at large N, collapse-dominated at small N) is the Kurtz/van-Kampen limit and is parameterisation-independent, but the exact crossover scale is model-specific.
+- Extinction is split into predator vs total because only PREY extinction is absorbing; predator-only extinction leaves the prey to grow (pure birth), so the SSA is not frozen and the prey are bounded by a numerical population cap (25*K). The max-relative-error metric at small K is therefore sensitive to that cap (escaped prey dominate the ensemble mean); the robust, cap-independent headline is the extinction fractions, not the rel-err magnitude.
+- The ABM here is WELL-MIXED (no spatial grid); spatial/heterogeneous ABMs are even further from an ODE reduction, so this is the FAVOURABLE case for SBML and still breaks at small N.
 visualizations:
 - name: abm_extinction
   address: local:ABMExtinction
@@ -172,25 +96,32 @@ simulation_set:
   status: ran
 pipeline_gate:
   gate_evaluator:
-    result: passed
-    blocked_by: []
+    result: blocked
+    blocked_by:
+    - reduction-valid-large-population
+    - reduction-invalid-small-population
     evaluated_by: code
-    diverges_from_authored: false
+    diverges_from_authored: true
 behavior_tests:
 - name: reduction-valid-large-population
   classification: accuracy
-  measure: ABM ensemble-mean vs the mean-field ODE, relative error at K=400
-  pass_if: < 0.10
+  measure:
+    kind: accuracy
+    detail: ABM ensemble-mean vs the mean-field ODE, relative error at K=400
+  pass_if:
+    op: threshold
+    detail: < 0.10
   units: relative error
-  description: At large population the ABM→SBML mean-field reduction is VALID. Measured 4.9%, extinction
-    0.0 → PASS.
+  description: At large population the ABM→SBML mean-field reduction is VALID. Measured 4.9%, extinction 0.0 → PASS.
   requires_simulation: true
 - name: reduction-invalid-small-population
   classification: adversarial
-  measure: ABM predator extinction fraction at K=8 (the ODE shows exactly 0 for any species)
-  pass_if: '> 0 (ODE = 0)'
+  measure:
+    kind: adversarial
+    detail: ABM predator extinction fraction at K=8 (the ODE shows exactly 0 for any species)
+  pass_if:
+    op: threshold
+    detail: '> 0 (ODE = 0)'
   units: fraction of runs
-  description: 'ADVERSARIAL / the SBML-applicability limit: at small population the ODE structurally misses
-    the stochastic collapse. Measured predators extinct in 86.5% of runs (total 51%) while the ODE cycles
-    forever → the reduction is INVALID here.'
+  description: 'ADVERSARIAL / the SBML-applicability limit: at small population the ODE structurally misses the stochastic collapse. Measured predators extinct in 86.5% of runs (total 51%) while the ODE cycles forever → the reduction is INVALID here.'
   requires_simulation: true

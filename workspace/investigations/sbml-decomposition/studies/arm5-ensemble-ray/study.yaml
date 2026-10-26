@@ -4,18 +4,11 @@ investigation: sbml-decomposition
 status: ran
 title: Arm 5 — Ensemble on Ray
 confidence: Accepted
-question: When many instances of the monolithic model are run as a parameter ensemble, does vivarium orchestration
-  on a real parallel backend (Ray) deliver a genuine throughput speedup?
-hypothesis: A Ray-backed ensemble of monolithic instances delivers a real wall-clock speedup — the one
-  arm where decomposition/orchestration wins on speed — because libroadrunner does not release the GIL,
-  so only OS-process parallelism helps.
+question: When many instances of the monolithic model are run as a parameter ensemble, does vivarium orchestration on a real parallel backend (Ray) deliver a genuine throughput speedup?
+hypothesis: A Ray-backed ensemble of monolithic instances delivers a real wall-clock speedup — the one arm where decomposition/orchestration wins on speed — because libroadrunner does not release the GIL, so only OS-process parallelism helps.
 objective: Fan the monolith out into a parameter ensemble on Ray and measure the real speedup.
-description: Methods arm of the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064,
-  17 floating species). The model is authored as inline Antimony and shown in the Model tab. Arm 5 runs
-  N monolithic instances concurrently via Ray OS processes (the baseline composite is one monolithic instance;
-  the ensemble is N of them with parameter draws).
-claim: A Ray ensemble of monoliths gives a real 7.5x wall-clock speedup on 16 cores — the one arm where
-  vivarium wins on speed; libroadrunner does NOT release the GIL, so in-process threads cannot (they backfire).
+description: Methods arm of the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species). The model is authored as inline Antimony and shown in the Model tab. Arm 5 runs N monolithic instances concurrently via Ray OS processes (the baseline composite is one monolithic instance; the ensemble is N of them with parameter draws).
+claim: A Ray ensemble of monoliths gives a real 7.5x wall-clock speedup on 16 cores — the one arm where vivarium wins on speed; libroadrunner does NOT release the GIL, so in-process threads cannot (they backfire).
 parent_studies:
 - study: arm1-monolithic-tellurium
   relation: leads-to
@@ -25,14 +18,11 @@ baseline:
 expected_behavior:
 - name: arm5-real-parallel-speedup
   observable: serial vs Ray wall-clock
-  condition: speedup > 1 on a multi-core host via Ray OS processes, or an explicit serial-fallback declaring
-    no speedup
+  condition: speedup > 1 on a multi-core host via Ray OS processes, or an explicit serial-fallback declaring no speedup
   rationale: the ensemble arm must show a genuine parallel win, not a mislabeled serial loop.
 findings:
 - summary: 'n_instances=8, 16 CPUs: serial 1.189s → Ray 0.158s = 7.52x real speedup (backend=ray, speedup_claimed=true).'
-- summary: libroadrunner does NOT release the GIL during .simulate() (8-instance ThreadPool = 0.99x),
-    so Ray's separate OS processes are the only path; in-process parallel_processes backfires for this
-    CVODE-wrapping work.
+- summary: libroadrunner does NOT release the GIL during .simulate() (8-instance ThreadPool = 0.99x), so Ray's separate OS processes are the only path; in-process parallel_processes backfires for this CVODE-wrapping work.
 runs:
 - name: canonical
   canonical: true
@@ -60,6 +50,22 @@ runs:
         source: resolved
     params_captured_at: '2026-10-25'
     params_source: dashboard-runner
+- name: viva_sbml_decomposition.composites.arm1_monolithic.glycolysis_monolithic__1793016449__0d84c6
+  status: completed
+  timestamp: 1793016453.523544
+  emitter:
+    kind: unknown
+  env_id: 612a0f30c7c3ca08
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+  provenance:
+    params:
+      n_steps:
+        value: 20
+        source: resolved
+    params_captured_at: '2026-10-26'
+    params_source: dashboard-runner
 visualizations:
 - name: ensemble_scaling
   address: local:EnsembleScaling
@@ -78,23 +84,32 @@ simulation_set:
   status: ran
 pipeline_gate:
   gate_evaluator:
-    result: passed
-    blocked_by: []
+    result: blocked
+    blocked_by:
+    - real-parallel-speedup
+    - gil-bound-needs-processes
     evaluated_by: code
-    diverges_from_authored: false
+    diverges_from_authored: true
 behavior_tests:
 - name: real-parallel-speedup
   classification: efficiency
-  measure: Ray ensemble speedup vs serial (n=8 instances, 16 cores)
-  pass_if: '>= 2.0'
+  measure:
+    kind: efficiency
+    detail: Ray ensemble speedup vs serial (n=8 instances, 16 cores)
+  pass_if:
+    op: threshold
+    detail: '>= 2.0'
   units: speedup ratio
   description: The ensemble arm must show a genuine parallel win on OS processes. Measured 7.52× → PASS.
   requires_simulation: true
 - name: gil-bound-needs-processes
   classification: efficiency
-  measure: in-process ThreadPool(8) speedup for the same work
-  pass_if: <= 1.1
+  measure:
+    kind: efficiency
+    detail: in-process ThreadPool(8) speedup for the same work
+  pass_if:
+    op: threshold
+    detail: <= 1.1
   units: speedup ratio
-  description: libroadrunner does not release the GIL, so in-process threads cannot parallelize. Measured
-    0.99× → confirms Ray's separate processes are the only path.
+  description: libroadrunner does not release the GIL, so in-process threads cannot parallelize. Measured 0.99× → confirms Ray's separate processes are the only path.
   requires_simulation: true
