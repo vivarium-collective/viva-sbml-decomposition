@@ -352,6 +352,9 @@ class NativeGlycolysisProcess(Process):
     """
 
     config_schema = {
+        # Informational: the Antimony the hand-ported RHS reproduces, carried so
+        # the workbench Model tab shows it for every engine (unused at runtime).
+        "model": {"_type": "string", "_default": ""},
         "leaf": {"_type": "string", "_default": "scalar"},
         "absolute_tolerance": {"_type": "float", "_default": ABSOLUTE_TOLERANCE},
         "relative_tolerance": {"_type": "float", "_default": RELATIVE_TOLERANCE},
@@ -435,6 +438,7 @@ class NativeSubmodelProcess(Process):
     """
 
     config_schema = {
+        "model": {"_type": "string", "_default": ""},   # informational (see above)
         "reactions": {"_type": "list[string]", "_default": []},
         "absolute_tolerance": {"_type": "float", "_default": ABSOLUTE_TOLERANCE},
         "relative_tolerance": {"_type": "float", "_default": RELATIVE_TOLERANCE},

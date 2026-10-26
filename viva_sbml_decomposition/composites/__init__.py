@@ -15,3 +15,4 @@ from . import arm7_multirate  # noqa: F401  glycolysis_multirate
 from . import arm8_multiorgan  # noqa: F401  glycolysis_multiorgan_mono / _decomposed
 from . import arm9_abm  # noqa: F401  predator_prey_abm / predator_prey_meanfield (adversarial arm)
 from . import arm10_copasi  # noqa: F401  glycolysis_copasi_mono / glycolysis_cross_engine (COPASI second engine)
+from . import engine_monolithic  # noqa: F401  engine_monolithic / native_composite (generic, model-as-data)
