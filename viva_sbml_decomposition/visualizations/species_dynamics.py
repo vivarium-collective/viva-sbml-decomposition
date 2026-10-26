@@ -1,7 +1,7 @@
 """SpeciesDynamics — the reference glycolysis trajectory every arm computes."""
 from __future__ import annotations
 
-from process_bigraph.visualization import Visualization
+from ._plotly import PlotlyVisualization
 
 from ._common import axis, layout, load_metrics
 
@@ -9,7 +9,7 @@ N = 6
 _COLORS = ["#2563eb", "#d97706", "#7c3aed", "#059669", "#db2777", "#0891b2"]
 
 
-class SpeciesDynamics(Visualization):
+class SpeciesDynamics(PlotlyVisualization):
     def inputs(self):
         return {"time": "list[float]", "species": "map[list[float]]"}
 
@@ -20,7 +20,7 @@ class SpeciesDynamics(Visualization):
         top = sorted(sp, key=lambda k: max(sp[k]) - min(sp[k]), reverse=True)[:N]
         return {"time": t["time"], "species": {k: sp[k] for k in top}}
 
-    def update(self, s):
+    def figure(self, s):
         data = [{"type": "scatter", "mode": "lines", "x": s["time"], "y": y, "name": k,
                  "line": {"width": 2.5, "color": _COLORS[i % len(_COLORS)]},
                  "hovertemplate": k + "<br>t=%{x:.2f}<br>%{y:.3f}<extra></extra>"}

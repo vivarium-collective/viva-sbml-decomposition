@@ -1,7 +1,7 @@
 """DecisionTable — the bottom line: when to use or avoid each arm."""
 from __future__ import annotations
 
-from process_bigraph.visualization import Visualization
+from ._plotly import PlotlyVisualization
 
 from ._common import comp_total, layout, load_metrics
 
@@ -15,7 +15,7 @@ _ROLE = {
 }
 
 
-class DecisionTable(Visualization):
+class DecisionTable(PlotlyVisualization):
     def inputs(self):
         return {"rows": "list[node]"}
 
@@ -44,7 +44,7 @@ class DecisionTable(Visualization):
             })
         return {"rows": rows}
 
-    def update(self, s):
+    def figure(self, s):
         rows = s["rows"]
         cols = ["Arm", "Speed (overhead / ratio)", "Accuracy", "Composability", "Use / Avoid / Why"]
         keys = ["arm", "speed", "accuracy", "composability", "why"]

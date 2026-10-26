@@ -1,12 +1,12 @@
 """ConvergenceCurves — error shrinks as the coupling interval shrinks."""
 from __future__ import annotations
 
-from process_bigraph.visualization import Visualization
+from ._plotly import PlotlyVisualization
 
 from ._common import PAL, axis, caption, label, layout, load_metrics
 
 
-class ConvergenceCurves(Visualization):
+class ConvergenceCurves(PlotlyVisualization):
     def inputs(self):
         return {"curves": "map[list[list[float]]]", "labels": "map[string]"}
 
@@ -17,7 +17,7 @@ class ConvergenceCurves(Visualization):
                 "labels": {a: label(m, a, " ") for a in m["convergence"]},
                 "note": m["notes"]["mismatched_interval"]}
 
-    def update(self, state):
+    def figure(self, state):
         data = []
         for arm, pts in state["curves"].items():
             pts = sorted(pts)

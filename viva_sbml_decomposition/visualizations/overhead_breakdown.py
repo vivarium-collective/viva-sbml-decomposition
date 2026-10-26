@@ -1,12 +1,12 @@
 """OverheadBreakdown — process vs framework seconds, arms with a measured total."""
 from __future__ import annotations
 
-from process_bigraph.visualization import Visualization
+from ._plotly import PlotlyVisualization
 
 from ._common import axis, caption, label, layout, load_metrics
 
 
-class OverheadBreakdown(Visualization):
+class OverheadBreakdown(PlotlyVisualization):
     def inputs(self):
         return {"arms": "list[string]", "labels": "list[string]",
                 "process_s": "list[float]", "framework_s": "list[float]",
@@ -23,7 +23,7 @@ class OverheadBreakdown(Visualization):
                 "overhead_fraction": [x["overhead_fraction"] for x in o],
                 "note": m["notes"]["overhead_fraction"]}
 
-    def update(self, state):
+    def figure(self, state):
         arms = state["arms"]
         common = {"type": "bar", "x": state["labels"], "customdata": arms}
         data = [

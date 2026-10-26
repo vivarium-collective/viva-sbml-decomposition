@@ -1,12 +1,12 @@
 """EnsembleScaling — arm5 serial vs Ray-parallel wall-clock."""
 from __future__ import annotations
 
-from process_bigraph.visualization import Visualization
+from ._plotly import PlotlyVisualization
 
 from ._common import axis, caption, layout, load_metrics
 
 
-class EnsembleScaling(Visualization):
+class EnsembleScaling(PlotlyVisualization):
     def inputs(self):
         return {"n_instances": "integer", "n_cpus": "integer", "serial_s": "float",
                 "parallel_s": "float", "speedup": "float", "backend": "string",
@@ -18,7 +18,7 @@ class EnsembleScaling(Visualization):
         return {k: e[k] for k in ("n_instances", "n_cpus", "serial_s", "parallel_s",
                                   "speedup", "backend", "gil_note")}
 
-    def update(self, s):
+    def figure(self, s):
         data = [{"type": "bar", "x": ["serial", f"parallel ({s['backend']})"],
                  "y": [s["serial_s"], s["parallel_s"]],
                  "marker": {"color": ["#94a3b8", "#db2777"]},

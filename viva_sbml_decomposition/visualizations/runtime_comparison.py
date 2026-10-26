@@ -1,12 +1,12 @@
 """RuntimeComparison — framework-overhead share per arm."""
 from __future__ import annotations
 
-from process_bigraph.visualization import Visualization
+from ._plotly import PlotlyVisualization
 
 from ._common import PAL, axis, caption, label, layout, load_metrics
 
 
-class RuntimeComparison(Visualization):
+class RuntimeComparison(PlotlyVisualization):
     def inputs(self):
         return {"arms": "list[string]", "labels": "list[string]",
                 "overhead_fraction": "list[maybe[float]]",
@@ -22,7 +22,7 @@ class RuntimeComparison(Visualization):
                 "total_s": [o.get("total_s") for o in oh],
                 "caption": m["notes"]["overhead_fraction"]}
 
-    def update(self, state):
+    def figure(self, state):
         arms, ys, ts = state["arms"], state["overhead_fraction"], state["total_s"]
         text = []
         for y, t in zip(ys, ts):

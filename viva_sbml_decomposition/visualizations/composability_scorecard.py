@@ -1,14 +1,14 @@
 """ComposabilityScorecard — 0-3 scores per arm and dimension."""
 from __future__ import annotations
 
-from process_bigraph.visualization import Visualization
+from ._plotly import PlotlyVisualization
 
 from ._common import label, layout, load_metrics
 
 DIMS = ["substitutability", "coupling_readiness", "multiscale_fit"]
 
 
-class ComposabilityScorecard(Visualization):
+class ComposabilityScorecard(PlotlyVisualization):
     def inputs(self):
         return {"arms": "list[string]", "labels": "list[string]", "dims": "list[string]",
                 "scores": "list[list[integer]]"}
@@ -20,7 +20,7 @@ class ComposabilityScorecard(Visualization):
         return {"arms": arms, "labels": [label(m, a) for a in arms], "dims": DIMS,
                 "scores": [[m["composability"][a][d] for a in arms] for d in DIMS]}
 
-    def update(self, s):
+    def figure(self, s):
         names = [d.replace("_", " ") for d in s["dims"]]
         trace = {"type": "heatmap", "x": s["labels"], "y": names, "z": s["scores"],
                  "zmin": 0, "zmax": 3, "colorscale": "Viridis",

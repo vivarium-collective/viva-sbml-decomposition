@@ -1,12 +1,12 @@
 """TradeoffMap — accuracy x framework-overhead, sized/colored by composability."""
 from __future__ import annotations
 
-from process_bigraph.visualization import Visualization
+from ._plotly import PlotlyVisualization
 
 from ._common import FLOOR, axis, comp_total, layout, load_metrics
 
 
-class TradeoffMap(Visualization):
+class TradeoffMap(PlotlyVisualization):
     def inputs(self):
         return {"points": "list[node]", "off_axis": "list[node]"}
 
@@ -25,7 +25,7 @@ class TradeoffMap(Visualization):
                 pts.append(row)
         return {"points": pts, "off_axis": off, "ensemble": m["ensemble"]}
 
-    def update(self, s):
+    def figure(self, s):
         pts = s["points"]
         xs = [max(p["accuracy"], FLOOR) for p in pts]
         data = [{"type": "scatter", "mode": "markers+text", "name": "accuracy-scored arms",

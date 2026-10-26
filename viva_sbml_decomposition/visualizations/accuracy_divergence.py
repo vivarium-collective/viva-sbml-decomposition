@@ -1,12 +1,12 @@
 """AccuracyDivergence — max relative error vs the monolithic reference (log)."""
 from __future__ import annotations
 
-from process_bigraph.visualization import Visualization
+from ._plotly import PlotlyVisualization
 
 from ._common import FLOOR, PAL, axis, label, layout, load_metrics
 
 
-class AccuracyDivergence(Visualization):
+class AccuracyDivergence(PlotlyVisualization):
     def inputs(self):
         return {"arms": "list[string]", "labels": "list[string]",
                 "max_rel_err": "list[float]", "exempt": "list[string]"}
@@ -21,7 +21,7 @@ class AccuracyDivergence(Visualization):
                 "max_rel_err": [m["accuracy"][a] for a in scored],
                 "exempt": exempt, "exempt_labels": [label(m, a) for a in exempt]}
 
-    def update(self, state):
+    def figure(self, state):
         arms, errs, labs = state["arms"], state["max_rel_err"], state["labels"]
         pos = [(a, l, e) for a, l, e in zip(arms, labs, errs) if e > 0]
         zero = [(a, l) for a, l, e in zip(arms, labs, errs) if e <= 0]

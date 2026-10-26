@@ -24,7 +24,7 @@ def _fig(mod, cls):
 
 def _spec(mod, cls):
     c, s = _fig(mod, cls)
-    return c(config={}, core=allocate_core()).update(s)
+    return c(config={}, core=allocate_core()).figure(s)
 
 
 @pytest.mark.parametrize("mod,cls", FIGS)
@@ -32,8 +32,13 @@ def test_figure_spec_valid(mod, cls):
     c, s = _fig(mod, cls)
     assert s
     assert isinstance(c(config={}, core=allocate_core()).inputs(), dict)
-    spec = c(config={}, core=allocate_core()).update(s)
-    assert isinstance(spec, dict) and spec["data"] and "layout" in spec
+    inst = c(config={}, core=allocate_core())
+    out = inst.update(s)
+    assert set(out) == {"html"} and isinstance(out["html"], str)
+    assert "<div" in out["html"] and "Plotly.newPlot" in out["html"]
+    assert f"viva_{cls}" in out["html"]
+    spec = inst.figure(s)
+    assert spec["data"] and "layout" in spec
     import plotly.graph_objects as go
     go.Figure(spec)  # valid plotly spec
 
