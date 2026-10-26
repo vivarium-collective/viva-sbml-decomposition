@@ -14,8 +14,8 @@
 name: Publish read-only dashboard
 
 # Build the workspace into a self-contained static SPA snapshot and publish it
-# to the gh-pages branch at dashboard/ (served at
-# <user>.github.io/<repo>/dashboard/). The READ-ONLY mirror of every
+# to the gh-pages branch at workbench/ (served at
+# <user>.github.io/<repo>/workbench/). The READ-ONLY mirror of every
 # investigation + study on main — browsable with no server.
 #
 # Ships with every workspace scaffolded from the template. Repo-specific bits
@@ -120,7 +120,7 @@ jobs:
           set -euo pipefail
           owner="${{ github.repository_owner }}"; repo="${{ github.event.repository.name }}"
           python3 scripts/feature_dashboard_in_readme.py README.md \
-            "https://${owner}.github.io/${repo}/dashboard/" \
+            "https://${owner}.github.io/${repo}/workbench/" \
             "https://${owner}.github.io/${repo}/"
           if ! git diff --quiet README.md; then
             git config user.name  "github-actions[bot]"

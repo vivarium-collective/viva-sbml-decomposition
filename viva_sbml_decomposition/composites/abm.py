@@ -129,7 +129,7 @@ def _build_abm_document(scale: int, n_points: int, seed: int) -> dict:
 @composite_generator(
     name="predator_prey_abm",
     description=(
-        "Arm 9 (ABM): a well-mixed stochastic Lotka-Volterra predator-prey model "
+        "Agent-based model: a well-mixed stochastic Lotka-Volterra predator-prey model "
         "as a population of DISCRETE individuals with stochastic birth/predation/"
         "death events, advanced by the exact Gillespie SSA in a native "
         "process-bigraph process. Integer-count state, one stochastic trajectory "
@@ -156,7 +156,7 @@ def predator_prey_abm(core=None, scale: int = LARGE_SCALE, seed: int = -1):
 @composite_generator(
     name="predator_prey_meanfield",
     description=(
-        "Arm 9 (mean-field reduction): the deterministic Lotka-Volterra ODE as "
+        "Mean-field reduction: the deterministic Lotka-Volterra ODE as "
         "Antimony integrated by libroadrunner/CVODE in a TelluriumProcess — the "
         "SBML reduction of the stochastic ABM. Faithful only in the large-"
         "population, well-mixed, deterministic limit; it structurally cannot "

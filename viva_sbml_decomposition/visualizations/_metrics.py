@@ -131,7 +131,7 @@ def collect_metrics() -> dict:
         "notes": {
             "overhead_fraction": "framework SHARE of wall-clock (Composite.timing_summary); highest for the CHEAP monolith, NOT the decomposition cost.",
             "scalar_vs_array": "indistinguishable at 17 species; scalar-dict tax is linear in element count, bites only at 100s-1000s.",
-            "mismatched_interval": "O(P^2) multi-rate scheduler cost in pb<=1.10.x; PR #270 (unmerged 2026-10-25) -> O(P log P). Prefer equal coupling intervals.",
+            "mismatched_interval": "O(P^2) multi-rate scheduler cost in pb<=1.10.x; PR #270 (merged; heap scheduler) -> O(P log P). Prefer equal coupling intervals.",
         },
     }
 

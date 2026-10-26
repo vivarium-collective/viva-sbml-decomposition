@@ -2,11 +2,11 @@
 engines, ONE shared additive species store.
 
 ``reaction_split(model, seam, engine_a, engine_b, coupling_interval)`` replaces the
-hand-written split/coupling arms (3 modular, 6 tellurium+native, 10 tellurium+COPASI,
-and the mechanical split of 2) with a single generator in which the model, the
+hand-written split/coupling variants (biological seam, tellurium+native,
+tellurium+COPASI, and the mechanical split) with a single generator in which the model, the
 reaction partition (``seam``) and each side's engine are data.
 
-Wiring (identical to arms 3/6/10): node A (``engine_a``, the *upper* reactions) and
+Wiring: node A (``engine_a``, the *upper* reactions) and
 node B (``engine_b``, the *lower* reactions) both read the shared ``["species"]``
 store, integrate only their own reactions over ``coupling_interval``, and write a
 per-interval DELTA that applies additively (``map[float]`` is additive; deltas from
@@ -16,16 +16,15 @@ re-derives those species from the reconciled pool each step.
 
 ``seam``:
 
-* ``"aldolase"`` - arm 3/6/10's biological upper/lower glycolysis seam.
-* ``"mechanical"`` / ``"operator"`` - arm 2's partition (core network vs the
-  vGLYCO/vTreha storage sinks).
+* ``"aldolase"`` - the biological upper/lower glycolysis seam.
+* ``"mechanical"`` / ``"operator"`` - a mechanical partition (core network vs the
+  vGLYCO/vTreha storage sinks), not a biological seam.
 * ``{"upper": [...], "lower": [...]}`` - explicit reaction lists (any model).
 
-Arm 2 caveat: arm 2 is one bespoke ``OperatorSplitProcess`` doing a sequential Lie
-split with overwrite coupling; this composite is always the two-node additive
-(Jacobi) split. With the arm-2 partition it is the closest faithful reproduction,
-NOT a bit-identical one (same first-order splitting error order, different
-constant).
+Coupling is always additive (Jacobi): both nodes advance from the same state each
+coupling interval and their deltas sum. The splitting error is first order in the
+interval; it is NOT a sequential (Lie) split, so for the mechanical seam it is
+larger at a given interval than a sequential split would be.
 """
 from __future__ import annotations
 
@@ -50,14 +49,14 @@ SPECIES_PATH = ("species",)
 DEFAULT_SPLIT_B = ["vGLYCO", "vTreha"]
 
 # name -> (upper node name, upper reactions, lower node name, lower reactions,
-#          default coupling interval of the arm it reproduces)
+#          default coupling interval for the seam)
 SEAMS = {
     "aldolase": ("upper_glycolysis", list(UPPER_GLYCOLYSIS),
                  "lower_glycolysis", list(LOWER_GLYCOLYSIS), 0.0005),
 }
 SEAM_ALIASES = {"mechanical": "mechanical", "operator": "mechanical"}
 DEFAULT_COUPLING_INTERVAL = 0.0005
-MECHANICAL_COUPLING_INTERVAL = 0.05     # arm 2's default
+MECHANICAL_COUPLING_INTERVAL = 0.05     # default for the mechanical seam
 EXPLICIT_COUPLING_INTERVAL = 0.005
 
 
@@ -124,7 +123,7 @@ def build_document(model="glycolysis", seam="aldolase", engine_a="tellurium",
         "(aldolase | mechanical | explicit upper/lower lists) into two process "
         "nodes, each in its own engine (tellurium | copasi | native), coupled only "
         "through ONE shared additive species store (per-interval deltas sum). "
-        "Reproduces arms 2/3/6/10-cross; config.model carries the Antimony."
+        "config.model carries the Antimony."
     ),
     parameters={
         "model": {"type": "string", "default": "glycolysis"},
@@ -154,7 +153,7 @@ def _run_inproc(model="glycolysis", seam="aldolase", engine_a="tellurium",
 
 def run_reaction_split(model="glycolysis", seam="aldolase", engine_a="tellurium",
                        engine_b="tellurium", coupling_interval=None, t_end=None):
-    """Run the split; return ``(traj, t)``. COPASI runs use arm 10's abort-safe
+    """Run the split; return ``(traj, t)``. COPASI runs use the abort-safe
     retrying subprocess (``seam`` must then be JSON-serialisable)."""
     for e in (engine_a, engine_b):
         if e not in ENGINES:

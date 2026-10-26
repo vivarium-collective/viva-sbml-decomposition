@@ -52,34 +52,28 @@ composites and investigations; regenerate any time with
 
 | Composite | What it is |
 |---|---|
-| `glycolysis_coupled` | Arm 6 (coupling demonstration): arm 3's modular glycolysis decomposition with the lower-glycolysis submodel swapped for a NATIVE process-bigraph process (hand-ported Teusink RHS + scipy) while upper… |
-| `glycolysis_modular` | Arm 3: the 17-species glycolysis model partitioned along the biological aldolase seam into separate upper- and lower-glycolysis process nodes (one SubmodelProcess each) that share a single species st… |
-| `glycolysis_monolithic` | Arm 1: whole 17-species glycolysis model in one TelluriumProcess (accuracy reference, bulk-bound species port). |
-| `glycolysis_multiorgan_decomposed` | Arm 8 (decomposed): the N-organ body as N per-organ OrganProcess nodes, each its own small libroadrunner instance, coupled through ONE shared blood store — every organ writes its per-interval Glc_blo… |
-| `glycolysis_multiorgan_mono` | Arm 8 (monolithic): the whole N-organ synthetic body as ONE Antimony/Tellurium model integrated by a single libroadrunner/CVODE instance. |
-| `glycolysis_multirate` | Arm 7 (multi-rate scheduler stress test): N INDEPENDENT monolithic glycolysis instances (each the arm-1 whole-model TelluriumProcess, bulk-bound species), each advanced on a DIFFERENT geometrically-s… |
-| `glycolysis_native_array` | Arm 4 (array leaf): the SAME fully native Teusink glycolysis ODE network as glycolysis_native_scalar — identical hand-ported RHS and scipy (LSODA) integration — but with the species state carried as… |
-| `glycolysis_native_scalar` | Arm 4 (scalar leaf): the 17-species Teusink glycolysis ODE network reimplemented as a fully native process-bigraph process — hand-ported rate laws, explicit scipy (LSODA) integration, no libroadrunne… |
-| `glycolysis_operator_split` | Arm 2: the 17-species glycolysis model integrated as a Lie operator split — core glycolytic/fermentation network vs. the glycogen/trehalose storage sinks — exchanging the full species state through a… |
-| `predator_prey_abm` | Arm 9 (ABM): a well-mixed stochastic Lotka-Volterra predator-prey model as a population of DISCRETE individuals with stochastic birth/predation/death events, advanced by the exact Gillespie SSA in a… |
-| `predator_prey_meanfield` | Arm 9 (mean-field reduction): the deterministic Lotka-Volterra ODE as Antimony integrated by libroadrunner/CVODE in a TelluriumProcess — the SBML reduction of the stochastic ABM. Faithful only in the… |
+| `engine_monolithic` | Generic monolith: a whole SBML/Antimony model (registry id or raw Antimony) in ONE process node of the chosen engine — tellurium (libroadrunner/CVODE, bulk species), copasi (COPASI/basico LSODA, over… |
+| `ensemble` | Generic ensemble: N independent whole-model instances of any registry model/engine. intervals=None is the same-rate ensemble (Ray-parallel runner, optional per-instance parameter draws); intervals='g… |
+| `native_composite` | The fully-native pbg reference: the glycolysis ODE network as a hand-ported NativeGlycolysisProcess (scalar map[float] leaf, scipy LSODA, no simulator at runtime). The engine='native' monolith; glyco… |
+| `predator_prey_abm` | Agent-based model: a well-mixed stochastic Lotka-Volterra predator-prey model as a population of DISCRETE individuals with stochastic birth/predation/death events, advanced by the exact Gillespie SSA… |
+| `predator_prey_meanfield` | Mean-field reduction: the deterministic Lotka-Volterra ODE as Antimony integrated by libroadrunner/CVODE in a TelluriumProcess — the SBML reduction of the stochastic ABM. Faithful only in the large-p… |
+| `reaction_split` | Generic reaction split: a model's reactions partitioned by `seam` (aldolase \| mechanical \| explicit upper/lower lists) into two process nodes, each in its own engine (tellurium \| copasi \| native), co… |
 <!-- END:composites -->
 
-> **COPASI engine caveat (arm 10: `glycolysis_copasi_mono`,
-> `glycolysis_cross_engine`).** These use COPASI/basico as a second SBML engine.
+> **COPASI engine caveat (`engine_monolithic` / `reaction_split` with
+> `engine="copasi"`).** These use COPASI/basico as a second SBML engine.
 > On the current `python-copasi` build COPASI's model *loader* (both the SBML
 > importer and the native `.cps` load) aborts the process **nondeterministically**
-> (~1-in-6; an uncatchable C++ `abort`/segfault). Mitigations: *building* an
-> arm-10 composite doc and *registering* the process never load COPASI (so
+> (~1-in-6; an uncatchable C++ `abort`/segfault). Mitigations: *building* a
+> COPASI composite doc and *registering* the process never load COPASI (so
 > dashboard rendering / study-run build is abort-safe), models are disk-cached as
 > `.cps` (keyed by SBML hash), and the local run/measurement helpers
-> (`run_copasi_mono`, `run_cross_engine`, `measure_copasi`) execute the real
-> COPASI composite in a **retrying subprocess** so an abort just retries. The one
-> path still exposed is the dashboard's own *in-process* run of an arm-10
-> composite (Model-tab simulate / study-run baseline) — it carries the residual
-> ~1-in-6 abort risk; wrap it in the subprocess runner if that becomes a problem.
-> COPASI also holds the GIL on its solve and is not thread-safe, so a COPASI
-> ensemble must use Ray separate processes (see arm 5), not in-process threads.
+> (`run_engine_monolithic`, `run_reaction_split`) execute the real COPASI
+> composite in a **retrying subprocess** so an abort just retries. The one path
+> still exposed is the dashboard's own *in-process* run of a COPASI composite
+> (Model-tab simulate / study-run baseline) — it carries the residual ~1-in-6
+> abort risk. COPASI also holds the GIL on its solve and is not thread-safe, so a
+> COPASI ensemble must use Ray separate processes, not in-process threads.
 
 ### Investigations
 
@@ -88,7 +82,7 @@ composites and investigations; regenerate any time with
 
 | Investigation | Research question |
 |---|---|
-| [SBML in Tellurium vs process-bigraph decomposition — a speed × accuracy × composability tradeoff _(complete)_](https://vivarium-collective.github.io/viva-sbml-decomposition/investigations/sbml-decomposition.html) | When you have a biochemical model available as SBML, when should you run it monolithically in Tellurium (libroadrunner/CVODE), and when is it worth decomposing it into vivarium / process-bigraph sub-… |
+| [sbml-decomposition](https://vivarium-collective.github.io/viva-sbml-decomposition/investigations/sbml-decomposition.html) |  |
 <!-- END:investigations -->
 
 ## Layout
