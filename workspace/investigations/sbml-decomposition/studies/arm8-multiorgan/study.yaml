@@ -4,11 +4,51 @@ investigation: sbml-decomposition
 status: ran
 title: Arm 8 — Multi-organ scaling (where monolithic Tellurium strains)
 confidence: Investigating
-question: 'As an SBML model grows large (tens -> hundreds -> thousands of species), where does a monolithic libroadrunner/CVODE instance strain — in model BUILD (compile) time, in integration time, or both — and does decomposing the body into N per-organ process-bigraph sub-processes coupled through a shared store actually come out ahead end-to-end, or does it just move the cost around?'
-hypothesis: 'A synthetic N-organ body (each organ a small 3-species chain, all coupled through one shared blood pool; species=3N+1, reactions=4N) run as ONE Antimony/Tellurium model will show the libroadrunner model build (compile) growing superlinearly in the reaction count and the dense CVODE step growing superlinearly in species. Decomposing into N per-organ libroadrunner instances coupled additively through a shared blood store (arm-3 pattern) replaces the one superlinear compile with N small ones, but adds per-tick orchestration overhead — so whether decomposition wins is an END-TO-END question, not a build-only one, and the answer depends on N and on the coupling interval that controls accuracy.'
-objective: 'Add a synthetic scaling knob (N organs) that stretches Tellurium past the fixed 17-species glycolysis model, and measure the HONEST end-to-end strain curve — monolithic build+run vs decomposed build+run — to locate where the monolith strains and to characterise, without overclaiming, when (if) decomposition comes out ahead.'
-description: 'Methods arm of the SBML-decomposition investigation. A synthetic multi-organ "body" is the scaling knob: N organ compartments, each a small 3-species enzymatic chain (o{i}_G -> o{i}_M -> o{i}_P), every one drawing from and returning to a SINGLE shared plasma metabolite Glc_blood (uptake + release flux), so the organs are genuinely coupled through the shared pool and the body is a closed, mass- conserving system that relaxes to a finite steady state at any N. Species = 3N+1, reactions = 4N. Two implementations run the SAME body: (1) MONOLITHIC — the whole N-organ model as one Antimony string integrated by a single libroadrunner/CVODE instance (build_multiorgan_antimony, on the generator''s config.model so the Model page shows it); (2) DECOMPOSED — N OrganProcess nodes, each its own small libroadrunner instance built from that organ''s 4 reactions, all sharing ONE blood store into which each writes its per-interval Glc_blood delta; the deltas reconcile additively through the bigraph apply path (exactly arm 3''s shared-store coupling). multiorgan_scaling records, per N, BOTH halves of BOTH implementations — mono_build_s + mono_run_s (= mono_total_s) and decomp_build_s + decomp_run_s (= decomp_total_s) — plus accuracy (decomposed vs monolithic max_rel_err). The decomposed run is measured through N=128; N>=256 are build-only anchors (the decomposed pbg run is too slow for the harness there, and is left honestly unmeasured rather than guessed).'
-claim: 'The one strong, well-measured result is that the MONOLITHIC libroadrunner BUILD strains superlinearly in the reaction count: 0.20 s at 97 species -> 1.76 s at 385 -> 5.54 s at 769 -> 18.5 s at 1537 species (~94x for ~16x the reactions, ~O(N^1.64)), with the dense-CVODE run blowing up alongside it (0.0023 s -> 2.56 s). That is the real strain point and the reason a very large SBML model is painful to run monolithically. Decomposition is NOT a free win: building N small models is SLOWER than the single compile up to ~100 species (1.7x slower at 97 species), reaches only rough parity at 385 species (1.40 vs 1.76 s) and becomes a clear build win only at ~1500 species (2.4x); and the decomposed per-tick RUN overhead is ~16x the monolith''s CVODE run, so the decomposed body is SLOWER END-TO-END at every N measured (decomp_total 2.35 s vs mono_total 1.81 s at 385 species). The end-to-end gap narrows with N but the decomposed run is unmeasured past N=128, so no end-to-end crossover is claimed. Decomposition is a structural trade — it swaps the monolith''s superlinear build for much higher run overhead — that would only pay off end-to-end on models larger than measured. CRUCIAL caveat: the additive-split accuracy is good only at small N / fine interval (max_rel_err 2e-3 at N=2, 1.2e-2 at N=8, 5.2e-2 at N=32) and is 0.31 (31%) at N=128 — so the regime where the speed gap narrows and the regime of acceptable accuracy do NOT co-occur at a fixed coupling interval. All numbers measured, not fabricated.'
+question: As an SBML model grows large (tens -> hundreds -> thousands of species), where does a monolithic
+  libroadrunner/CVODE instance strain — in model BUILD (compile) time, in integration time, or both —
+  and does decomposing the body into N per-organ process-bigraph sub-processes coupled through a shared
+  store actually come out ahead end-to-end, or does it just move the cost around?
+hypothesis: A synthetic N-organ body (each organ a small 3-species chain, all coupled through one shared
+  blood pool; species=3N+1, reactions=4N) run as ONE Antimony/Tellurium model will show the libroadrunner
+  model build (compile) growing superlinearly in the reaction count and the dense CVODE step growing superlinearly
+  in species. Decomposing into N per-organ libroadrunner instances coupled additively through a shared
+  blood store (arm-3 pattern) replaces the one superlinear compile with N small ones, but adds per-tick
+  orchestration overhead — so whether decomposition wins is an END-TO-END question, not a build-only one,
+  and the answer depends on N and on the coupling interval that controls accuracy.
+objective: Add a synthetic scaling knob (N organs) that stretches Tellurium past the fixed 17-species
+  glycolysis model, and measure the HONEST end-to-end strain curve — monolithic build+run vs decomposed
+  build+run — to locate where the monolith strains and to characterise, without overclaiming, when (if)
+  decomposition comes out ahead.
+description: 'Methods arm of the SBML-decomposition investigation. A synthetic multi-organ "body" is the
+  scaling knob: N organ compartments, each a small 3-species enzymatic chain (o{i}_G -> o{i}_M -> o{i}_P),
+  every one drawing from and returning to a SINGLE shared plasma metabolite Glc_blood (uptake + release
+  flux), so the organs are genuinely coupled through the shared pool and the body is a closed, mass- conserving
+  system that relaxes to a finite steady state at any N. Species = 3N+1, reactions = 4N. Two implementations
+  run the SAME body: (1) MONOLITHIC — the whole N-organ model as one Antimony string integrated by a single
+  libroadrunner/CVODE instance (build_multiorgan_antimony, on the generator''s config.model so the Model
+  page shows it); (2) DECOMPOSED — N OrganProcess nodes, each its own small libroadrunner instance built
+  from that organ''s 4 reactions, all sharing ONE blood store into which each writes its per-interval
+  Glc_blood delta; the deltas reconcile additively through the bigraph apply path (exactly arm 3''s shared-store
+  coupling). multiorgan_scaling records, per N, BOTH halves of BOTH implementations — mono_build_s + mono_run_s
+  (= mono_total_s) and decomp_build_s + decomp_run_s (= decomp_total_s) — plus accuracy (decomposed vs
+  monolithic max_rel_err). The decomposed run is measured through N=128; N>=256 are build-only anchors
+  (the decomposed pbg run is too slow for the harness there, and is left honestly unmeasured rather than
+  guessed).'
+claim: 'The one strong, well-measured result is that the MONOLITHIC libroadrunner BUILD strains superlinearly
+  in the reaction count: 0.20 s at 97 species -> 1.76 s at 385 -> 5.54 s at 769 -> 18.5 s at 1537 species
+  (~94x for ~16x the reactions, ~O(N^1.64)), with the dense-CVODE run blowing up alongside it (0.0023
+  s -> 2.56 s). That is the real strain point and the reason a very large SBML model is painful to run
+  monolithically. Decomposition is NOT a free win: building N small models is SLOWER than the single compile
+  up to ~100 species (1.7x slower at 97 species), reaches only rough parity at 385 species (1.40 vs 1.76
+  s) and becomes a clear build win only at ~1500 species (2.4x); and the decomposed per-tick RUN overhead
+  is ~16x the monolith''s CVODE run, so the decomposed body is SLOWER END-TO-END at every N measured (decomp_total
+  2.35 s vs mono_total 1.81 s at 385 species). The end-to-end gap narrows with N but the decomposed run
+  is unmeasured past N=128, so no end-to-end crossover is claimed. Decomposition is a structural trade
+  — it swaps the monolith''s superlinear build for much higher run overhead — that would only pay off
+  end-to-end on models larger than measured. CRUCIAL caveat: the additive-split accuracy is good only
+  at small N / fine interval (max_rel_err 2e-3 at N=2, 1.2e-2 at N=8, 5.2e-2 at N=32) and is 0.31 (31%)
+  at N=128 — so the regime where the speed gap narrows and the regime of acceptable accuracy do NOT co-occur
+  at a fixed coupling interval. All numbers measured, not fabricated.'
 parent_studies:
 - study: arm3-modular-submodels
   relation: leads-to
@@ -19,15 +59,46 @@ baseline:
   composite: viva_sbml_decomposition.composites.arm8_multiorgan.glycolysis_multiorgan_mono
 expected_behavior:
 - name: arm8-monolith-build-strains-superlinearly
-  observable: monolithic libroadrunner build (compile) wall-clock vs the species/reaction count (3N+1 species, 4N reactions), and the decomposed-vs-monolithic accuracy at the default coupling interval
-  condition: 'the monolithic build time grows superlinearly with the reaction count (the strain signal), AND the decomposed body reproduces the monolithic reference within tolerance at small N / fine interval (max_rel_err < 0.03 at N=8, coupling interval 0.05), with the error shrinking as the interval shrinks. No decomposition speed win is asserted — it does not hold end-to-end at the N measured.'
-  rationale: 'a single libroadrunner model build is superlinear in reactions and its CVODE Jacobian is dense in species, so a monolith must strain as the model grows — that much is a clean, defensible measurement. Whether decomposition is worth it is an end-to-end trade-off (build saved vs run overhead added vs accuracy lost), not a given, so the behavior gates only the measured strain + small-N fidelity.'
+  observable: monolithic libroadrunner build (compile) wall-clock vs the species/reaction count (3N+1
+    species, 4N reactions), and the decomposed-vs-monolithic accuracy at the default coupling interval
+  condition: the monolithic build time grows superlinearly with the reaction count (the strain signal),
+    AND the decomposed body reproduces the monolithic reference within tolerance at small N / fine interval
+    (max_rel_err < 0.03 at N=8, coupling interval 0.05), with the error shrinking as the interval shrinks.
+    No decomposition speed win is asserted — it does not hold end-to-end at the N measured.
+  rationale: a single libroadrunner model build is superlinear in reactions and its CVODE Jacobian is
+    dense in species, so a monolith must strain as the model grows — that much is a clean, defensible
+    measurement. Whether decomposition is worth it is an end-to-end trade-off (build saved vs run overhead
+    added vs accuracy lost), not a given, so the behavior gates only the measured strain + small-N fidelity.
 findings:
-- summary: 'STRONG RESULT — the monolithic libroadrunner BUILD (compile) strains superlinearly: measured medians 0.20 s at 97 species, 1.76 s at 385, 5.54 s at 769, 18.5 s at 1537 species — ~94x the build cost for ~16x the reactions (~O(N^1.64)). The dense-CVODE integration blows up alongside it (0.0023 s -> 0.058 s -> 0.395 s -> 2.56 s). Both halves of the monolithic cost grow superlinearly; this is the real, well-measured strain point and the arm''s headline.'
-- summary: 'HONEST NEGATIVE — decomposition does NOT build "several-fold faster by hundreds of species". The decomposed build is N separate libroadrunner setups: SLOWER than the single monolithic compile up to ~100 species (97 sp: 0.34 s vs 0.20 s, 1.7x slower), roughly at PARITY by 385 species (1.40 vs 1.76 s), and a clear win only at ~1500 species (7.75 vs 18.5 s, 2.4x). The build crossover is at the hundreds-of-species scale, not before.'
-- summary: 'HONEST NEGATIVE (end-to-end) — the decomposed per-tick RUN overhead dwarfs the monolith''s raw CVODE run: at 385 species decomp_run 0.95 s vs mono_run 0.058 s (~16x). So the decomposed body is SLOWER END-TO-END at every N measured: mono_total vs decomp_total = 0.017 vs 0.044 s (N=2), 0.039 vs 0.143 (N=8), 0.200 vs 0.559 (N=32), 1.81 vs 2.35 (N=128). The end-to-end gap narrows as N grows (3.6x -> 1.3x), but the decomposed run is UNMEASURED past N=128 (too slow for the harness), so NO end-to-end crossover is claimed. Decomposition trades the monolith''s superlinear build for higher run overhead; it would only pay off end-to-end on models larger than we measured.'
-- summary: 'The coupling is genuine: Glc_blood lives in ONE shared store and every organ writes the delta it produced on it, reconciled additively through the bigraph apply path (arm-3 pattern). The shared pool drains more as more organs are added (monotone in N — a test asserts 8 organs drain it below the 2-organ case), which is only possible if the organs genuinely share the pool (contrast arm 7''s N INDEPENDENT monoliths).'
-- summary: 'CRUCIAL caveat — accuracy and speed do NOT line up. The decomposed-vs-monolithic max_rel_err is a first-order additive-split error: 2e-3 at N=2, 1.2e-2 at N=8, 5.2e-2 at N=32, 0.31 (31%) at N=128. It HALVES as the coupling interval halves (verified) and GROWS with coupling density (more organs competing for the one pool per interval). The N=128 point where the end-to-end gap is smallest is exactly where accuracy (0.31) is unusable — so the speed crossover regime and the acceptable-accuracy regime do not co-occur at a fixed interval. Restoring accuracy at large N needs a finer interval, which adds more ticks and makes the decomposed run even slower. This is why the study verdict is PARTIAL.'
+- summary: 'STRONG RESULT — the monolithic libroadrunner BUILD (compile) strains superlinearly: measured
+    medians 0.20 s at 97 species, 1.76 s at 385, 5.54 s at 769, 18.5 s at 1537 species — ~94x the build
+    cost for ~16x the reactions (~O(N^1.64)). The dense-CVODE integration blows up alongside it (0.0023
+    s -> 0.058 s -> 0.395 s -> 2.56 s). Both halves of the monolithic cost grow superlinearly; this is
+    the real, well-measured strain point and the arm''s headline.'
+- summary: 'HONEST NEGATIVE — decomposition does NOT build "several-fold faster by hundreds of species".
+    The decomposed build is N separate libroadrunner setups: SLOWER than the single monolithic compile
+    up to ~100 species (97 sp: 0.34 s vs 0.20 s, 1.7x slower), roughly at PARITY by 385 species (1.40
+    vs 1.76 s), and a clear win only at ~1500 species (7.75 vs 18.5 s, 2.4x). The build crossover is at
+    the hundreds-of-species scale, not before.'
+- summary: 'HONEST NEGATIVE (end-to-end) — the decomposed per-tick RUN overhead dwarfs the monolith''s
+    raw CVODE run: at 385 species decomp_run 0.95 s vs mono_run 0.058 s (~16x). So the decomposed body
+    is SLOWER END-TO-END at every N measured: mono_total vs decomp_total = 0.017 vs 0.044 s (N=2), 0.039
+    vs 0.143 (N=8), 0.200 vs 0.559 (N=32), 1.81 vs 2.35 (N=128). The end-to-end gap narrows as N grows
+    (3.6x -> 1.3x), but the decomposed run is UNMEASURED past N=128 (too slow for the harness), so NO
+    end-to-end crossover is claimed. Decomposition trades the monolith''s superlinear build for higher
+    run overhead; it would only pay off end-to-end on models larger than we measured.'
+- summary: 'The coupling is genuine: Glc_blood lives in ONE shared store and every organ writes the delta
+    it produced on it, reconciled additively through the bigraph apply path (arm-3 pattern). The shared
+    pool drains more as more organs are added (monotone in N — a test asserts 8 organs drain it below
+    the 2-organ case), which is only possible if the organs genuinely share the pool (contrast arm 7''s
+    N INDEPENDENT monoliths).'
+- summary: 'CRUCIAL caveat — accuracy and speed do NOT line up. The decomposed-vs-monolithic max_rel_err
+    is a first-order additive-split error: 2e-3 at N=2, 1.2e-2 at N=8, 5.2e-2 at N=32, 0.31 (31%) at N=128.
+    It HALVES as the coupling interval halves (verified) and GROWS with coupling density (more organs
+    competing for the one pool per interval). The N=128 point where the end-to-end gap is smallest is
+    exactly where accuracy (0.31) is unusable — so the speed crossover regime and the acceptable-accuracy
+    regime do not co-occur at a fixed interval. Restoring accuracy at large N needs a finer interval,
+    which adds more ticks and makes the decomposed run even slower. This is why the study verdict is PARTIAL.'
 runs:
 - name: canonical
   canonical: true
@@ -36,7 +107,9 @@ runs:
   outcomes:
     arm8-monolith-build-strains-superlinearly:
       result: ok
-      detail: 'monolithic build superlinear (0.20 s@97sp -> 18.5 s@1537sp, ~O(N^1.64)) — the strain signal, measured; decomposed matches monolith within tolerance at small N (max_rel_err 1.2e-2 @ N=8, interval 0.05). No decomposition speed win asserted (none holds end-to-end at measured N).'
+      detail: monolithic build superlinear (0.20 s@97sp -> 18.5 s@1537sp, ~O(N^1.64)) — the strain signal,
+        measured; decomposed matches monolith within tolerance at small N (max_rel_err 1.2e-2 @ N=8, interval
+        0.05). No decomposition speed win asserted (none holds end-to-end at measured N).
   computed_outcomes:
     _status: store_unresolved
 - name: viva_sbml_decomposition.composites.arm8_multiorgan.glycolysis_multiorgan_mono__1792986425__d98f2e
@@ -59,9 +132,12 @@ verdict: partial
 evaluation_status: passed
 gate_status: passed
 caveats:
-- The monolithic build superlinearity is the one strong, well-measured result; the broader "decompose it and it scales better" narrative is NOT supported by the measurements and is deliberately not claimed.
-- Decomposition is SLOWER end-to-end at every N measured (through N=128); the decomposed run past N=128 is unmeasured, so no end-to-end crossover is claimed — only a structural build-vs-run trade is characterised.
-- The speed crossover regime (large N, where the end-to-end gap narrows) and the acceptable-accuracy regime (small N / fine interval) do not co-occur at a fixed coupling interval; accuracy at N=128 is 0.31.
+- The monolithic build superlinearity is the one strong, well-measured result; the broader "decompose
+  it and it scales better" narrative is NOT supported by the measurements and is deliberately not claimed.
+- Decomposition is SLOWER end-to-end at every N measured (through N=128); the decomposed run past N=128
+  is unmeasured, so no end-to-end crossover is claimed — only a structural build-vs-run trade is characterised.
+- The speed crossover regime (large N, where the end-to-end gap narrows) and the acceptable-accuracy regime
+  (small N / fine interval) do not co-occur at a fixed coupling interval; accuracy at N=128 is 0.31.
 visualizations:
 - name: multiorgan_scaling
   address: local:MultiorganScaling
@@ -81,3 +157,21 @@ pipeline_gate:
     blocked_by: []
     evaluated_by: code
     diverges_from_authored: false
+behavior_tests:
+- name: monolithic-build-strains-superlinearly
+  classification: efficiency
+  measure: monolithic libroadrunner BUILD-time growth over the measured species range (97→1537 species)
+  pass_if: '> 10x (superlinear)'
+  units: build-time ratio
+  description: The monolithic build is the strain point. Measured 0.20s→18.5s ≈ 94× for ~16× the reactions
+    (~O(N^1.64)) → PASS.
+  requires_simulation: true
+- name: decomposition-not-a-free-win
+  classification: efficiency
+  measure: end-to-end (build+run) decomposed total vs monolithic total at every measured N
+  pass_if: decomposed >= monolithic (at measured N)
+  units: wall-clock seconds
+  description: 'HONEST NEGATIVE: decomposition is slower end-to-end at every measured N (e.g. 2.35s vs
+    1.81s @385 species); it only build-wins at ~769+ species, with accuracy degradation (0.31 @385). This
+    test documents the caveat, not a win.'
+  requires_simulation: true
