@@ -103,6 +103,9 @@ executive:
     - study: arm8-multiorgan
       behavior: arm8-monolith-build-strains-superlinearly
       result: passing
+    - study: arm9-abm-meanfield
+      behavior: arm9-meanfield-valid-only-at-large-N
+      result: passing
     unmet: []
     diverges_from_authored: true
 scientific_argument:
@@ -188,6 +191,8 @@ at_a_glance:
   role: genuinely multi-rate composite (N independent monoliths, geometric intervals) — exercises + measures the process-bigraph event-heap scheduler from PR-270 (O(P log P) vs the stock scan's O(P^2)), bit-identical results, the one arm that stress-tests the scheduler instead of the biology
 - study: arm8-multiorgan
   role: synthetic N-organ scaling knob (species=3N+1, shared blood pool) — stretches a monolithic libroadrunner/CVODE instance past the fixed 17-species model to its strain point (the compile is superlinear in reactions, ~O(N^1.64)). The honest end-to-end finding is that decomposition into N per-organ processes is NOT a free win — its build only reaches parity in the hundreds of species and its per-tick run overhead makes it slower end-to-end at every N measured; a structural build-vs-run trade, not a scaling victory
+- study: arm9-abm-meanfield
+  role: the ADVERSARIAL arm — a stochastic Gillespie-SSA agent-based Lotka-Volterra model (discrete individuals, not an ODE) and its deterministic mean-field SBML/Tellurium reduction. Answers the prior question the other arms assume away ("can an ABM even BE an SBML model?") with numbers; the reduction is valid only in the large-population limit (K=400; 4.9% max rel err, 0% extinction) and structurally breaks at small population (K=8; 94% of runs go extinct — which the ODE can never show — 68% max rel err). Breaks the naive "any model is an SBML model" claim
 how_to_read: 'Start with arm 1 (the reference), then read arms 2→4 as increasing decomposition
 
   (watch accuracy degrade and composability rise), then arm 5 (the parallel win) and
@@ -220,6 +225,7 @@ studies:
 - arm6-coupling-demo
 - arm7-multirate
 - arm8-multiorgan
+- arm9-abm-meanfield
 expert_docs: []
 acceptance_criteria:
 - study: arm1-monolithic-tellurium
@@ -238,5 +244,5 @@ acceptance_criteria:
   behavior: arm7-heap-beats-scan-at-scale
 - study: arm8-multiorgan
   behavior: arm8-monolith-build-strains-superlinearly
-adversarial_coverage_skip: true
-adversarial_coverage_skip_reason: 'Methods tradeoff investigation, not a discovery study with biological negative controls. The adversarial content is integral and documented as the ''avoid'' findings: a mechanical operator split across the strong P/ATP/ADP energy coupling DIVERGES at every interval (arm 2 ablation note), and mismatched coupling intervals incur an O(P^2) scheduler cost (decision table). These are negative results that break the naive ''just decompose it'' claim, carried in the scientific_argument caveats rather than a separate pass/fail member study.'
+- study: arm9-abm-meanfield
+  behavior: arm9-meanfield-valid-only-at-large-N

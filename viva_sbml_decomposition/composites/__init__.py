@@ -13,3 +13,4 @@ from . import arm5_ensemble  # noqa: F401  glycolysis_ensemble (runner, no gener
 from . import arm6_coupling  # noqa: F401  glycolysis_coupled
 from . import arm7_multirate  # noqa: F401  glycolysis_multirate
 from . import arm8_multiorgan  # noqa: F401  glycolysis_multiorgan_mono / _decomposed
+from . import arm9_abm  # noqa: F401  predator_prey_abm / predator_prey_meanfield (adversarial arm)

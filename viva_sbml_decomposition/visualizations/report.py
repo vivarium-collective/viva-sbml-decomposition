@@ -17,6 +17,7 @@ import os
 import yaml
 from process_bigraph import allocate_core
 
+from .abm_meanfield import ABMMeanField
 from .accuracy_divergence import AccuracyDivergence
 from .composability_scorecard import ComposabilityScorecard
 from .convergence_curves import ConvergenceCurves
@@ -45,6 +46,7 @@ _FIGURES = [
     ("Multi-organ scaling — where monolithic Tellurium strains", MultiorganScaling),
     ("Composability scorecard", ComposabilityScorecard),
     ("The 3-way tradeoff map (speed × accuracy × composability)", TradeoffMap),
+    ("Adversarial arm — can an ABM even be an SBML model? (only in the large-population limit)", ABMMeanField),
     ("Decision guide", DecisionTable),
 ]
 
@@ -87,6 +89,9 @@ _STUDY_FIGURES = {
     "arm8-multiorgan": [
         ("The strain curve — monolithic compile explodes, decomposition stays cheap", MultiorganScaling),
         ("Composability — why decomposition is the way out at scale", ComposabilityScorecard)],
+    "arm9-abm-meanfield": [
+        ("The ABM vs its mean-field ODE reduction — valid at large N, breaks at small N", ABMMeanField),
+        ("Where arm 9 sits on the 3-way tradeoff", TradeoffMap)],
 }
 
 
@@ -156,6 +161,28 @@ def build_study_reports() -> list:
             if isinstance(f, dict) and f.get("summary"))
         fig_html = "".join(
             f'<h3>{_esc(h)}</h3><div class="fig">{_fig_html(c)}</div>' for h, c in figs)
+        # Per-study model section. Most arms run the Teusink glycolysis model;
+        # arm 9 (adversarial) runs a Lotka-Volterra ABM whose SBML reduction is
+        # the mean-field ODE — and whose ABM half is deliberately NOT SBML.
+        if slug == "arm9-abm-meanfield":
+            from ..composites.arm9_abm import LV_ANTIMONY
+            model_html = (
+                "<h2>Model — the mean-field SBML reduction (Lotka-Volterra, Antimony)</h2>"
+                "<p class=\"muted\">This is the <strong>mean-field ODE reduction</strong> "
+                "(the <code>predator_prey_meanfield</code> composite), integrated by "
+                "libroadrunner/CVODE — a real, runnable SBML model. The agent-based model "
+                "itself (<code>predator_prey_abm</code>, a Gillespie-SSA process over integer "
+                "populations) is <strong>NOT an SBML model</strong>: it has no continuous RHS, "
+                "and its stochasticity / discreteness / extinction cannot be written as ODE "
+                "state. That gap is the finding.</p>"
+                "<details><summary>Show the mean-field Lotka-Volterra Antimony</summary>"
+                f"<pre>{_esc(LV_ANTIMONY)}</pre></details>")
+        else:
+            model_html = (
+                f"<h2>Model (Teusink glycolysis, {_esc(GLYCOLYSIS_META.get('biomodels_id'))}) — inline Antimony</h2>"
+                f"<details><summary>Show the Antimony source "
+                f"({len(GLYCOLYSIS_META.get('species') or [])} floating species)</summary>"
+                f"<pre>{_esc(GLYCOLYSIS_ANTIMONY)}</pre></details>")
         html = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{_esc(s.get('title') or slug)}</title>
@@ -173,9 +200,7 @@ def build_study_reports() -> list:
 <div class="claim"><strong>Claim.</strong> {_esc(s.get('claim'))}</div>
 <h2>What this arm shows</h2>{fig_html}
 <h2>Findings</h2><ul>{findings}</ul>
-<h2>Model (Teusink glycolysis, {_esc(GLYCOLYSIS_META.get('biomodels_id'))}) — inline Antimony</h2>
-<details><summary>Show the Antimony source ({len(GLYCOLYSIS_META.get('species') or [])} floating species)</summary>
-<pre>{_esc(GLYCOLYSIS_ANTIMONY)}</pre></details>
+{model_html}
 </body></html>"""
         out = os.path.join(studies_dir, slug, "report.html")
         tmp = out + ".tmp"
