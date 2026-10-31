@@ -4,10 +4,18 @@ from .native_glycolysis import (
     NativeGlycolysisProcess,
     register_native_glycolysis,
 )
+from .recovery import (
+    SyntheticTargetGenerator,
+    TrajectoryComparator,
+    register_recovery,
+)
 
 __all__ = [
     "NativeGlycolysisProcess",
     "register_native_glycolysis",
     "CopasiProcess",
     "register_copasi",
+    "SyntheticTargetGenerator",
+    "TrajectoryComparator",
+    "register_recovery",
 ]
