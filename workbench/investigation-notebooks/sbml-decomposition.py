@@ -278,5 +278,9 @@ def _render_one(address, config, runs_db, study_yaml, overrides=None):
 #
 # _study.yaml not found — skipped._
 
+# ## Study: `decomposition-synthesis`
+#
+# _study.yaml not found — skipped._
+
 # ## Open decisions
 # - Adopt the opt-in bulk-binding + heap scheduler across all tellurium studies and re-measure?
