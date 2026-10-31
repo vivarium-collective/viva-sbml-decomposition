@@ -283,12 +283,132 @@ class StructuralScorer(Step):
         }
 
 
+class RateLawFitter(Step):
+    """Fit a candidate flat-SBML model's rate constants to the target (the "fit" step).
+
+    Given a candidate model with the RIGHT structure but wrong/unknown parameters,
+    minimizes the mean range-normalized trajectory error against the oracle target
+    (Nelder-Mead) over ``param_names`` (default: all global parameters). This is the
+    build loop's parameter-recovery step — it turns a proposed structure into a
+    fitted candidate the comparator + structural scorer then grade. Returns the
+    fitted parameters, the fitted Antimony, and the achieved nrmse.
+    """
+
+    config_schema = {
+        "candidate_antimony": {"_type": "string", "_default": ""},
+        "target": {"_type": "string", "_default": ""},
+        "param_names": {"_type": "list[string]", "_default": []},
+        "observed": {"_type": "list[string]", "_default": []},
+        "n_points": {"_type": "integer", "_default": 101},
+        "max_iter": {"_type": "integer", "_default": 400},
+    }
+
+    def inputs(self):
+        return {}
+
+    def outputs(self):
+        return {"fitted_antimony": "string", "fitted_params": "map[float]", "nrmse": "float"}
+
+    def update(self, state):
+        import tellurium as te
+        from scipy.optimize import minimize
+
+        from ..models.recovery_targets import RECOVERY_TARGETS
+
+        cfg = self.config
+        if not cfg["candidate_antimony"]:
+            raise ValueError("RateLawFitter requires a 'candidate_antimony'.")
+        entry = RECOVERY_TARGETS[cfg["target"]]
+        truth, meta = entry["antimony"], entry["meta"]
+        t_end, n = meta["t_end"], int(cfg["n_points"])
+        observed = cfg["observed"] or meta["species"]
+
+        rr_t = _load(truth)
+        rr_t.reset()
+        tt = rr_t.simulate(0.0, t_end, n, selections=["time"] + observed)
+        target = {s: [float(v) for v in tt[:, i + 1]] for i, s in enumerate(observed)}
+
+        rr = _load(cfg["candidate_antimony"])
+        pnames = list(cfg["param_names"]) or list(rr.getGlobalParameterIds())
+        x0 = np.array([float(rr[p]) for p in pnames], dtype=float)
+
+        def _cost(x):
+            try:
+                rr.reset()
+                for p, v in zip(pnames, x):
+                    rr[p] = max(float(v), 1e-9)
+                res = rr.simulate(0.0, t_end, n, selections=["time"] + observed)
+                errs = [_nrmse(target[s], [float(v) for v in res[:, i + 1]]) for i, s in enumerate(observed)]
+                return float(np.mean(errs))
+            except Exception:
+                return 1e6
+
+        r = minimize(_cost, x0, method="Nelder-Mead",
+                     options={"maxiter": int(cfg["max_iter"]), "xatol": 1e-7, "fatol": 1e-9})
+        fitted = {p: float(max(v, 1e-9)) for p, v in zip(pnames, r.x)}
+        rr.reset()
+        for p, v in fitted.items():
+            rr[p] = v
+        try:
+            fitted_antimony = te.sbmlToAntimony(rr.getCurrentSBML())
+        except Exception:
+            fitted_antimony = cfg["candidate_antimony"]
+        return {"fitted_antimony": fitted_antimony, "fitted_params": fitted, "nrmse": float(r.fun)}
+
+
+class ReactionProposer(Step):
+    """Propose a candidate flat-SBML reaction network over a species list.
+
+    A FIRST structure proposer: enumerates a pool of mass-action reactions — every
+    unimolecular conversion X -> Y and (optionally) the bimolecular associations
+    X + Y -> Z — each with a small unit rate constant, as the candidate structure
+    the RateLawFitter then fits (reactions whose fitted constant collapses toward
+    zero are effectively pruned). Residual-guided, sparsity-driven proposal is the
+    next step; this establishes the propose -> fit pipeline.
+    """
+
+    config_schema = {
+        "species": {"_type": "list[string]", "_default": []},
+        "initial": {"_type": "map[float]", "_default": {}},
+        "include_bimolecular": {"_type": "boolean", "_default": False},
+        "k0": {"_type": "float", "_default": 0.1},
+    }
+
+    def inputs(self):
+        return {}
+
+    def outputs(self):
+        return {"candidate_antimony": "string", "n_reactions": "integer"}
+
+    def update(self, state):
+        sp = list(self.config["species"])
+        if len(sp) < 2:
+            raise ValueError("ReactionProposer needs >= 2 species")
+        init = self.config["initial"] or {}
+        k0 = float(self.config["k0"])
+        rxns: list[tuple[str, str]] = [(f"{a} -> {b}", a) for a in sp for b in sp if a != b]
+        if self.config["include_bimolecular"]:
+            for i, a in enumerate(sp):
+                for b in sp[i + 1:]:
+                    for c in sp:
+                        if c not in (a, b):
+                            rxns.append((f"{a} + {b} -> {c}", f"{a}*{b}"))
+        lines = ["model proposed()", "  species " + ", ".join(sp) + ";"]
+        lines += [f"  {s} = {float(init.get(s, 0.0))};" for s in sp]
+        lines += [f"  k{i} = {k0};" for i in range(len(rxns))]
+        lines += [f"  R{i}: {rx}; k{i}*{rate};" for i, (rx, rate) in enumerate(rxns)]
+        lines.append("end")
+        return {"candidate_antimony": "\n".join(lines), "n_reactions": len(rxns)}
+
+
 def register_recovery(core):
     """Register the recovery capabilities (idempotent)."""
     for name, cls in (
         ("SyntheticTargetGenerator", SyntheticTargetGenerator),
         ("TrajectoryComparator", TrajectoryComparator),
         ("StructuralScorer", StructuralScorer),
+        ("RateLawFitter", RateLawFitter),
+        ("ReactionProposer", ReactionProposer),
     ):
         if name not in core.link_registry:
             core.register_link(name, cls)

@@ -36,8 +36,58 @@ MASS_ACTION_META = {
     },
 }
 
-# Registry of ground-truth targets by study slug (extended as rungs are added:
-# recover-enzyme-kinetics, recover-gene-switch, recover-oscillator).
+# --- Rung 2: Michaelis-Menten enzyme kinetics -------------------------------
+# Elementary mechanism S + E <-> ES -> E + P. The reduced saturating law is the
+# observationally-equivalent alternative when only S/P are observed.
+ENZYME_ANTIMONY = r"""
+model enzyme_mm()
+  species S, E, ES, P;
+  S = 10.0; E = 1.0; ES = 0.0; P = 0.0;
+  k1 = 0.5; k2 = 0.1; kcat = 0.4;
+  r1: S + E -> ES; k1*S*E;
+  r2: ES -> S + E; k2*ES;
+  r3: ES -> E + P; kcat*ES;
+end
+""".strip()
+
+ENZYME_META = {"name": "enzyme_mm", "species": ["S", "E", "ES", "P"], "t_end": 20.0}
+
+# --- Rung 3: Hill gene switch (bistable toggle) -----------------------------
+# Two mutually-repressing genes; Hill repression gives two stable steady states.
+GENE_SWITCH_ANTIMONY = r"""
+model gene_toggle()
+  species u, v;
+  u = 1.0; v = 0.1;
+  a = 4.0; n = 3.0; g = 1.0;
+  Ju_prod: => u; a/(1 + v^n);
+  Ju_deg:  u => ; g*u;
+  Jv_prod: => v; a/(1 + u^n);
+  Jv_deg:  v => ; g*v;
+end
+""".strip()
+
+GENE_SWITCH_META = {"name": "gene_toggle", "species": ["u", "v"], "t_end": 20.0}
+
+# --- Rung 4: Brusselator oscillator -----------------------------------------
+# Limit-cycle oscillator (A=1, B=3 is well past the Hopf bifurcation).
+OSCILLATOR_ANTIMONY = r"""
+model brusselator()
+  species X, Y;
+  X = 1.0; Y = 1.0;
+  A = 1.0; B = 3.0;
+  r1: => X; A;
+  r2: 2 X + Y => 3 X; X^2*Y;
+  r3: X => Y; B*X;
+  r4: X => ; X;
+end
+""".strip()
+
+OSCILLATOR_META = {"name": "brusselator", "species": ["X", "Y"], "t_end": 20.0}
+
+# Registry of ground-truth targets by study slug — one oracle per recovery rung.
 RECOVERY_TARGETS = {
     "recover-mass-action": {"antimony": MASS_ACTION_ANTIMONY, "meta": MASS_ACTION_META},
+    "recover-enzyme-kinetics": {"antimony": ENZYME_ANTIMONY, "meta": ENZYME_META},
+    "recover-gene-switch": {"antimony": GENE_SWITCH_ANTIMONY, "meta": GENE_SWITCH_META},
+    "recover-oscillator": {"antimony": OSCILLATOR_ANTIMONY, "meta": OSCILLATOR_META},
 }

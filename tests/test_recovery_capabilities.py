@@ -11,12 +11,27 @@ from viva_sbml_decomposition.models.recovery_targets import (
     RECOVERY_TARGETS,
 )
 from viva_sbml_decomposition.composites.engine_monolithic import run_engine_monolithic
-from viva_sbml_decomposition.composites.recovery import recover_mass_action
+from viva_sbml_decomposition.composites.recovery import recover_candidate, recover_mass_action
 from viva_sbml_decomposition.processes.recovery import (
+    RateLawFitter,
+    ReactionProposer,
     StructuralScorer,
     SyntheticTargetGenerator,
     TrajectoryComparator,
 )
+
+# Mass-action structure with WRONG rate constants — the build side must fit these
+# back to the truth (k1=0.5, k2=0.3, k2r=0.1) from the target data.
+CAND_BADPARAMS = """
+model cand_badparams()
+  species A, B, C;
+  A = 10.0; B = 0.0; C = 0.0;
+  k1 = 1.0; k2 = 1.0; k2r = 1.0;
+  r1: A -> B; k1*A;
+  r2: A + B -> C; k2*A*B;
+  r2r: C -> A + B; k2r*C;
+end
+""".strip()
 
 # Candidate variants of the mass-action oracle for structural scoring.
 CAND_MISSING_R2R = """
@@ -191,3 +206,63 @@ def test_recovery_loop_identity_end_to_end(core):
     struct = _score(core, MASS_ACTION_ANTIMONY)
     assert struct["structure_recovered"] is True
     assert struct["parsimonious"] is True
+
+
+# --- the full oracle ladder + generic composite -----------------------------
+
+def test_all_four_oracles_simulate():
+    import tellurium as te
+    from viva_sbml_decomposition.models.recovery_targets import RECOVERY_TARGETS
+    assert set(RECOVERY_TARGETS) == {
+        "recover-mass-action", "recover-enzyme-kinetics", "recover-gene-switch", "recover-oscillator"}
+    for slug, entry in RECOVERY_TARGETS.items():
+        r = te.loada(entry["antimony"]); r.reset()
+        res = r.simulate(0, entry["meta"]["t_end"], 50)
+        assert res.shape[0] == 50, slug
+
+
+def test_recover_candidate_composite_for_each_target():
+    from viva_sbml_decomposition.models.recovery_targets import RECOVERY_TARGETS
+    for slug in RECOVERY_TARGETS:
+        doc = recover_candidate(target=slug)
+        assert isinstance(doc, dict) and doc, slug
+
+
+# --- build side: RateLawFitter + ReactionProposer ---------------------------
+
+def test_rate_law_fitter_recovers_mass_action_params(core):
+    out = RateLawFitter(
+        config={"candidate_antimony": CAND_BADPARAMS, "target": "recover-mass-action", "max_iter": 800},
+        core=core,
+    ).update({})
+    assert out["nrmse"] < 0.03, out["nrmse"]
+    fp = out["fitted_params"]
+    assert fp["k1"] == pytest.approx(0.5, rel=0.2), fp
+    assert fp["k2"] == pytest.approx(0.3, rel=0.25), fp
+    assert fp["k2r"] == pytest.approx(0.1, rel=0.4), fp
+
+
+def test_fit_then_structure_recovers_non_identity(core):
+    # Non-identity recovery: wrong params -> fit -> structurally recovered.
+    fitted = RateLawFitter(
+        config={"candidate_antimony": CAND_BADPARAMS, "target": "recover-mass-action", "max_iter": 800},
+        core=core,
+    ).update({})["fitted_antimony"]
+    sc = StructuralScorer(config={"param_tol": 0.25}, core=core).update(
+        {"candidate_antimony": fitted, "truth_antimony": MASS_ACTION_ANTIMONY}
+    )
+    assert sc["structure_recovered"] is True, sc
+
+
+def test_reaction_proposer_produces_valid_candidate(core):
+    import tellurium as te
+    out = ReactionProposer(config={"species": ["A", "B", "C"], "initial": {"A": 10.0}}, core=core).update({})
+    assert out["n_reactions"] == 6  # 3*2 unimolecular conversions
+    r = te.loada(out["candidate_antimony"]); r.reset()
+    res = r.simulate(0, 5, 10)
+    assert res.shape[0] == 10
+
+
+def test_build_side_registered(core):
+    for name in ("RateLawFitter", "ReactionProposer"):
+        assert name in core.link_registry

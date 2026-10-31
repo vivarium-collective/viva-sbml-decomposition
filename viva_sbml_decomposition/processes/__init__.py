@@ -5,6 +5,8 @@ from .native_glycolysis import (
     register_native_glycolysis,
 )
 from .recovery import (
+    RateLawFitter,
+    ReactionProposer,
     StructuralScorer,
     SyntheticTargetGenerator,
     TrajectoryComparator,
@@ -19,5 +21,7 @@ __all__ = [
     "SyntheticTargetGenerator",
     "TrajectoryComparator",
     "StructuralScorer",
+    "RateLawFitter",
+    "ReactionProposer",
     "register_recovery",
 ]
