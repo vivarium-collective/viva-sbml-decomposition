@@ -4,21 +4,11 @@ investigation: sbml-decomposition
 status: ran
 title: Ensemble throughput and multi-rate scheduling
 confidence: Accepted
-question: 'When many instances of the monolithic model are run together, (a) as a same-rate parameter ensemble does vivarium orchestration on a real parallel backend (Ray) deliver a genuine throughput speedup,
-  and (b) as a genuinely multi-rate ensemble (each instance on a different interval) does process-bigraph #270''s event-heap scheduler beat the stock scan loop as the process count grows, while staying
-  bit-identical?'
-hypothesis: 'A Ray-backed same-rate ensemble of monoliths delivers a real wall-clock speedup (libroadrunner does not release the GIL, so only OS-process parallelism helps); and the #270 heap scheduler runs
-  the SAME math as the scan loop (bit-identical) with a wall-clock advantage that grows with the instance count P on a multi-rate ensemble.'
+question: 'When many instances of the monolithic model are run together, (a) as a same-rate parameter ensemble does vivarium orchestration on a real parallel backend (Ray) deliver a genuine throughput speedup, and (b) as a genuinely multi-rate ensemble (each instance on a different interval) does process-bigraph #270''s event-heap scheduler beat the stock scan loop as the process count grows, while staying bit-identical?'
+hypothesis: 'A Ray-backed same-rate ensemble of monoliths delivers a real wall-clock speedup (libroadrunner does not release the GIL, so only OS-process parallelism helps); and the #270 heap scheduler runs the SAME math as the scan loop (bit-identical) with a wall-clock advantage that grows with the instance count P on a multi-rate ensemble.'
 objective: Fan the monolith out into same-rate and multi-rate ensembles and measure the real Ray speedup and the heap-vs-scan scheduler advantage.
-description: 'Methods study of the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species), merging two ensemble questions on the generic ensemble composite. SAME-RATE
-  (intervals unset): N monolithic Tellurium instances run concurrently via Ray OS processes with parameter draws. MULTI-RATE (intervals=geometric): N independent monolithic instances, each advanced on a
-  different geometrically-spaced interval, run under scheduler=scan (stock O(P^2) tick loop) and scheduler=heap (#270 event-heap, O(P log P)); the instances share no store and are uncoupled, so there is
-  no splitting error and only the scheduler changes.'
-claim: 'A Ray ensemble of monoliths gives a real 7.5x wall-clock speedup on 16 cores — the one study where vivarium wins on speed; libroadrunner does NOT release the GIL, so in-process threads cannot (they
-  backfire). Separately, process-bigraph #270''s event-heap scheduler is bit-identical to the stock scan loop (same math, different tick order) and its wall-clock advantage grows monotonically with P on
-  a genuinely multi-rate composite — measured 0.98x at P=4 (heap bookkeeping with nothing to gain), crossing over near P~50-64, to 1.64x at P=256 on real libroadrunner/CVODE instances. The per-process CVODE
-  integration dominates the per-tick scan until P reaches the low hundreds, so the multiplier is modest at the P a unit test can afford; it is reported as measured, and the regime where it grows large (hundreds-to-thousands
-  of cheap processes) is #270''s own 4.8x@P=100 -> 46x@P=1000 micro-benchmark, cited not reproduced.'
+description: 'Methods study of the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species), merging two ensemble questions on the generic ensemble composite. SAME-RATE (intervals unset): N monolithic Tellurium instances run concurrently via Ray OS processes with parameter draws. MULTI-RATE (intervals=geometric): N independent monolithic instances, each advanced on a different geometrically-spaced interval, run under scheduler=scan (stock O(P^2) tick loop) and scheduler=heap (#270 event-heap, O(P log P)); the instances share no store and are uncoupled, so there is no splitting error and only the scheduler changes.'
+claim: 'A Ray ensemble of monoliths gives a real 7.5x wall-clock speedup on 16 cores — the one study where vivarium wins on speed; libroadrunner does NOT release the GIL, so in-process threads cannot (they backfire). Separately, process-bigraph #270''s event-heap scheduler is bit-identical to the stock scan loop (same math, different tick order) and its wall-clock advantage grows monotonically with P on a genuinely multi-rate composite — measured 0.98x at P=4 (heap bookkeeping with nothing to gain), crossing over near P~50-64, to 1.64x at P=256 on real libroadrunner/CVODE instances. The per-process CVODE integration dominates the per-tick scan until P reaches the low hundreds, so the multiplier is modest at the P a unit test can afford; it is reported as measured, and the regime where it grows large (hundreds-to-thousands of cheap processes) is #270''s own 4.8x@P=100 -> 46x@P=1000 micro-benchmark, cited not reproduced.'
 parent_studies:
 - study: sbml-in-tellurium
   relation: builds-on
@@ -49,31 +39,24 @@ expected_behavior:
   rationale: a many-rate composite is exactly the O(P^2) case the event-heap scheduler was built to fix; because only the tick ordering changes, correctness must be identical and only wall-clock may differ.
 findings:
 - summary: '[same-rate/Ray] n_instances=8, 16 CPUs: serial 1.189s → Ray 0.158s = 7.52x real speedup (backend=ray, speedup_claimed=true).'
-- summary: '[same-rate/Ray] libroadrunner does NOT release the GIL during .simulate() (8-instance ThreadPool = 0.99x), so Ray''s separate OS processes are the only path; in-process parallel_processes backfires
-    for this CVODE-wrapping work.'
-- summary: '[multi-rate/heap] Scan and heap are bit-identical at every measured P — multirate_scaling records a per-N bit_identical flag (np.array_equal of the two schedulers'' final state across every
-    instance store), True at each of P=4..256, and a dedicated test asserts it across the measured Ns (not just the small-N case). #270 changes only the order in which due processes are popped, never the
-    math. The multi-rate composite is uncoupled (independent monoliths, empty inputs), so there is no split-coupling divergence to confound the timing.'
-- summary: '[multi-rate/heap] Measured scan vs heap run() wall-clock (median of 3, construction excluded), geometric intervals i_fast=H/(3P)..i_slow=3H, H=20: P=4 scan=0.0082s heap=0.0083s (0.98x); P=16
-    0.0468s / 0.0492s (0.95x); P=64 0.419s / 0.371s (1.13x); P=128 1.555s / 1.280s (1.22x); P=256 6.598s / 4.019s (1.64x). The heap/scan speedup rises monotonically with P and crosses over near P~50-64.'
-- summary: '[multi-rate/heap] Honesty: heap is ~5% SLOWER at tiny P (P=4,16) — the event-heap bookkeeping has nothing to gain when the per-tick scan is trivially short — exactly #270''s documented single-rate
-    penalty. The win is modest (<=1.64x) at the P a test can afford because the real libroadrunner/CVODE update per due process dominates the per-tick Python scan at small P (measured crossover ~P=50-64).
-    #270''s cheap-process micro-benchmark (where the scheduler is the whole cost) is 4.8x@P=100 rising to 46x@P=1000; ensemble-and-multirate reproduces the TREND with real integrator instances, not those
-    multipliers.'
-- summary: '[multi-rate/heap] Scheduler API used (#270): the strategy is the "scheduler" CONFIG FIELD on the Composite (Composite({"state": doc, "scheduler": "heap"|"scan"|"auto"}, core=core)); "auto" (the
-    default) picks heap only when more than one distinct process interval is present. ensemble-and-multirate selects "scan" vs "heap" explicitly to measure both.'
-cites: null
-calibration_anchor: null
+- summary: '[same-rate/Ray] libroadrunner does NOT release the GIL during .simulate() (8-instance ThreadPool = 0.99x), so Ray''s separate OS processes are the only path; in-process parallel_processes backfires for this CVODE-wrapping work.'
+- summary: '[multi-rate/heap] Scan and heap are bit-identical at every measured P — multirate_scaling records a per-N bit_identical flag (np.array_equal of the two schedulers'' final state across every instance store), True at each of P=4..256, and a dedicated test asserts it across the measured Ns (not just the small-N case). #270 changes only the order in which due processes are popped, never the math. The multi-rate composite is uncoupled (independent monoliths, empty inputs), so there is no split-coupling divergence to confound the timing.'
+- summary: '[multi-rate/heap] Measured scan vs heap run() wall-clock (median of 3, construction excluded), geometric intervals i_fast=H/(3P)..i_slow=3H, H=20: P=4 scan=0.0082s heap=0.0083s (0.98x); P=16 0.0468s / 0.0492s (0.95x); P=64 0.419s / 0.371s (1.13x); P=128 1.555s / 1.280s (1.22x); P=256 6.598s / 4.019s (1.64x). The heap/scan speedup rises monotonically with P and crosses over near P~50-64.'
+- summary: '[multi-rate/heap] Honesty: heap is ~5% SLOWER at tiny P (P=4,16) — the event-heap bookkeeping has nothing to gain when the per-tick scan is trivially short — exactly #270''s documented single-rate penalty. The win is modest (<=1.64x) at the P a test can afford because the real libroadrunner/CVODE update per due process dominates the per-tick Python scan at small P (measured crossover ~P=50-64). #270''s cheap-process micro-benchmark (where the scheduler is the whole cost) is 4.8x@P=100 rising to 46x@P=1000; ensemble-and-multirate reproduces the TREND with real integrator instances, not those multipliers.'
+- summary: '[multi-rate/heap] Scheduler API used (#270): the strategy is the "scheduler" CONFIG FIELD on the Composite (Composite({"state": doc, "scheduler": "heap"|"scan"|"auto"}, core=core)); "auto" (the default) picks heap only when more than one distinct process interval is present. ensemble-and-multirate selects "scan" vs "heap" explicitly to measure both.'
+cites:
+calibration_anchor:
 visualizations:
 - name: ensemble_scaling
   address: local:EnsembleScaling
   config: {}
-- name: runtime_comparison
-  address: local:RuntimeComparison
-  config: {}
+  covers:
+  - ensemble_speedup
 - name: multirate_scaling
   address: local:MultirateScaling
   config: {}
+  covers:
+  - multirate_scaling
 verdict: supported
 evaluation_status: passed
 gate_status: passed

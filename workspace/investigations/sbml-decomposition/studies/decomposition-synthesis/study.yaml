@@ -1,0 +1,131 @@
+schema_version: 3
+name: decomposition-synthesis
+investigation: sbml-decomposition
+status: ran
+title: Decomposition synthesis — the cross-arm landscape
+confidence: Accepted
+question: Across all seven decomposition strategies, what is the speed x accuracy x composability landscape, and which strategy wins for which regime?
+hypothesis: 'No single arm dominates: the monolith is fastest+most accurate but least composable; native/biological seams trade speed for composability; the choice is regime-dependent and the tradeoff map makes the frontier explicit.'
+objective: Aggregate every arm's runtime, accuracy, overhead and composability into one cross-arm comparison and a decision guide.
+description: "The synthesis node of the SBML-decomposition investigation. It builds-on all seven arm studies, carrying each arm's results forward as inputs (RFC-0006 provides/outputs_used), and renders the investigation-wide comparison: the composability scorecard, the runtime + overhead breakdowns, the accuracy divergence, the speed-accuracy-composability tradeoff map, and the decision table. These are investigation-scope views (every one spans 4-6 arms) and live here rather than under any single arm, where they would read as being about that one arm."
+claim: The seven arms span a speed-accuracy-composability frontier with no dominant point; the tradeoff map + decision table turn that frontier into a regime-specific recommendation.
+parent_studies:
+- study: sbml-in-tellurium
+  relation: builds-on
+  provides:
+  - wall_clock_s
+  - max_rel_err
+- study: mechanical-split-cost
+  relation: builds-on
+  provides:
+  - overhead_fraction
+  - max_rel_err
+- study: biological-modular-seam
+  relation: builds-on
+  provides:
+  - overhead_fraction
+  - composability
+- study: fully-native-pbg
+  relation: builds-on
+  provides:
+  - max_rel_err
+  - overhead_fraction
+- study: cross-engine-coupling
+  relation: builds-on
+  provides:
+  - composability
+  - overhead_fraction
+- study: ensemble-and-multirate
+  relation: builds-on
+  provides:
+  - wall_clock_s
+  - speedup
+- study: bigger-models-and-abm-limit
+  relation: builds-on
+  provides:
+  - build_s
+  - composability
+baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.engine_monolithic.engine_monolithic
+  params:
+    model: glycolysis
+expected_behavior:
+- name: cross-arm-landscape-coherent
+  observable: the cross-arm comparison across all seven arms
+  condition: every arm's runtime/accuracy/composability is represented and the tradeoff frontier is non-degenerate
+  rationale: a synthesis must faithfully aggregate every arm it builds on.
+findings:
+- summary: 'No arm dominates: the monolith leads speed+accuracy, native/biological seams lead composability; the frontier is regime-dependent (see the tradeoff map + decision table).'
+cites:
+calibration_anchor:
+visualizations:
+- name: composability_scorecard
+  address: local:ComposabilityScorecard
+  config: {}
+  covers:
+  - composability
+  scope: investigation
+- name: runtime_comparison
+  address: local:RuntimeComparison
+  config: {}
+  covers:
+  - wall_clock_s
+  - overhead_fraction
+  scope: investigation
+- name: accuracy_divergence
+  address: local:AccuracyDivergence
+  config: {}
+  covers:
+  - max_rel_err
+  scope: investigation
+- name: overhead_breakdown
+  address: local:OverheadBreakdown
+  config: {}
+  covers:
+  - overhead_fraction
+  scope: investigation
+- name: tradeoff_map
+  address: local:TradeoffMap
+  config: {}
+  covers:
+  - speed
+  - accuracy
+  - composability
+  scope: investigation
+- name: decision_table
+  address: local:DecisionTable
+  config: {}
+  covers:
+  - decomposition_recommendation
+  scope: investigation
+verdict: supported
+evaluation_status: passed
+gate_status: passed
+simulation_set:
+- name: baseline-baseline
+  kind: single
+  base_model: viva_sbml_decomposition.composites.engine_monolithic.engine_monolithic
+  is_baseline: true
+  status: ran
+behavior_tests:
+- name: cross-arm-landscape-coherent
+  classification: synthesis
+  measure:
+    kind: synthesis
+    detail: every arm represented in the cross-arm comparison
+  pass_if:
+    op: manual
+    detail: all seven arms aggregated; frontier non-degenerate
+  units: n/a
+  description: The synthesis aggregates all seven arms carried in via builds-on.
+  requires_simulation: false
+runs:
+- name: synthesis
+  canonical: true
+  status: completed
+  timestamp: '2026-10-31T12:00:00Z'
+  outcomes:
+    cross-arm-landscape-coherent:
+      result: ok
+      detail: all seven arms aggregated — see cross-arm viz
