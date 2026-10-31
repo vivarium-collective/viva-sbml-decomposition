@@ -20,6 +20,8 @@ Ground-truth benchmark models live in
 """
 from __future__ import annotations
 
+import re
+
 import numpy as np
 from process_bigraph import Step, allocate_core
 from process_bigraph.emitter import RAMEmitter
@@ -151,11 +153,142 @@ class TrajectoryComparator(Step):
         return {"nrmse": overall, "per_species_nrmse": per_species, "passed": passed}
 
 
+def _tokens(s: str) -> set[str]:
+    return set(re.findall(r"[A-Za-z_]\w*", s or ""))
+
+
+def _reactions_from_antimony(antimony: str) -> dict:
+    """Extract ``{reaction_id: {"sig": (reactants, products), "params": {name: value}}}``.
+
+    ``sig`` is a stoichiometry signature (frozensets of (species, coefficient)) used
+    to MATCH reactions across models regardless of id; ``params`` are the numeric
+    parameters the reaction's kinetic law references (local parameters + any global
+    parameter named in the rate expression).
+    """
+    import libsbml
+    import tellurium as te
+
+    sbml = te.loada(antimony).getCurrentSBML()
+    model = libsbml.readSBMLFromString(sbml).getModel()
+    globals_ = {
+        model.getParameter(i).getId(): float(model.getParameter(i).getValue())
+        for i in range(model.getNumParameters())
+    }
+    out: dict = {}
+    for i in range(model.getNumReactions()):
+        rxn = model.getReaction(i)
+        reactants = frozenset(
+            (rxn.getReactant(j).getSpecies(), float(rxn.getReactant(j).getStoichiometry()))
+            for j in range(rxn.getNumReactants())
+        )
+        products = frozenset(
+            (rxn.getProduct(j).getSpecies(), float(rxn.getProduct(j).getStoichiometry()))
+            for j in range(rxn.getNumProducts())
+        )
+        params: dict = {}
+        kl = rxn.getKineticLaw()
+        if kl is not None:
+            for k in range(kl.getNumLocalParameters()):
+                lp = kl.getLocalParameter(k)
+                params[lp.getId()] = float(lp.getValue())
+            formula = libsbml.formulaToString(kl.getMath()) if kl.getMath() else ""
+            for name in _tokens(formula) & set(globals_):
+                params[name] = globals_[name]
+        out[rxn.getId()] = {"sig": (reactants, products), "params": params}
+    return out
+
+
+def _param_set_rel_err(truth_vals: list[float], cand_vals: list[float]) -> float:
+    """Max over truth params of the min relative error to any candidate param value."""
+    if not truth_vals:
+        return 0.0
+    if not cand_vals:
+        return float("inf")
+    errs = []
+    for tv in truth_vals:
+        denom = abs(tv) if abs(tv) > 1e-12 else 1.0
+        errs.append(min(abs(cv - tv) / denom for cv in cand_vals))
+    return max(errs)
+
+
+class StructuralScorer(Step):
+    """Grade a recovered flat-SBML model against the ground-truth oracle.
+
+    Parses both ``candidate_antimony`` and ``truth_antimony`` (the hidden answer
+    key), matches reactions by stoichiometry signature, and reports: the fraction of
+    ground-truth reactions recovered, the count of spurious (unmatched) candidate
+    reactions, the worst matched-reaction parameter relative error, and two gate
+    flags — ``structure_recovered`` (every truth reaction matched, parameters within
+    ``param_tol``, and — when ``require_no_spurious`` — no extra reactions) and
+    ``parsimonious`` (no more reactions than the truth).
+    """
+
+    config_schema = {
+        "param_tol": {"_type": "float", "_default": 0.1},
+        "require_no_spurious": {"_type": "boolean", "_default": True},
+    }
+
+    def inputs(self):
+        return {"candidate_antimony": "string", "truth_antimony": "string"}
+
+    def outputs(self):
+        return {
+            "reactions_recovered": "float",
+            "spurious_count": "integer",
+            "param_max_rel_err": "float",
+            "structure_recovered": "boolean",
+            "parsimonious": "boolean",
+        }
+
+    def update(self, state):
+        cand = _reactions_from_antimony((state or {})["candidate_antimony"])
+        truth = _reactions_from_antimony((state or {})["truth_antimony"])
+        truth_by_sig: dict = {}
+        for r in truth.values():
+            truth_by_sig.setdefault(r["sig"], []).append(r["params"])
+        cand_by_sig: dict = {}
+        for r in cand.values():
+            cand_by_sig.setdefault(r["sig"], []).append(r["params"])
+
+        matched = 0
+        param_errs: list[float] = []
+        for sig, truth_list in truth_by_sig.items():
+            cand_list = cand_by_sig.get(sig, [])
+            n = min(len(truth_list), len(cand_list))
+            matched += n
+            for k in range(n):
+                param_errs.append(
+                    _param_set_rel_err(list(truth_list[k].values()), list(cand_list[k].values()))
+                )
+        total_truth = sum(len(v) for v in truth_by_sig.values())
+        cand_count = sum(len(v) for v in cand_by_sig.values())
+        spurious = sum(
+            max(0, len(cl) - len(truth_by_sig.get(sig, [])))
+            for sig, cl in cand_by_sig.items()
+        )
+        reactions_recovered = matched / total_truth if total_truth else 1.0
+        param_max = max(param_errs) if param_errs else 0.0
+        no_spurious = spurious == 0 or not self.config["require_no_spurious"]
+        structure_recovered = bool(
+            matched == total_truth
+            and param_max <= float(self.config["param_tol"])
+            and no_spurious
+        )
+        return {
+            "reactions_recovered": float(reactions_recovered),
+            "spurious_count": int(spurious),
+            "param_max_rel_err": float(param_max),
+            "structure_recovered": structure_recovered,
+            "parsimonious": bool(cand_count <= total_truth),
+        }
+
+
 def register_recovery(core):
     """Register the recovery capabilities (idempotent)."""
     for name, cls in (
         ("SyntheticTargetGenerator", SyntheticTargetGenerator),
         ("TrajectoryComparator", TrajectoryComparator),
+        ("StructuralScorer", StructuralScorer),
     ):
         if name not in core.link_registry:
             core.register_link(name, cls)
