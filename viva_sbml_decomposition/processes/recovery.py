@@ -301,6 +301,14 @@ class RateLawFitter(Step):
         "observed": {"_type": "list[string]", "_default": []},
         "n_points": {"_type": "integer", "_default": 101},
         "max_iter": {"_type": "integer", "_default": 400},
+        # auto | trajectory | gradient | two_stage. Gradient matching fits params so
+        # the model's RHS matches derivatives estimated from the data (phase-free —
+        # the only way to recover OSCILLATORS, where trajectory LSQ is ill-
+        # conditioned); two_stage gradient-seeds a trajectory refine. `auto` (default)
+        # runs trajectory-only AND two_stage and keeps whichever fits better, so it
+        # recovers every ladder rung: exact params where identifiable, the oscillator
+        # via gradient-matching.
+        "method": {"_type": "string", "_default": "auto"},
     }
 
     def inputs(self):
@@ -311,7 +319,7 @@ class RateLawFitter(Step):
 
     def update(self, state):
         import tellurium as te
-        from scipy.optimize import minimize
+        from scipy.optimize import least_squares, minimize
 
         from ..models.recovery_targets import RECOVERY_TARGETS
 
@@ -322,17 +330,42 @@ class RateLawFitter(Step):
         truth, meta = entry["antimony"], entry["meta"]
         t_end, n = meta["t_end"], int(cfg["n_points"])
         observed = cfg["observed"] or meta["species"]
+        method = cfg["method"] or "two_stage"
 
         rr_t = _load(truth)
         rr_t.reset()
-        tt = rr_t.simulate(0.0, t_end, n, selections=["time"] + observed)
+        tt = np.asarray(rr_t.simulate(0.0, t_end, n, selections=["time"] + observed))
+        times = tt[:, 0]
         target = {s: [float(v) for v in tt[:, i + 1]] for i, s in enumerate(observed)}
 
         rr = _load(cfg["candidate_antimony"])
         pnames = list(cfg["param_names"]) or list(rr.getGlobalParameterIds())
         x0 = np.array([float(rr[p]) for p in pnames], dtype=float)
 
-        def _cost(x):
+        def _grad_match(start):
+            # Fit params so the model RHS matches data-estimated derivatives at each
+            # sample (no integration -> phase-free, well-conditioned).
+            data = np.asarray([target[s] for s in observed]).T
+            dxdt = np.gradient(data, times[1] - times[0], axis=0)
+            roc_order = list(rr.getFloatingSpeciesIds())
+            idx = [roc_order.index(s) for s in observed]
+
+            def _resid(theta):
+                for p, v in zip(pnames, theta):
+                    rr[p] = max(float(v), 1e-12)
+                out = []
+                for k in range(0, len(times), 3):
+                    for i, s in enumerate(observed):
+                        rr[s] = float(data[k, i])
+                    roc = rr.getRatesOfChange()
+                    for i in range(len(observed)):
+                        out.append(dxdt[k, i] - float(roc[idx[i]]))
+                return np.array(out)
+
+            res = least_squares(_resid, start, method="lm", max_nfev=2000)
+            return np.maximum(res.x, 1e-12)
+
+        def _traj_cost(x):
             try:
                 rr.reset()
                 for p, v in zip(pnames, x):
@@ -343,9 +376,26 @@ class RateLawFitter(Step):
             except Exception:
                 return 1e6
 
-        r = minimize(_cost, x0, method="Nelder-Mead",
-                     options={"maxiter": int(cfg["max_iter"]), "xatol": 1e-7, "fatol": 1e-9})
-        fitted = {p: float(max(v, 1e-9)) for p, v in zip(pnames, r.x)}
+        def _traj_refine(start):
+            r = minimize(_traj_cost, start, method="Nelder-Mead",
+                         options={"maxiter": int(cfg["max_iter"]), "xatol": 1e-7, "fatol": 1e-9})
+            return np.maximum(r.x, 1e-9)
+
+        if method == "gradient":
+            xf = _grad_match(x0)
+        elif method == "trajectory":
+            xf = _traj_refine(x0)
+        elif method == "two_stage":
+            xf = _traj_refine(_grad_match(x0))
+        else:  # auto: best of trajectory-only and gradient-seeded two-stage
+            cands = []
+            xt = _traj_refine(x0)
+            cands.append((_traj_cost(xt), xt))
+            xts = _traj_refine(_grad_match(x0))
+            cands.append((_traj_cost(xts), xts))
+            xf = min(cands, key=lambda c: c[0])[1]
+
+        fitted = {p: float(v) for p, v in zip(pnames, xf)}
         rr.reset()
         for p, v in fitted.items():
             rr[p] = v
@@ -353,7 +403,7 @@ class RateLawFitter(Step):
             fitted_antimony = te.sbmlToAntimony(rr.getCurrentSBML())
         except Exception:
             fitted_antimony = cfg["candidate_antimony"]
-        return {"fitted_antimony": fitted_antimony, "fitted_params": fitted, "nrmse": float(r.fun)}
+        return {"fitted_antimony": fitted_antimony, "fitted_params": fitted, "nrmse": float(_traj_cost(xf))}
 
 
 class ReactionProposer(Step):

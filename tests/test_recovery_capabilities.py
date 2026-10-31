@@ -266,3 +266,46 @@ def test_reaction_proposer_produces_valid_candidate(core):
 def test_build_side_registered(core):
     for name in ("RateLawFitter", "ReactionProposer"):
         assert name in core.link_registry
+
+
+# --- gradient-matching closes the oscillator gap ----------------------------
+
+def _wrong_2x(antimony):
+    import tellurium as te
+    rr = te.loada(antimony)
+    for p in rr.getGlobalParameterIds():
+        rr[p] = float(rr[p]) * 2.0
+    return te.sbmlToAntimony(rr.getCurrentSBML())
+
+
+def test_oscillator_recovered_via_gradient_matching(core):
+    from viva_sbml_decomposition.models.recovery_targets import OSCILLATOR_ANTIMONY
+    out = RateLawFitter(
+        config={"candidate_antimony": _wrong_2x(OSCILLATOR_ANTIMONY), "target": "recover-oscillator"},
+        core=core,
+    ).update({})
+    assert out["nrmse"] < 0.05, out["nrmse"]
+    assert out["fitted_params"]["A"] == pytest.approx(1.0, abs=0.05), out["fitted_params"]
+    assert out["fitted_params"]["B"] == pytest.approx(3.0, abs=0.1), out["fitted_params"]
+
+
+def test_trajectory_only_cannot_recover_oscillator(core):
+    # Documents WHY gradient matching is needed: raw-trajectory LSQ is ill-conditioned
+    # on a limit cycle and fails from a 2x-wrong start.
+    from viva_sbml_decomposition.models.recovery_targets import OSCILLATOR_ANTIMONY
+    out = RateLawFitter(
+        config={"candidate_antimony": _wrong_2x(OSCILLATOR_ANTIMONY),
+                "target": "recover-oscillator", "method": "trajectory"},
+        core=core,
+    ).update({})
+    assert out["nrmse"] > 0.1, out["nrmse"]
+
+
+def test_auto_recovers_every_rung(core):
+    from viva_sbml_decomposition.models.recovery_targets import RECOVERY_TARGETS
+    for slug, entry in RECOVERY_TARGETS.items():
+        out = RateLawFitter(
+            config={"candidate_antimony": _wrong_2x(entry["antimony"]), "target": slug},
+            core=core,
+        ).update({})
+        assert out["nrmse"] < 0.05, (slug, out["nrmse"])
