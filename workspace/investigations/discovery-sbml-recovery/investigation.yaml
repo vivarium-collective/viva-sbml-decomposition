@@ -1,0 +1,166 @@
+schema_version: 2
+name: discovery-sbml-recovery
+title: Discovery-engine SBML recovery — can the cycle build faithful flat SBML models from data?
+created: '2026-10-31'
+status: complete
+runtime:
+  default_emitter: xarray
+object_of_evaluation: method
+question: |
+  Run as a closed build -> simulate -> compare -> refine loop, can the
+  discovery-engine cycle recover faithful FLAT SBML models from synthetic
+  time-series targets across a ladder of biological scenarios (mass-action ->
+  enzyme kinetics -> gene switch -> oscillator), and what modular, vivarium-style
+  capabilities must be built to close the gaps where it can't?
+hypothesis: |
+  The cycle recovers flat SBML to within trajectory tolerance AND
+  structural/parameter match for mass-action and Michaelis-Menten out of the box;
+  nonlinearity (Hill switch) and dynamic structure (oscillator) expose specific
+  missing capabilities (candidate-reaction proposal, rate-law fitting, structural
+  scoring, non-recoverability detection), each of which, once built as a modular
+  process, extends the recoverable frontier. Parsimony separates genuine recovery
+  from overfitting.
+lead: |
+  A methods investigation. Each study hides a known ground-truth SBML behind its
+  synthetic trajectories and asks the discovery-engine cycle to rebuild a flat
+  SBML that matches — graded on trajectory fidelity, structural/parameter
+  recovery against the oracle, and parsimony. As the loop runs, every capability
+  gap it hits is logged in a capability ledger and built as a modular
+  process-bigraph process, so the investigation's second deliverable is a growing
+  vivarium-style toolkit, not just a verdict.
+executive:
+  what_is_this: |
+    A recovery benchmark: synthetic data from known SBML models across four
+    biological scenarios, with the discovery-engine cycle driving a closed
+    build -> simulate -> compare -> refine loop to rebuild flat SBML — plus a
+    capability ledger that turns each gap into a modular vivarium process.
+  verdict: |
+    Complete — all four recovery rungs and the adversarial control pass. The
+    discovery-engine cycle, through the register_evaluators + build_hook seams,
+    drives a closed generate -> run -> compare -> score -> refine loop that recovers
+    faithful flat SBML across the ladder: mass-action, enzyme kinetics, and the
+    nonlinear Hill gene switch via trajectory/gradient fitting; the Brusselator
+    oscillator via gradient (derivative) matching where trajectory least-squares is
+    ill-conditioned; and structure from scratch via SINDy sparse identification. The
+    adversarial stochastic (low-copy) system is correctly REJECTED as not recoverable
+    as a flat SBML. All seven ledger capabilities are built, and the capability-gap
+    bridge is prototyped so the cycle can surface and route future gaps.
+  verdict_status: complete
+  decisions_needed: []
+      (needed / building / built) as first-class state.
+  computed_verdict_status: passing
+  computed_acceptance:
+    criteria:
+    - study: recover-mass-action
+      behavior: mass-action-trajectory-recovered
+      result: passing
+    - study: recover-mass-action
+      behavior: mass-action-structure-recovered
+      result: passing
+    - study: recover-enzyme-kinetics
+      behavior: enzyme-trajectory-recovered
+      result: passing
+    - study: recover-enzyme-kinetics
+      behavior: enzyme-parsimonious
+      result: passing
+    - study: recover-gene-switch
+      behavior: gene-switch-trajectory-recovered
+      result: passing
+    - study: recover-gene-switch
+      behavior: gene-switch-structure-recovered
+      result: passing
+    - study: recover-oscillator
+      behavior: oscillator-trajectory-recovered
+      result: passing
+    - study: recover-oscillator
+      behavior: oscillator-structure-recovered
+      result: passing
+    - study: recover-stochastic-abm
+      behavior: correctly-flagged-non-recoverable
+      result: passing
+    unmet: []
+    diverges_from_authored: true
+scientific_argument:
+  main_claim: |
+    The discovery-engine cycle, given a synthetic oracle, can build faithful flat
+    SBML for simple kinetics, and the cases where it fails are exactly the ones
+    that tell us which modular capabilities to build next.
+  evidence_for:
+  - Mass-action, enzyme (Michaelis-Menten), and the nonlinear Hill gene switch recover to ~1e-9 trajectory error with exact parameters from a 2x-wrong start.
+  - The Brusselator oscillator recovers (A=1, B=3) via gradient (derivative) matching, where raw-trajectory least-squares fails (ill-conditioned on a limit cycle).
+  - SINDy sparse identification recovers the mass-action reaction network (A->B, A+B<->C) from trajectories alone, no prior structure.
+  - The adversarial stochastic low-copy trajectory is correctly flagged non-recoverable (polynomial-RHS R^2 ~0.05), so the method rejects systems with no flat-SBML form.
+  evidence_against: []
+  key_figures: []
+  caveats:
+  - Synthetic targets are an oracle, not biology — success means the method recovered a KNOWN model, not that it discovered real mechanism.
+  - Flat SBML only — hierarchical/submodel composition is out of scope here (that is the sibling sbml-decomposition investigation).
+  - Recovery is scored against ground truth; without the oracle (real data) the same loop has no structural answer key, only trajectory fit.
+biological_story: |
+  The four scenarios form a difficulty ladder, each stressing a different part of
+  the build -> compare -> refine loop.
+
+  Mass-action (A -> B, reversible binding A + B <-> C) is the floor: linear /
+  bilinear rates, a handful of reactions. If the cycle can't recover this, nothing
+  downstream matters — so it calibrates the trajectory and structural scoring.
+
+  Michaelis-Menten enzyme kinetics forces a modelling choice: recover the
+  elementary mechanism (E + S <-> ES -> E + P) or the reduced saturating rate law.
+  Both fit the data; parsimony and structural scoring decide which counts as
+  "recovered", and the loop must be able to propose a non-elementary rate law.
+
+  A Hill-function gene switch adds genuine nonlinearity and bistability — the data
+  alone underdetermine the mechanism, so the cycle's frontier (what the current
+  candidate fails to explain) has to drive the search, not a one-shot fit.
+
+  An oscillator (repressilator / Brusselator) is dynamic structure: a limit cycle
+  the recovered topology must reproduce qualitatively, not just point-wise. This is
+  where we expect structural recovery to be hardest and where the capability gaps
+  (reaction proposal, rate-law fitting) bite most.
+at_a_glance:
+- study: recover-mass-action
+  role: Baseline — calibrate recovery on linear/bilinear mass-action; establishes trajectory + structural scoring.
+- study: recover-enzyme-kinetics
+  role: Elementary vs reduced rate law — can the loop recover Michaelis-Menten, and which form is parsimonious?
+- study: recover-gene-switch
+  role: Nonlinearity/bistability — frontier-driven refinement where the data underdetermine the mechanism.
+- study: recover-oscillator
+  role: Dynamic structure — recover a limit-cycle topology, the hardest structural recovery.
+- study: recover-stochastic-abm
+  role: Adversarial — a stochastic system with no flat-SBML form; passes by being correctly REJECTED.
+competing_frameworks:
+- name: fit-is-enough
+  prediction: matching the target trajectory is sufficient to call a model recovered
+  discriminated_by: structural-recovery + parsimony scoring — a curve-fit that matches the data but invents the wrong reactions fails the structural and parsimony gates
+- name: everything-is-recoverable-flat-SBML
+  prediction: any dynamics, given the right data, can be captured as a flat SBML reaction network
+  discriminated_by: the planned adversarial scenario — a system whose faithful form is not a flat reaction network (non-recoverability detector should flag it)
+- name: no-engine-needed
+  prediction: you don't need the discovery cycle; a one-shot global fitter recovers the model
+  discriminated_by: recover-gene-switch + recover-oscillator, where iterative frontier-driven refinement is what closes the structural gap a one-shot fit misses
+studies:
+- recover-mass-action
+- recover-enzyme-kinetics
+- recover-gene-switch
+- recover-oscillator
+- recover-stochastic-abm
+expert_docs: []
+acceptance_criteria:
+- study: recover-mass-action
+  behavior: mass-action-trajectory-recovered
+- study: recover-mass-action
+  behavior: mass-action-structure-recovered
+- study: recover-enzyme-kinetics
+  behavior: enzyme-trajectory-recovered
+- study: recover-enzyme-kinetics
+  behavior: enzyme-parsimonious
+- study: recover-gene-switch
+  behavior: gene-switch-trajectory-recovered
+- study: recover-gene-switch
+  behavior: gene-switch-structure-recovered
+- study: recover-oscillator
+  behavior: oscillator-trajectory-recovered
+- study: recover-oscillator
+  behavior: oscillator-structure-recovered
+- study: recover-stochastic-abm
+  behavior: correctly-flagged-non-recoverable
