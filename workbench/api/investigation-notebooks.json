@@ -1,1 +1,1 @@
-{"notebooks": [{"slug": "sbml-decomposition", "ipynb": "investigation-notebooks/sbml-decomposition.ipynb", "py": "investigation-notebooks/sbml-decomposition.py"}]}
+{"notebooks": [{"slug": "discovery-sbml-recovery", "ipynb": "investigation-notebooks/discovery-sbml-recovery.ipynb", "py": "investigation-notebooks/discovery-sbml-recovery.py"}, {"slug": "sbml-decomposition", "ipynb": "investigation-notebooks/sbml-decomposition.ipynb", "py": "investigation-notebooks/sbml-decomposition.py"}]}

@@ -193,6 +193,7 @@
   function syncCurrent() {
     var box = el("dcyc-current");
     if (!box) return;
+    if (isSnapshot()) { renderSnapshotNote(); return; }
     var cur = currentSlug();
     S.current = cur;
     if (!cur) { box.innerHTML = '<span>No investigation open in the workbench.</span>'; return; }
@@ -222,10 +223,41 @@
     runCycle();   // one click → load + run
   }
 
+  // ---- read-only snapshot ------------------------------------------------
+  // The cycle is interactive (it runs a live sandbox + writes back on Apply), so a
+  // published static bundle has no backend to drive it. Rather than let the picker
+  // 404 into "(failed to load)" with dead buttons, show an informative read-only note
+  // naming the open investigation + how to run the cycle for real.
+  function renderSnapshotNote() {
+    var sel = el("dcyc-inv");
+    if (sel) { sel.innerHTML = '<option value="">Live workbench only</option>'; sel.disabled = true; }
+    ["dcyc-switch", "dcyc-run", "dcyc-run-cont", "dcyc-apply"].forEach(function (id) {
+      var b = el(id); if (b) b.disabled = true;
+    });
+    var cur = currentSlug();
+    var box = el("dcyc-current");
+    if (box) box.innerHTML = cur
+      ? 'Investigation: <b>' + esc(currentTitle(cur)) + "</b>"
+      : "<span>Open an investigation to see which cycle would run.</span>";
+    var g = el("dcyc-graph");
+    if (g) g.innerHTML =
+      '<div class="empty-state" style="text-align:left;line-height:1.5">' +
+      "<p><b>The discovery cycle is interactive.</b></p>" +
+      '<p class="muted">It runs the investigation\'s build → simulate → compare → score → steer ' +
+      "loop in a live sandbox, proposes the next experiments, and (on Apply) writes verdicts and " +
+      "edges back to the studies — so it works in the running workbench, not in this read-only snapshot.</p>" +
+      '<p class="muted">Run the workbench locally on this workspace to load ' +
+      (cur ? "“" + esc(currentTitle(cur)) + "”" : "an investigation") +
+      " into the cycle and Run / Advance / Apply it.</p>" +
+      '<p><a href="https://github.com/vivarium-collective/vivarium-workbench" target="_blank" rel="noopener">Get vivarium-workbench →</a></p>' +
+      "</div>";
+  }
+
   // ---- data ---------------------------------------------------------------
   function loadInvestigations() {
     var sel = el("dcyc-inv");
     if (!sel) return Promise.resolve();
+    if (isSnapshot()) { renderSnapshotNote(); return Promise.resolve(); }
     return getJSON("/api/discovery-cycle-investigations").then(function (j) {
       var rows = (j && j.investigations) || [];
       if (!rows.length) {
@@ -336,6 +368,35 @@
   }
   document.addEventListener("viv:discovery-changed", function () { if (S.slug) loadDelta(); });
 
+  // Viz-appropriateness: census line + the opt-in toggle for the `viz_untied` rollout flag.
+  function vizApprHtml() {
+    var m = S.summary;
+    if (!m || m.viz_untied_enabled == null) return "";
+    var va = m.viz_appropriateness || {};
+    var parts = [];
+    if (va.misplaced) parts.push(va.misplaced + " misplaced");
+    if (va.duplicated) parts.push(va.duplicated + " duplicated");
+    if (va.untied_surfaced && va.untied) parts.push(va.untied + " untied");
+    var census = parts.length ? parts.join(" · ") : "no issues";
+    var na = va.not_assessed ? " · " + va.not_assessed + " not assessed" : "";
+    return '<div class="dcyc-bn-sub" id="dcyc-viz-appr">Figure appropriateness: ' + esc(census + na) +
+      ' <label title="Surface figures that are not tied to any observable (rollout flag cycle_flags.viz_untied)">' +
+      '<input type="checkbox" id="dcyc-untied-toggle"' + (m.viz_untied_enabled ? " checked" : "") +
+      "> flag untied figures</label></div>";
+  }
+
+  function toggleUntied(enabled) {
+    if (!S.slug || S.busy) return;
+    S.busy = true; setStatus((enabled ? "Enabling" : "Disabling") + " untied-figure flagging…");
+    postJSON("/api/discovery-cycle/" + encodeURIComponent(S.slug) + "/toggle-untied", { enabled: !!enabled })
+      .then(function (j) {
+        if (!j || j.available === false) { setStatus("Discovery engine unavailable."); return; }
+        if (j.after && j.after.steps && j.after.steps.length) setTrace(j.after);
+        setStatus(j.ok ? ("Untied-figure flagging " + (j.enabled ? "on." : "off.")) : (j.detail || "Toggle failed."));
+      }).catch(function () { setStatus("Toggle request failed."); })
+      .finally(function () { S.busy = false; });
+  }
+
   function bannerHtml() {
     var m = S.summary;
     if (!m || m.closed == null) return "";
@@ -358,7 +419,7 @@
         (na.target ? " — " + esc(String(na.target).slice(0, 90)) : "") + "</div>"
       : "";
     return '<div class="dcyc-banner ' + cls + '"><div class="dcyc-bn-h">' + head + "</div>" +
-      naline + runline + "</div>";
+      naline + runline + vizApprHtml() + "</div>";
   }
 
   // The gate inspector: every open item on the engine's frontier, split into the
@@ -687,6 +748,8 @@
         var ta = el("dcyc-decide-ta"); if (ta) ta.focus();
       });
     });
+    var ut = g.querySelector("#dcyc-untied-toggle");
+    if (ut) ut.addEventListener("change", function () { toggleUntied(ut.checked); });
     Array.prototype.forEach.call(g.querySelectorAll("[data-build]"), function (b) {
       b.addEventListener("click", function (ev) { ev.stopPropagation(); buildViz(b.getAttribute("data-build")); });
     });
