@@ -47,7 +47,6 @@ executive:
     bridge is prototyped so the cycle can surface and route future gaps.
   verdict_status: complete
   decisions_needed: []
-      (needed / building / built) as first-class state.
   computed_verdict_status: passing
   computed_acceptance:
     criteria:
