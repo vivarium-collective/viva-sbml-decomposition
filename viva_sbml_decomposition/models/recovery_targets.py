@@ -85,9 +85,21 @@ end
 OSCILLATOR_META = {"name": "brusselator", "species": ["X", "Y"], "t_end": 20.0}
 
 # Registry of ground-truth targets by study slug — one oracle per recovery rung.
+
+# --- Adversarial: a stochastic low-copy system (no faithful flat-SBML form) -------
+# The SAME mass-action network, but a single Gillespie trajectory at low copy numbers.
+# It is a flat reaction network only in the large-population mean-field limit; a single
+# stochastic trajectory's noisy derivatives fit no smooth RHS, so it is NOT recoverable
+# as a deterministic flat SBML. The honest-failure case the non-recoverability detector
+# must flag (the ABM/stochastic boundary from the sbml-decomposition investigation).
+STOCHASTIC_ABM_ANTIMONY = MASS_ACTION_ANTIMONY.replace("mass_action()", "stochastic_abm()")
+STOCHASTIC_ABM_META = {"name": "stochastic_abm", "species": ["A", "B", "C"], "t_end": 10.0,
+                       "stochastic": True, "seed": 3}
+
 RECOVERY_TARGETS = {
     "recover-mass-action": {"antimony": MASS_ACTION_ANTIMONY, "meta": MASS_ACTION_META},
     "recover-enzyme-kinetics": {"antimony": ENZYME_ANTIMONY, "meta": ENZYME_META},
     "recover-gene-switch": {"antimony": GENE_SWITCH_ANTIMONY, "meta": GENE_SWITCH_META},
     "recover-oscillator": {"antimony": OSCILLATOR_ANTIMONY, "meta": OSCILLATOR_META},
+    "recover-stochastic-abm": {"antimony": STOCHASTIC_ABM_ANTIMONY, "meta": STOCHASTIC_ABM_META},
 }

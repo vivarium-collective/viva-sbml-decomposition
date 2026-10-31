@@ -151,6 +151,23 @@ def _limit_cycle(test, reader, ws_root):
     )
 
 
+
+def _non_recoverable(test, reader, ws_root):
+    from .core import build_core
+    from .processes.recovery import NonRecoverabilityDetector
+
+    m = test.get("measure") or {}
+    res = NonRecoverabilityDetector(
+        config={"target": m["target"], "r2_threshold": float(m.get("r2_threshold", 0.9))},
+        core=build_core(),
+    ).update({})
+    # Adversarial: PASS when the system is CORRECTLY detected as non-recoverable.
+    return _code_outcome(
+        "PASS" if res["non_recoverable"] else "FAIL", round(res["min_r2"], 4),
+        "recovery_non_recoverable/threshold", res["detail"],
+    )
+
+
 def register_evaluators(registry: dict) -> dict:
     """discovery_engine hook: map our custom measure kinds to their evaluators."""
     registry["recovery_trajectory"] = _trajectory
@@ -158,4 +175,5 @@ def register_evaluators(registry: dict) -> dict:
     registry["recovery_parsimony"] = _parsimony
     registry["recovery_bistability"] = _bistability
     registry["recovery_limit_cycle"] = _limit_cycle
+    registry["recovery_non_recoverable"] = _non_recoverable
     return registry

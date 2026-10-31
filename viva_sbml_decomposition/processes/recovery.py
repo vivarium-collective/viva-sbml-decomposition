@@ -407,14 +407,19 @@ class RateLawFitter(Step):
 
 
 class ReactionProposer(Step):
-    """Propose a candidate flat-SBML reaction network over a species list.
+    """Propose a candidate flat-SBML reaction network.
 
-    A FIRST structure proposer: enumerates a pool of mass-action reactions — every
-    unimolecular conversion X -> Y and (optionally) the bimolecular associations
-    X + Y -> Z — each with a small unit rate constant, as the candidate structure
-    the RateLawFitter then fits (reactions whose fitted constant collapses toward
-    zero are effectively pruned). Residual-guided, sparsity-driven proposal is the
-    next step; this establishes the propose -> fit pipeline.
+    Two modes:
+
+    * ``enumerate`` (default) — a blind pool: every unimolecular conversion X -> Y
+      and (optionally) the bimolecular associations X + Y -> Z, each with a small
+      unit rate constant, as a candidate the RateLawFitter then fits/prunes.
+    * ``from_data`` — **residual/data-driven structure discovery (SINDy)**: fit the
+      data-estimated derivatives against a reaction-pool library with sequentially-
+      thresholded least-squares, keeping only the reactions whose rate constants
+      survive thresholding. Recovers the actual network (structure + parameters)
+      from the target data alone — no prior structure — e.g. recovering A -> B,
+      A + B <-> C from mass-action trajectories.
     """
 
     config_schema = {
@@ -422,6 +427,11 @@ class ReactionProposer(Step):
         "initial": {"_type": "map[float]", "_default": {}},
         "include_bimolecular": {"_type": "boolean", "_default": False},
         "k0": {"_type": "float", "_default": 0.1},
+        "mode": {"_type": "string", "_default": "enumerate"},
+        "target": {"_type": "string", "_default": ""},
+        "observed": {"_type": "list[string]", "_default": []},
+        "threshold": {"_type": "float", "_default": 0.02},
+        "n_points": {"_type": "integer", "_default": 201},
     }
 
     def inputs(self):
@@ -431,6 +441,8 @@ class ReactionProposer(Step):
         return {"candidate_antimony": "string", "n_reactions": "integer"}
 
     def update(self, state):
+        if (self.config.get("mode") or "enumerate") == "from_data":
+            return self._from_data()
         sp = list(self.config["species"])
         if len(sp) < 2:
             raise ValueError("ReactionProposer needs >= 2 species")
@@ -450,6 +462,174 @@ class ReactionProposer(Step):
         lines.append("end")
         return {"candidate_antimony": "\n".join(lines), "n_reactions": len(rxns)}
 
+    def _from_data(self):
+        from ..models.recovery_targets import RECOVERY_TARGETS
+        cfg = self.config
+        entry = RECOVERY_TARGETS[cfg["target"]]
+        truth, meta = entry["antimony"], entry["meta"]
+        observed = cfg["observed"] or meta["species"]
+        rr = _load(truth)
+        rr.reset()
+        res = np.asarray(rr.simulate(0.0, meta["t_end"], int(cfg["n_points"]), selections=["time"] + observed))
+        data, times = res[:, 1:], res[:, 0]
+        reactions = _sindy_reactions(data, times, list(observed), float(cfg["threshold"]))
+        init = {s: float(data[0, i]) for i, s in enumerate(observed)}
+        return {
+            "candidate_antimony": _reactions_to_antimony("recovered", list(observed), init, reactions),
+            "n_reactions": len(reactions),
+        }
+
+
+def _reaction_pool(species: list[str]) -> list[tuple[dict, dict]]:
+    """Candidate mass-action reactions over ``species``: unimolecular X -> Y,
+    dissociation X -> Y + Z, and association X + Y -> Z."""
+    from itertools import combinations
+
+    rx: list[tuple[dict, dict]] = []
+    for a in species:
+        for b in species:
+            if a != b:
+                rx.append(({a: 1}, {b: 1}))
+    for a in species:
+        for b, c in combinations([s for s in species if s != a], 2):
+            rx.append(({a: 1}, {b: 1, c: 1}))
+    for a, b in combinations(species, 2):
+        for c in species:
+            if c not in (a, b):
+                rx.append(({a: 1, b: 1}, {c: 1}))
+    return rx
+
+
+def _sindy_reactions(data, times, species: list[str], threshold: float) -> list[tuple[dict, dict, float]]:
+    """Sparse identification of a mass-action network from trajectories: regress the
+    data-estimated derivatives on the reaction-pool library with sequentially-
+    thresholded least-squares. Returns the surviving ``(reactants, products, k)``."""
+    dxdt = np.gradient(data, times[1] - times[0], axis=0)
+    pool = _reaction_pool(species)
+
+    def _mono(reactants):
+        m = np.ones(data.shape[0])
+        for s, c in reactants.items():
+            m = m * data[:, species.index(s)] ** c
+        return m
+
+    cols = []
+    for reac, prod in pool:
+        S = np.zeros(len(species))
+        for s, c in reac.items():
+            S[species.index(s)] -= c
+        for s, c in prod.items():
+            S[species.index(s)] += c
+        m = _mono(reac)
+        cols.append(np.concatenate([S[i] * m for i in range(len(species))]))
+    A = np.column_stack(cols)
+    y = np.concatenate([dxdt[:, i] for i in range(len(species))])
+    k, *_ = np.linalg.lstsq(A, y, rcond=None)
+    for _ in range(10):  # sequentially thresholded least-squares
+        small = np.abs(k) < threshold
+        k[small] = 0.0
+        big = ~small
+        if big.any():
+            k[big], *_ = np.linalg.lstsq(A[:, big], y, rcond=None)
+    return [(reac, prod, float(k[j])) for j, (reac, prod) in enumerate(pool) if abs(k[j]) > 1e-6]
+
+
+def _reactions_to_antimony(name: str, species: list[str], initial: dict, reactions: list) -> str:
+    def _side(d):
+        return " + ".join((f"{c} {s}" if c > 1 else s) for s, c in d.items())
+
+    lines = [f"model {name}()", "  species " + ", ".join(species) + ";"]
+    lines += [f"  {s} = {float(initial.get(s, 0.0))};" for s in species]
+    lines += [f"  k{j} = {k};" for j, (_, _, k) in enumerate(reactions)]
+    for j, (reac, prod, _) in enumerate(reactions):
+        rate = f"k{j}" + "".join(f"*{s}" + (f"^{c}" if c > 1 else "") for s, c in reac.items())
+        lines.append(f"  R{j}: {_side(reac)} -> {_side(prod)}; {rate};")
+    lines.append("end")
+    return "\n".join(lines)
+
+
+def _poly_rhs_min_r2(data, times, degree: int) -> float:
+    """Min over species of the R^2 of a best-fit polynomial RHS (monomials up to
+    ``degree``) for the data-estimated derivatives. ~1 => the observed dynamics are a
+    polynomial (mass-action) reaction network; low => they are not (e.g. a single
+    stochastic trajectory, whose derivatives no smooth RHS can fit)."""
+    from itertools import combinations_with_replacement
+
+    n, nsp = data.shape
+    cols = [np.ones(n)]
+    for d in range(1, degree + 1):
+        for combo in combinations_with_replacement(range(nsp), d):
+            col = np.ones(n)
+            for j in combo:
+                col = col * data[:, j]
+            cols.append(col)
+    M = np.column_stack(cols)
+    dxdt = np.gradient(data, times[1] - times[0], axis=0)
+    r2s = []
+    for i in range(nsp):
+        y = dxdt[:, i]
+        coef, *_ = np.linalg.lstsq(M, y, rcond=None)
+        ss_tot = float(np.sum((y - y.mean()) ** 2))
+        r2s.append(1.0 if ss_tot < 1e-12 else 1.0 - float(np.sum((y - M @ coef) ** 2)) / ss_tot)
+    return min(r2s) if r2s else 0.0
+
+
+class NonRecoverabilityDetector(Step):
+    """Decide when a target is NOT recoverable as a flat SBML reaction network.
+
+    Fits the best polynomial (mass-action) RHS to the data-estimated derivatives and
+    reports the worst-species R^2: ~1 means the observed dynamics ARE a flat reaction
+    network (recoverable); a low value means they are not — the honest-failure signal
+    that stops the loop overfitting. The canonical non-recoverable case is a single
+    stochastic (Gillespie) trajectory at low copy numbers: it is flat-SBML only in the
+    large-population mean-field limit, so its noisy derivatives fit no smooth RHS.
+
+    Scope: this detects recoverability of the DETERMINISTIC flat-SBML form from the
+    given trajectory. A fully-observed deterministic network reads recoverable; a
+    stochastic/low-copy trajectory reads non-recoverable.
+    """
+
+    config_schema = {
+        "target": {"_type": "string", "_default": ""},
+        "observed": {"_type": "list[string]", "_default": []},
+        "max_degree": {"_type": "integer", "_default": 3},
+        "r2_threshold": {"_type": "float", "_default": 0.9},
+        "n_points": {"_type": "integer", "_default": 201},
+        "stochastic": {"_type": "boolean", "_default": False},
+        "seed": {"_type": "integer", "_default": 0},
+    }
+
+    def inputs(self):
+        return {}
+
+    def outputs(self):
+        return {"non_recoverable": "boolean", "min_r2": "float", "detail": "string"}
+
+    def update(self, state):
+        from ..models.recovery_targets import RECOVERY_TARGETS
+
+        cfg = self.config
+        entry = RECOVERY_TARGETS[cfg["target"]]
+        truth, meta = entry["antimony"], entry["meta"]
+        observed = cfg["observed"] or meta["species"]
+        stochastic = bool(cfg["stochastic"] or meta.get("stochastic"))
+        rr = _load(truth)
+        rr.reset()
+        if stochastic:
+            rr.setIntegrator("gillespie")
+            try:
+                rr.integrator.seed = int(cfg["seed"])
+            except Exception:
+                pass
+        res = np.asarray(rr.simulate(0.0, meta["t_end"], int(cfg["n_points"]), selections=["time"] + observed))
+        min_r2 = _poly_rhs_min_r2(res[:, 1:], res[:, 0], int(cfg["max_degree"]))
+        thr = float(cfg["r2_threshold"])
+        return {
+            "non_recoverable": bool(min_r2 < thr),
+            "min_r2": float(min_r2),
+            "detail": f"best polynomial-RHS min R^2 {min_r2:.3g} vs {thr}" + (" (stochastic)" if stochastic else ""),
+        }
+
 
 def register_recovery(core):
     """Register the recovery capabilities (idempotent)."""
@@ -459,6 +639,7 @@ def register_recovery(core):
         ("StructuralScorer", StructuralScorer),
         ("RateLawFitter", RateLawFitter),
         ("ReactionProposer", ReactionProposer),
+        ("NonRecoverabilityDetector", NonRecoverabilityDetector),
     ):
         if name not in core.link_registry:
             core.register_link(name, cls)

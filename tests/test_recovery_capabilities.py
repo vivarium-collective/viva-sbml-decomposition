@@ -213,8 +213,8 @@ def test_recovery_loop_identity_end_to_end(core):
 def test_all_four_oracles_simulate():
     import tellurium as te
     from viva_sbml_decomposition.models.recovery_targets import RECOVERY_TARGETS
-    assert set(RECOVERY_TARGETS) == {
-        "recover-mass-action", "recover-enzyme-kinetics", "recover-gene-switch", "recover-oscillator"}
+    assert {"recover-mass-action", "recover-enzyme-kinetics", "recover-gene-switch",
+            "recover-oscillator"} <= set(RECOVERY_TARGETS)
     for slug, entry in RECOVERY_TARGETS.items():
         r = te.loada(entry["antimony"]); r.reset()
         res = r.simulate(0, entry["meta"]["t_end"], 50)
@@ -304,8 +304,36 @@ def test_trajectory_only_cannot_recover_oscillator(core):
 def test_auto_recovers_every_rung(core):
     from viva_sbml_decomposition.models.recovery_targets import RECOVERY_TARGETS
     for slug, entry in RECOVERY_TARGETS.items():
+        if entry["meta"].get("stochastic"):
+            continue  # adversarial — not a recovery rung
         out = RateLawFitter(
             config={"candidate_antimony": _wrong_2x(entry["antimony"]), "target": slug},
             core=core,
         ).update({})
         assert out["nrmse"] < 0.05, (slug, out["nrmse"])
+
+
+# --- deepened proposer (SINDy) + non-recoverability detector ----------------
+
+def test_sindy_recovers_mass_action_structure_from_data(core):
+    out = ReactionProposer(config={"mode": "from_data", "target": "recover-mass-action"}, core=core).update({})
+    assert out["n_reactions"] == 3  # A->B, A+B->C, C->A+B — no spurious
+    sc = StructuralScorer(config={"param_tol": 0.1}, core=core).update(
+        {"candidate_antimony": out["candidate_antimony"],
+         "truth_antimony": __import__("viva_sbml_decomposition.models.recovery_targets",
+                                      fromlist=["MASS_ACTION_ANTIMONY"]).MASS_ACTION_ANTIMONY})
+    assert sc["structure_recovered"] is True
+    assert sc["reactions_recovered"] == pytest.approx(1.0)
+
+
+def test_non_recoverability_detector(core):
+    from viva_sbml_decomposition.processes.recovery import NonRecoverabilityDetector
+    # Deterministic flat-SBML systems read recoverable.
+    for slug in ("recover-mass-action", "recover-oscillator"):
+        out = NonRecoverabilityDetector(config={"target": slug}, core=core).update({})
+        assert out["non_recoverable"] is False, (slug, out)
+        assert out["min_r2"] > 0.9
+    # A single stochastic (low-copy) trajectory is NOT recoverable as deterministic flat SBML.
+    adv = NonRecoverabilityDetector(config={"target": "recover-stochastic-abm"}, core=core).update({})
+    assert adv["non_recoverable"] is True
+    assert adv["min_r2"] < 0.9
