@@ -16,3 +16,4 @@ from . import abm  # noqa: F401  predator_prey_abm / predator_prey_meanfield
 from . import engine_monolithic  # noqa: F401  engine_monolithic / native_composite
 from . import ensemble  # noqa: F401  ensemble (same-rate + multi-rate #270)
 from . import reaction_split  # noqa: F401  reaction_split (two-engine reaction partition)
+from . import recovery  # noqa: F401  recover_mass_action (candidate run for the recovery loop)
