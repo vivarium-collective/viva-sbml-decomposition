@@ -20,7 +20,7 @@
   <div style="display:flex; align-items:center; gap:14px; justify-content:space-between;">
   <div style="display:flex; align-items:center; gap:12px; min-width:0; flex-wrap:wrap">
   <h1 class="study-title" style="margin:0">
-    <span class="study-name" id="study-name" data-slug="cross-engine-coupling" data-study-kind="computational" title="cross-engine-coupling">Cross-engine coupling: engines are interchangeable at a seam</span>
+    <span class="study-name" id="study-name" data-slug="cross-engine-coupling" data-study-kind="computational" title="cross-engine-coupling" data-edit-kind="study" data-edit-field="title" data-edit-value="Cross-engine coupling: engines are interchangeable at a seam" data-edit-label="Title">Cross-engine coupling: engines are interchangeable at a seam</span>
     
   </h1>
     
@@ -543,7 +543,7 @@
 
     <div class="ctr-block">
       <h2 class="overview-label ctr-h">Claim</h2>
-      <p class="ctr-text">A single composite runs HALF in one engine and HALF in another, sharing one store - structurally impossible for a monolith. Swapping the lower half of the seam=aldolase composite from Tellurium to COPASI or to the native process reproduces the Tellurium+Tellurium trajectory at the same coupling interval (0.005) to max relative error 3.2e-7 (COPASI 3.19e-7, native 3.20e-7, measured); the engines are interchangeable at a seam as a ~1e-7 drop-in (COPASI is not bit-reproducible run to run). This is the composability payoff, not a numeric result.</p>
+      <p class="ctr-text" data-edit-kind="study" data-edit-field="claim" data-edit-value="A single composite runs HALF in one engine and HALF in another, sharing one store - structurally impossible for a monolith. Swapping the lower half of the seam=aldolase composite from Tellurium to COPASI or to the native process reproduces the Tellurium+Tellurium trajectory at the same coupling interval (0.005) to max relative error 3.2e-7 (COPASI 3.19e-7, native 3.20e-7, measured); the engines are interchangeable at a seam as a ~1e-7 drop-in (COPASI is not bit-reproducible run to run). This is the composability payoff, not a numeric result." data-edit-multiline data-edit-label="Claim">A single composite runs HALF in one engine and HALF in another, sharing one store - structurally impossible for a monolith. Swapping the lower half of the seam=aldolase composite from Tellurium to COPASI or to the native process reproduces the Tellurium+Tellurium trajectory at the same coupling interval (0.005) to max relative error 3.2e-7 (COPASI 3.19e-7, native 3.20e-7, measured); the engines are interchangeable at a seam as a ~1e-7 drop-in (COPASI is not bit-reproducible run to run). This is the composability payoff, not a numeric result.</p>
       
     </div>
 
@@ -551,15 +551,15 @@
     <div class="ctr-block">
       <h2 class="overview-label ctr-h">Background</h2>
       <div class="ctr-meta">
-        <div class="ctr-meta-row"><span class="ctr-meta-k">Question</span> <span class="ctr-meta-item">Can one composite run part of the model in one engine and part in another (libroadrunner, COPASI, or the native process), sharing one store - a composition a monolithic SBML model structurally cannot express - and are the engines interchangeable at the seam?</span></div>
-        <div class="ctr-meta-row"><span class="ctr-meta-k">Hypothesis</span> <span class="ctr-meta-item">A hybrid composite (upper glycolysis in Tellurium, lower glycolysis in COPASI or the native process) sharing one species store runs through process-bigraph and reproduces the biological-seam result - the engine at either side of the seam is a drop-in, the composability payoff a monolith can never match.</span></div>
+        <div class="ctr-meta-row"><span class="ctr-meta-k">Question</span> <span class="ctr-meta-item" data-edit-kind="study" data-edit-field="question" data-edit-value="Can one composite run part of the model in one engine and part in another (libroadrunner, COPASI, or the native process), sharing one store - a composition a monolithic SBML model structurally cannot express - and are the engines interchangeable at the seam?" data-edit-multiline data-edit-label="Question">Can one composite run part of the model in one engine and part in another (libroadrunner, COPASI, or the native process), sharing one store - a composition a monolithic SBML model structurally cannot express - and are the engines interchangeable at the seam?</span></div>
+        <div class="ctr-meta-row"><span class="ctr-meta-k">Hypothesis</span> <span class="ctr-meta-item" data-edit-kind="study" data-edit-field="hypothesis" data-edit-value="A hybrid composite (upper glycolysis in Tellurium, lower glycolysis in COPASI or the native process) sharing one species store runs through process-bigraph and reproduces the biological-seam result - the engine at either side of the seam is a drop-in, the composability payoff a monolith can never match." data-edit-multiline data-edit-label="Hypothesis">A hybrid composite (upper glycolysis in Tellurium, lower glycolysis in COPASI or the native process) sharing one species store runs through process-bigraph and reproduces the biological-seam result - the engine at either side of the seam is a drop-in, the composability payoff a monolith can never match.</span></div>
       </div>
     </div>
     
 
     <div class="ctr-block">
       <h2 class="overview-label ctr-h">Model &amp; approach</h2>
-      <p class="ctr-text">Demonstrate cross-engine composition impossible for a monolith, and that engines are swappable at a seam - the existence proof for the composability axis.</p>
+      <p class="ctr-text" data-edit-kind="study" data-edit-field="objective" data-edit-value="Demonstrate cross-engine composition impossible for a monolith, and that engines are swappable at a seam - the existence proof for the composability axis." data-edit-multiline data-edit-label="Objective">Demonstrate cross-engine composition impossible for a monolith, and that engines are swappable at a seam - the existence proof for the composability axis.</p>
       <div class="ctr-meta">
         <div class="ctr-meta-row"><span class="ctr-meta-k">Model</span> <code>baseline</code>, <code>native-lower</code><a class="ov-tablink" href="#" onclick="_setStudyTab('compose');return false;">model →</a></div>
         
@@ -575,6 +575,7 @@
 
     <div class="ctr-block">
       <h2 class="overview-label ctr-h">Result</h2>
+      
       <p class="ctr-text"></p>
       
       
@@ -918,6 +919,12 @@
 <div class="overview-section" id="results-section">
   
   <div id="results-summary" data-study="cross-engine-coupling" style="margin:0 0 16px"></div>
+
+  
+  <div id="gate-results-section" data-study="cross-engine-coupling" style="margin:0 0 22px" hidden>
+    <h4>Gate results <span class="muted" style="font-size:0.8em;font-weight:normal">— each acceptance test's value, graded from run data</span></h4>
+    <div id="gate-results"></div>
+  </div>
 
   <h4>Latest run preview <span class="muted" style="font-size:0.8em;font-weight:normal">— downsampled sparkline + first/last/min/max per store</span></h4>
   <div id="results-preview" data-study="cross-engine-coupling">
@@ -1382,11 +1389,12 @@ pass_if: {"detail": "\u003c 1e-3", "op": "threshold"}</pre>
 </section>
 
 </main>
-<script>window.__DASH_CONFIG__ = { mode: "snapshot", interactiveUrl: "https://github.com/vivarium-collective/viva-sbml-decomposition", basePath: "/viva-sbml-decomposition/workbench", inputsDownloadBase: "https://github.com/vivarium-collective/viva-sbml-decomposition/raw/main", provenance: {"repo_slug": "vivarium-collective/viva-sbml-decomposition", "repo_url": "https://github.com/vivarium-collective/viva-sbml-decomposition", "commit": "4c6895c6d6770053257fb6e870fdb51b17ae3dd2", "commit_url": "https://github.com/vivarium-collective/viva-sbml-decomposition/commit/4c6895c6d6770053257fb6e870fdb51b17ae3dd2", "branch": "main", "lockfile": "uv.lock@70f04d6f3931", "generated_at": "2026-10-28 01:24 UTC"} };</script>
+<script>window.__DASH_CONFIG__ = { mode: "snapshot", interactiveUrl: "https://github.com/vivarium-collective/viva-sbml-decomposition", basePath: "/viva-sbml-decomposition/workbench", inputsDownloadBase: "https://github.com/vivarium-collective/viva-sbml-decomposition/raw/main", provenance: {"repo_slug": "vivarium-collective/viva-sbml-decomposition", "repo_url": "https://github.com/vivarium-collective/viva-sbml-decomposition", "commit": "33dbd0406c193fc4922288b475f2a8133dbcfe94", "commit_url": "https://github.com/vivarium-collective/viva-sbml-decomposition/commit/33dbd0406c193fc4922288b475f2a8133dbcfe94", "branch": "main", "lockfile": "uv.lock@70f04d6f3931", "generated_at": "2026-10-31 20:13 UTC"} };</script>
 <script src="/viva-sbml-decomposition/workbench/assets/data-source.js"></script>
 <script src="/viva-sbml-decomposition/workbench/assets/toast.js"></script>
 <script>
 window._studyName = "cross-engine-coupling";
+window.__STUDY_INVESTIGATION__ = "sbml-decomposition";  // owning investigation (feedback save routing)
 window._study = null;  // populated by _bootstrapStudy() in study-detail.js
 
 // Save handler for the Conditions → Model settings editable rows.
@@ -1515,6 +1523,8 @@ window._seedFollowupProposal = _seedFollowupProposal;
 <script src="/viva-sbml-decomposition/workbench/assets/progress-track.js"></script>
 <script src="/viva-sbml-decomposition/workbench/assets/comparison-view.js"></script>
 <script src="/viva-sbml-decomposition/workbench/assets/study-detail.js"></script>
+<script src="/viva-sbml-decomposition/workbench/assets/study-feedback.js"></script>
+<script src="/viva-sbml-decomposition/workbench/assets/inline-edit.js"></script>
 <script>
 // Re-assert the refresh-aware seed handlers AFTER study-detail.js (which
 // defines its own navigate-away _seedFollowupStudy). The embedded

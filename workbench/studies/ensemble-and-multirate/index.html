@@ -20,7 +20,7 @@
   <div style="display:flex; align-items:center; gap:14px; justify-content:space-between;">
   <div style="display:flex; align-items:center; gap:12px; min-width:0; flex-wrap:wrap">
   <h1 class="study-title" style="margin:0">
-    <span class="study-name" id="study-name" data-slug="ensemble-and-multirate" data-study-kind="computational" title="ensemble-and-multirate">Ensemble throughput and multi-rate scheduling</span>
+    <span class="study-name" id="study-name" data-slug="ensemble-and-multirate" data-study-kind="computational" title="ensemble-and-multirate" data-edit-kind="study" data-edit-field="title" data-edit-value="Ensemble throughput and multi-rate scheduling" data-edit-label="Title">Ensemble throughput and multi-rate scheduling</span>
     
   </h1>
     
@@ -543,7 +543,7 @@
 
     <div class="ctr-block">
       <h2 class="overview-label ctr-h">Claim</h2>
-      <p class="ctr-text">A Ray ensemble of monoliths gives a real 7.5x wall-clock speedup on 16 cores — the one study where vivarium wins on speed; libroadrunner does NOT release the GIL, so in-process threads cannot (they backfire). Separately, process-bigraph #270&#39;s event-heap scheduler is bit-identical to the stock scan loop (same math, different tick order) and its wall-clock advantage grows monotonically with P on a genuinely multi-rate composite — measured 0.98x at P=4 (heap bookkeeping with nothing to gain), crossing over near P~50-64, to 1.64x at P=256 on real libroadrunner/CVODE instances. The per-process CVODE integration dominates the per-tick scan until P reaches the low hundreds, so the multiplier is modest at the P a unit test can afford; it is reported as measured, and the regime where it grows large (hundreds-to-thousands of cheap processes) is #270&#39;s own 4.8x@P=100 -&gt; 46x@P=1000 micro-benchmark, cited not reproduced.</p>
+      <p class="ctr-text" data-edit-kind="study" data-edit-field="claim" data-edit-value="A Ray ensemble of monoliths gives a real 7.5x wall-clock speedup on 16 cores — the one study where vivarium wins on speed; libroadrunner does NOT release the GIL, so in-process threads cannot (they backfire). Separately, process-bigraph #270&#39;s event-heap scheduler is bit-identical to the stock scan loop (same math, different tick order) and its wall-clock advantage grows monotonically with P on a genuinely multi-rate composite — measured 0.98x at P=4 (heap bookkeeping with nothing to gain), crossing over near P~50-64, to 1.64x at P=256 on real libroadrunner/CVODE instances. The per-process CVODE integration dominates the per-tick scan until P reaches the low hundreds, so the multiplier is modest at the P a unit test can afford; it is reported as measured, and the regime where it grows large (hundreds-to-thousands of cheap processes) is #270&#39;s own 4.8x@P=100 -&gt; 46x@P=1000 micro-benchmark, cited not reproduced." data-edit-multiline data-edit-label="Claim">A Ray ensemble of monoliths gives a real 7.5x wall-clock speedup on 16 cores — the one study where vivarium wins on speed; libroadrunner does NOT release the GIL, so in-process threads cannot (they backfire). Separately, process-bigraph #270&#39;s event-heap scheduler is bit-identical to the stock scan loop (same math, different tick order) and its wall-clock advantage grows monotonically with P on a genuinely multi-rate composite — measured 0.98x at P=4 (heap bookkeeping with nothing to gain), crossing over near P~50-64, to 1.64x at P=256 on real libroadrunner/CVODE instances. The per-process CVODE integration dominates the per-tick scan until P reaches the low hundreds, so the multiplier is modest at the P a unit test can afford; it is reported as measured, and the regime where it grows large (hundreds-to-thousands of cheap processes) is #270&#39;s own 4.8x@P=100 -&gt; 46x@P=1000 micro-benchmark, cited not reproduced.</p>
       
     </div>
 
@@ -551,15 +551,15 @@
     <div class="ctr-block">
       <h2 class="overview-label ctr-h">Background</h2>
       <div class="ctr-meta">
-        <div class="ctr-meta-row"><span class="ctr-meta-k">Question</span> <span class="ctr-meta-item">When many instances of the monolithic model are run together, (a) as a same-rate parameter ensemble does vivarium orchestration on a real parallel backend (Ray) deliver a genuine throughput speedup, and (b) as a genuinely multi-rate ensemble (each instance on a different interval) does process-bigraph #270&#39;s event-heap scheduler beat the stock scan loop as the process count grows, while staying bit-identical?</span></div>
-        <div class="ctr-meta-row"><span class="ctr-meta-k">Hypothesis</span> <span class="ctr-meta-item">A Ray-backed same-rate ensemble of monoliths delivers a real wall-clock speedup (libroadrunner does not release the GIL, so only OS-process parallelism helps); and the #270 heap scheduler runs the SAME math as the scan loop (bit-identical) with a wall-clock advantage that grows with the instance count P on a multi-rate ensemble.</span></div>
+        <div class="ctr-meta-row"><span class="ctr-meta-k">Question</span> <span class="ctr-meta-item" data-edit-kind="study" data-edit-field="question" data-edit-value="When many instances of the monolithic model are run together, (a) as a same-rate parameter ensemble does vivarium orchestration on a real parallel backend (Ray) deliver a genuine throughput speedup, and (b) as a genuinely multi-rate ensemble (each instance on a different interval) does process-bigraph #270&#39;s event-heap scheduler beat the stock scan loop as the process count grows, while staying bit-identical?" data-edit-multiline data-edit-label="Question">When many instances of the monolithic model are run together, (a) as a same-rate parameter ensemble does vivarium orchestration on a real parallel backend (Ray) deliver a genuine throughput speedup, and (b) as a genuinely multi-rate ensemble (each instance on a different interval) does process-bigraph #270&#39;s event-heap scheduler beat the stock scan loop as the process count grows, while staying bit-identical?</span></div>
+        <div class="ctr-meta-row"><span class="ctr-meta-k">Hypothesis</span> <span class="ctr-meta-item" data-edit-kind="study" data-edit-field="hypothesis" data-edit-value="A Ray-backed same-rate ensemble of monoliths delivers a real wall-clock speedup (libroadrunner does not release the GIL, so only OS-process parallelism helps); and the #270 heap scheduler runs the SAME math as the scan loop (bit-identical) with a wall-clock advantage that grows with the instance count P on a multi-rate ensemble." data-edit-multiline data-edit-label="Hypothesis">A Ray-backed same-rate ensemble of monoliths delivers a real wall-clock speedup (libroadrunner does not release the GIL, so only OS-process parallelism helps); and the #270 heap scheduler runs the SAME math as the scan loop (bit-identical) with a wall-clock advantage that grows with the instance count P on a multi-rate ensemble.</span></div>
       </div>
     </div>
     
 
     <div class="ctr-block">
       <h2 class="overview-label ctr-h">Model &amp; approach</h2>
-      <p class="ctr-text">Fan the monolith out into same-rate and multi-rate ensembles and measure the real Ray speedup and the heap-vs-scan scheduler advantage.</p>
+      <p class="ctr-text" data-edit-kind="study" data-edit-field="objective" data-edit-value="Fan the monolith out into same-rate and multi-rate ensembles and measure the real Ray speedup and the heap-vs-scan scheduler advantage." data-edit-multiline data-edit-label="Objective">Fan the monolith out into same-rate and multi-rate ensembles and measure the real Ray speedup and the heap-vs-scan scheduler advantage.</p>
       <div class="ctr-meta">
         <div class="ctr-meta-row"><span class="ctr-meta-k">Model</span> <code>baseline</code>, <code>multirate</code><a class="ov-tablink" href="#" onclick="_setStudyTab('compose');return false;">model →</a></div>
         
@@ -575,6 +575,7 @@
 
     <div class="ctr-block">
       <h2 class="overview-label ctr-h">Result</h2>
+      
       <p class="ctr-text"></p>
       
       
@@ -1013,6 +1014,12 @@
 <div class="overview-section" id="results-section">
   
   <div id="results-summary" data-study="ensemble-and-multirate" style="margin:0 0 16px"></div>
+
+  
+  <div id="gate-results-section" data-study="ensemble-and-multirate" style="margin:0 0 22px" hidden>
+    <h4>Gate results <span class="muted" style="font-size:0.8em;font-weight:normal">— each acceptance test's value, graded from run data</span></h4>
+    <div id="gate-results"></div>
+  </div>
 
   <h4>Latest run preview <span class="muted" style="font-size:0.8em;font-weight:normal">— downsampled sparkline + first/last/min/max per store</span></h4>
   <div id="results-preview" data-study="ensemble-and-multirate">
@@ -1528,11 +1535,12 @@ pass_if: {"detail": "speedup(large P) \u003e speedup(small P)", "op": "threshold
 </section>
 
 </main>
-<script>window.__DASH_CONFIG__ = { mode: "snapshot", interactiveUrl: "https://github.com/vivarium-collective/viva-sbml-decomposition", basePath: "/viva-sbml-decomposition/workbench", inputsDownloadBase: "https://github.com/vivarium-collective/viva-sbml-decomposition/raw/main", provenance: {"repo_slug": "vivarium-collective/viva-sbml-decomposition", "repo_url": "https://github.com/vivarium-collective/viva-sbml-decomposition", "commit": "4c6895c6d6770053257fb6e870fdb51b17ae3dd2", "commit_url": "https://github.com/vivarium-collective/viva-sbml-decomposition/commit/4c6895c6d6770053257fb6e870fdb51b17ae3dd2", "branch": "main", "lockfile": "uv.lock@70f04d6f3931", "generated_at": "2026-10-28 01:24 UTC"} };</script>
+<script>window.__DASH_CONFIG__ = { mode: "snapshot", interactiveUrl: "https://github.com/vivarium-collective/viva-sbml-decomposition", basePath: "/viva-sbml-decomposition/workbench", inputsDownloadBase: "https://github.com/vivarium-collective/viva-sbml-decomposition/raw/main", provenance: {"repo_slug": "vivarium-collective/viva-sbml-decomposition", "repo_url": "https://github.com/vivarium-collective/viva-sbml-decomposition", "commit": "33dbd0406c193fc4922288b475f2a8133dbcfe94", "commit_url": "https://github.com/vivarium-collective/viva-sbml-decomposition/commit/33dbd0406c193fc4922288b475f2a8133dbcfe94", "branch": "main", "lockfile": "uv.lock@70f04d6f3931", "generated_at": "2026-10-31 20:13 UTC"} };</script>
 <script src="/viva-sbml-decomposition/workbench/assets/data-source.js"></script>
 <script src="/viva-sbml-decomposition/workbench/assets/toast.js"></script>
 <script>
 window._studyName = "ensemble-and-multirate";
+window.__STUDY_INVESTIGATION__ = "sbml-decomposition";  // owning investigation (feedback save routing)
 window._study = null;  // populated by _bootstrapStudy() in study-detail.js
 
 // Save handler for the Conditions → Model settings editable rows.
@@ -1661,6 +1669,8 @@ window._seedFollowupProposal = _seedFollowupProposal;
 <script src="/viva-sbml-decomposition/workbench/assets/progress-track.js"></script>
 <script src="/viva-sbml-decomposition/workbench/assets/comparison-view.js"></script>
 <script src="/viva-sbml-decomposition/workbench/assets/study-detail.js"></script>
+<script src="/viva-sbml-decomposition/workbench/assets/study-feedback.js"></script>
+<script src="/viva-sbml-decomposition/workbench/assets/inline-edit.js"></script>
 <script>
 // Re-assert the refresh-aware seed handlers AFTER study-detail.js (which
 // defines its own navigate-away _seedFollowupStudy). The embedded
