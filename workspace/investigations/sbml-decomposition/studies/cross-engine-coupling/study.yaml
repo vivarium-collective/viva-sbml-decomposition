@@ -4,18 +4,11 @@ investigation: sbml-decomposition
 status: ran
 title: 'Cross-engine coupling: engines are interchangeable at a seam'
 confidence: Accepted
-question: Can one composite run part of the model in one engine and part in another (libroadrunner, COPASI, or the native process), sharing one store - a composition a monolithic SBML model structurally
-  cannot express - and are the engines interchangeable at the seam?
-hypothesis: A hybrid composite (upper glycolysis in Tellurium, lower glycolysis in COPASI or the native process) sharing one species store runs through process-bigraph and reproduces the biological-seam
-  result - the engine at either side of the seam is a drop-in, the composability payoff a monolith can never match.
+question: Can one composite run part of the model in one engine and part in another (libroadrunner, COPASI, or the native process), sharing one store - a composition a monolithic SBML model structurally cannot express - and are the engines interchangeable at the seam?
+hypothesis: A hybrid composite (upper glycolysis in Tellurium, lower glycolysis in COPASI or the native process) sharing one species store runs through process-bigraph and reproduces the biological-seam result - the engine at either side of the seam is a drop-in, the composability payoff a monolith can never match.
 objective: Demonstrate cross-engine composition impossible for a monolith, and that engines are swappable at a seam - the existence proof for the composability axis.
-description: 'Study in the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species). The model is authored as inline Antimony and shown in the Model tab. cross-engine-coupling
-  swaps biological-modular-seam''s lower-glycolysis submodel for the native-pbg process while upper stays libroadrunner, both sharing one store. This is the composability existence proof; it has no monolithic
-  reference (accuracy-exempt). The generic reaction_split composite makes the engine a parameter of each side of the seam: the baseline couples Tellurium (upper) with COPASI (lower); the native-lower variant
-  couples Tellurium with the hand-ported native process. Both reproduce the Tellurium+Tellurium biological-seam result at the same coupling interval to ~3e-7 (measured below).'
-claim: A single composite runs HALF in one engine and HALF in another, sharing one store - structurally impossible for a monolith. Swapping the lower half of the seam=aldolase composite from Tellurium to COPASI
-  or to the native process reproduces the Tellurium+Tellurium trajectory at the same coupling interval (0.005) to max relative error 3.2e-7 (COPASI 3.19e-7, native 3.20e-7, measured); the engines are
-  interchangeable at a seam as a ~1e-7 drop-in (COPASI is not bit-reproducible run to run). This is the composability payoff, not a numeric result.
+description: 'Study in the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species). The model is authored as inline Antimony and shown in the Model tab. cross-engine-coupling swaps biological-modular-seam''s lower-glycolysis submodel for the native-pbg process while upper stays libroadrunner, both sharing one store. This is the composability existence proof; it has no monolithic reference (accuracy-exempt). The generic reaction_split composite makes the engine a parameter of each side of the seam: the baseline couples Tellurium (upper) with COPASI (lower); the native-lower variant couples Tellurium with the hand-ported native process. Both reproduce the Tellurium+Tellurium biological-seam result at the same coupling interval to ~3e-7 (measured below).'
+claim: A single composite runs HALF in one engine and HALF in another, sharing one store - structurally impossible for a monolith. Swapping the lower half of the seam=aldolase composite from Tellurium to COPASI or to the native process reproduces the Tellurium+Tellurium trajectory at the same coupling interval (0.005) to max relative error 3.2e-7 (COPASI 3.19e-7, native 3.20e-7, measured); the engines are interchangeable at a seam as a ~1e-7 drop-in (COPASI is not bit-reproducible run to run). This is the composability payoff, not a numeric result.
 parent_studies:
 - study: biological-modular-seam
   relation: builds-on
@@ -42,22 +35,17 @@ expected_behavior:
   condition: builds, runs, emits the full 17-species set with finite output; accuracy-exempt (no monolithic reference)
   rationale: the value is the structural capability, demonstrated by a working cross-engine composite, not a trajectory match.
 findings:
-- summary: 'Hybrid composite: upper glycolysis (Tellurium SubmodelProcess) + lower glycolysis (NativeSubmodelProcess) share one species store, reconciling additively — a composition a single libroadrunner
-    model cannot express.'
+- summary: 'Hybrid composite: upper glycolysis (Tellurium SubmodelProcess) + lower glycolysis (NativeSubmodelProcess) share one species store, reconciling additively — a composition a single libroadrunner model cannot express.'
 - summary: "Matches the Tellurium+Tellurium reference at the same interval (0.005) when the lower half is swapped (same ODEs, different engine): max_rel_err 3.19e-7 for the COPASI swap, 3.20e-7 for the native swap; the monolith-impossibility is STRUCTURAL, not numeric. Accuracy-exempt in the 3-way figure."
 - summary: 'Engine interchangeability is measured on both swaps (seam=aldolase, interval 0.005, vs tellurium+tellurium): tellurium+COPASI 3.19e-7, tellurium+native 3.20e-7. Both are ~1e-7 engine-swap drop-ins; COPASI is not bit-reproducible and varies at the ~1e-7 level run to run.'
-cites: null
-calibration_anchor: null
+cites:
+calibration_anchor:
 visualizations:
-- name: composability_scorecard
-  address: local:ComposabilityScorecard
+- name: species_dynamics
+  address: local:SpeciesDynamics
   config: {}
-- name: tradeoff_map
-  address: local:TradeoffMap
-  config: {}
-- name: decision_table
-  address: local:DecisionTable
-  config: {}
+  covers:
+  - glycolysis_species_trajectory
 verdict: supported
 evaluation_status: passed
 gate_status: passed

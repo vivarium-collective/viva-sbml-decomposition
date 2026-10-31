@@ -4,13 +4,10 @@ investigation: sbml-decomposition
 status: ran
 title: Fully native process-bigraph
 confidence: Accepted
-question: Can the glycolysis ODE network be reimplemented as native process-bigraph processes (no libroadrunner at runtime) at reference fidelity, and does the state leaf representation (scalar-dict vs
-  numpy-array) matter for performance at this scale?
+question: Can the glycolysis ODE network be reimplemented as native process-bigraph processes (no libroadrunner at runtime) at reference fidelity, and does the state leaf representation (scalar-dict vs numpy-array) matter for performance at this scale?
 hypothesis: A hand-ported native RHS integrated by scipy matches the reference to high fidelity; at 17 species the scalar-dict vs numpy-array leaf choice is perf-irrelevant.
 objective: Reimplement the network natively (the far pole of composability) and test leaf-representation sensitivity.
-description: Study in the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species). The model is authored as inline Antimony and shown in the Model tab. The 17
-  Teusink rate laws + the 3 sqrt assignment rules are hand-ported to pure Python/numpy and integrated with scipy LSODA — no libroadrunner at runtime. Built in two leaf variants (scalar-dict and numpy-array).
-  Realised by the generic native_composite (model=glycolysis).
+description: Study in the SBML-decomposition investigation on Teusink glycolysis (BIOMD0000000064, 17 floating species). The model is authored as inline Antimony and shown in the Model tab. The 17 Teusink rate laws + the 3 sqrt assignment rules are hand-ported to pure Python/numpy and integrated with scipy LSODA — no libroadrunner at runtime. Built in two leaf variants (scalar-dict and numpy-array). Realised by the generic native_composite (model=glycolysis).
 claim: A fully native process-bigraph implementation reaches reference fidelity (~1e-7); at 17 species the scalar-dict-vs-array leaf choice is perf-irrelevant (only bites at 100s-1000s of species).
 parent_studies:
 - study: sbml-in-tellurium
@@ -27,20 +24,15 @@ expected_behavior:
   rationale: a faithful native port must match the reference and the two leaf variants must be the same math.
 findings:
 - summary: Native RHS (all 17 reactions + 3 sqrt adenylate rules) matches the reference to max_rel_err ~1.05e-7; scalar and array variants bitwise identical.
-- summary: Scalar-dict vs numpy-array overhead_fraction indistinguishable (0.023 vs 0.022); per-process leaf-crossing ~6.8ms vs 6.7ms, swamped by the ~289ms LSODA integration. The scalar-dict framework
-    tax is linear in element count and only matters at large state.
-cites: null
-calibration_anchor: null
+- summary: Scalar-dict vs numpy-array overhead_fraction indistinguishable (0.023 vs 0.022); per-process leaf-crossing ~6.8ms vs 6.7ms, swamped by the ~289ms LSODA integration. The scalar-dict framework tax is linear in element count and only matters at large state.
+cites:
+calibration_anchor:
 visualizations:
-- name: accuracy_divergence
-  address: local:AccuracyDivergence
+- name: species_dynamics
+  address: local:SpeciesDynamics
   config: {}
-- name: runtime_comparison
-  address: local:RuntimeComparison
-  config: {}
-- name: composability_scorecard
-  address: local:ComposabilityScorecard
-  config: {}
+  covers:
+  - glycolysis_species_trajectory
 verdict: supported
 evaluation_status: passed
 gate_status: passed
