@@ -74,7 +74,14 @@ def recover(study_slug: str = "recover-mass-action") -> dict:
     run["status"] = "completed"
     run["outcomes"] = outcomes
     run["canonical"] = True
-    d.setdefault("runs", []).insert(0, run)  # make it the canonical run
+    runs = d.setdefault("runs", [])
+    # Replace any prior recovery-fit run for this study and clear other canonical
+    # flags, so there is exactly one canonical run (this one) — never a stale pick.
+    runs[:] = [r for r in runs if not str(r.get("name", "")).startswith(f"recovery-fit:{study_slug}")]
+    for r in runs:
+        if r.get("canonical"):
+            r["canonical"] = False
+    runs.insert(0, run)
     d["status"] = "ran"
     with p.open("w") as f:
         y.dump(d, f)
