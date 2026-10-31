@@ -1,0 +1,118 @@
+schema_version: 3
+name: recover-stochastic-abm
+investigation: discovery-sbml-recovery
+status: ran
+kind: adversarial
+title: Reject a stochastic system (no flat-SBML form)
+confidence: Planned
+question: |
+  Does the recovery pipeline correctly REFUSE to recover a flat SBML from a single
+  low-copy stochastic trajectory — recognizing the ABM/stochastic boundary where no
+  deterministic flat-SBML reaction network faithfully fits the data?
+hypothesis: |
+  A single Gillespie trajectory at low copy numbers has noisy derivatives that no
+  smooth polynomial (mass-action) RHS can fit, so the non-recoverability detector
+  flags it (worst-species R^2 well below threshold). The underlying network IS flat
+  SBML only in the large-population mean-field limit; from this data it is not
+  recoverable. The adversarial passes by correctly REJECTING the system — the honest
+  failure that keeps the loop from overfitting noise.
+objective: |
+  Run the non-recoverability detector on a single stochastic trajectory of the
+  mass-action network and verify it is correctly flagged as not recoverable as a
+  deterministic flat SBML.
+description: |
+  Adversarial / negative-control rung. The oracle is the SAME mass-action network as
+  recover-mass-action, but observed as one Gillespie trajectory at low copy numbers
+  (recover-stochastic-abm). Deterministically it is a flat reaction network; as a
+  single stochastic path it is not — its derivatives are dominated by shot noise. This
+  is the ABM/stochastic boundary the sbml-decomposition investigation found (an ABM
+  reduces to an SBML/ODE only in the large-population limit). The study is a control
+  for the whole ladder: the metric must pass by rejecting a system it should not claim
+  to recover, so the recovery capabilities are not just curve-fitting anything.
+parent_studies:
+- study: recover-oscillator
+  relation: builds-on
+baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.recovery.recover_candidate
+  params:
+    target: recover-stochastic-abm
+variants: []
+interventions: []
+expected_behavior:
+- name: correctly-flagged-non-recoverable
+  observable: non-recoverability detector verdict on a single stochastic trajectory
+  condition: flagged non_recoverable (worst-species polynomial-RHS R^2 below threshold)
+  rationale: a flat-SBML recovery method must refuse systems with no faithful flat form, not overfit noise.
+readouts:
+- name: A
+  description: Species A trajectory (stochastic).
+  identifier: A
+  units: molecules
+- name: B
+  description: Species B trajectory (stochastic).
+  identifier: B
+  units: molecules
+- name: C
+  description: Species C trajectory (stochastic).
+  identifier: C
+  units: molecules
+behavior_tests:
+- name: correctly-flagged-non-recoverable
+  classification: adversarial
+  measure:
+    kind: recovery_non_recoverable
+    target: recover-stochastic-abm
+    r2_threshold: 0.9
+  pass_if:
+    op: threshold
+    detail: detector flags non_recoverable (graded by viva_sbml_decomposition.evaluators)
+  requires_simulation: true
+  description: Passes by correctly REJECTING the system as not recoverable as a flat SBML. Graded by the NonRecoverabilityDetector.
+findings: []
+visualizations: []
+pipeline_gate:
+  gate_evaluator:
+    result: passed
+    blocked_by: []
+    evaluated_by: code
+    diverges_from_authored: false
+runs:
+- name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793476030__730600
+  status: completed
+  timestamp: 1793476033.9370408
+  emitter:
+    kind: unknown
+  env_id: bab25b0358b3edb8
+  params: '{"target": "recover-stochastic-abm"}'
+  computed_outcomes:
+    correctly-flagged-non-recoverable:
+      result: PASS
+      measured_value: 0.0534
+      evaluated_by: code
+      operator: recovery_non_recoverable/threshold
+      detail: best polynomial-RHS min R^2 0.0534 vs 0.9 (stochastic)
+      reconcile: agree
+  provenance:
+    params:
+      target:
+        value: recover-stochastic-abm
+        source: override
+    params_captured_at: '2026-10-31'
+    params_source: dashboard-runner
+  outcomes:
+    correctly-flagged-non-recoverable:
+      result: ok
+      detail: best polynomial-RHS min R^2 0.0534 vs 0.9 (stochastic) (code-graded)
+simulation_set:
+- name: baseline-baseline
+  kind: single
+  base_model: viva_sbml_decomposition.composites.recovery.recover_candidate
+  is_baseline: true
+  status: ran
+  params:
+    target: recover-stochastic-abm
+  metrics:
+  - A
+  - B
+  - C

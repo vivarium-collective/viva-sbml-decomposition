@@ -1,0 +1,185 @@
+schema_version: 3
+name: recover-mass-action
+investigation: discovery-sbml-recovery
+status: ran
+title: Recover mass-action kinetics
+confidence: Planned
+question: |
+  Given only synthetic time-series generated from a known mass-action SBML model
+  (A -> B, reversible binding A + B <-> C), can the discovery-engine cycle rebuild
+  a flat SBML that reproduces the trajectories and recovers the actual reactions
+  and rate constants?
+hypothesis: |
+  Mass-action is the floor: linear/bilinear rate laws and a handful of reactions.
+  The cycle should recover both the trajectory (to tight tolerance) and the exact
+  reaction set + rate constants with no spurious reactions, calibrating the
+  trajectory and structural scoring for the whole ladder.
+objective: |
+  Generate a ground-truth mass-action SBML, simulate it to synthetic targets, hide
+  the model, and run the build -> simulate -> compare -> refine loop to recover a
+  flat SBML. Score trajectory fidelity, structural recovery, and parsimony.
+description: |
+  Baseline rung of the recovery ladder. The ground truth is a small mass-action
+  network (A -> B with rate k1; A + B <-> C with k2/k2r). A synthetic-target
+  generator simulates it (tellurium) to produce the observed species trajectories;
+  only those trajectories + the species list are exposed to the loop. The
+  discovery-engine cycle proposes candidate reactions, simulates, compares to the
+  target, and refines until acceptance. Because the oracle is known, structural
+  recovery and parsimony are gradeable exactly. This study calibrates the
+  trajectory-comparator and structural-scorer capabilities before the harder rungs.
+parent_studies: []
+baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.recovery.recover_mass_action
+  params: {}
+variants: []
+interventions: []
+expected_behavior:
+- name: mass-action-trajectory-recovered
+  observable: recovered-model simulation vs synthetic target trajectory (per 
+    species, shared time grid)
+  condition: normalized RMSE < 0.05 across all observed species
+  rationale: the recovered model must reproduce the data it was fit to before 
+    any structural claim is meaningful.
+- name: mass-action-structure-recovered
+  observable: recovered reaction set + rate constants vs the ground-truth SBML
+  condition: every ground-truth reaction is present and each rate constant is 
+    within 10% of truth
+  rationale: mass-action is fully identifiable from clean data, so genuine 
+    recovery means getting the actual mechanism, not just a fit.
+- name: mass-action-parsimonious
+  observable: number of reactions / parameters in the recovered model vs ground 
+    truth
+  condition: recovered reaction count <= ground-truth count (no spurious 
+    reactions)
+  rationale: a correct recovery introduces no extra machinery; parsimony 
+    separates recovery from overfitting.
+readouts:
+- name: A
+  description: Species A trajectory from the candidate run.
+  identifier: A
+  units: concentration
+- name: B
+  description: Species B trajectory from the candidate run.
+  identifier: B
+  units: concentration
+- name: C
+  description: Species C trajectory from the candidate run.
+  identifier: C
+  units: concentration
+behavior_tests:
+- name: mass-action-trajectory-recovered
+  classification: accuracy
+  measure:
+    kind: recovery_trajectory
+    target: recover-mass-action
+    tol: 0.05
+  pass_if:
+    op: threshold
+    detail: normalized RMSE < 0.05
+  units: normalized RMSE
+  requires_simulation: true
+  description: The recovered model's simulation must reproduce the oracle target
+    within tolerance. Graded by viva_sbml_decomposition.evaluators 
+    (TrajectoryComparator).
+- name: mass-action-structure-recovered
+  classification: correctness
+  measure:
+    kind: recovery_structure
+    target: recover-mass-action
+    param_tol: 0.1
+  pass_if:
+    op: threshold
+    detail: all ground-truth reactions matched, rate constants within 10%, no 
+      spurious reactions
+  units: fraction of reactions recovered
+  requires_simulation: true
+  description: Recovered reactions + rate constants must match the ground truth.
+    Graded by viva_sbml_decomposition.evaluators (StructuralScorer).
+- name: mass-action-parsimonious
+  classification: correctness
+  measure:
+    kind: recovery_parsimony
+    target: recover-mass-action
+  pass_if:
+    op: threshold
+    detail: no more reactions than the ground truth (no spurious reactions)
+  units: spurious reaction count
+  requires_simulation: true
+  description: No spurious reactions beyond the ground truth. Graded by 
+    viva_sbml_decomposition.evaluators (StructuralScorer).
+findings: []
+visualizations: []
+runs:
+- name: recovery-fit:recover-mass-action:1793473950
+  status: completed
+  outcomes:
+    mass-action-trajectory-recovered:
+      result: ok
+      detail: nrmse 1.492e-09 vs tol 0.05 (recovered candidate, 2x-param start)
+    mass-action-structure-recovered:
+      result: ok
+      detail: reactions_recovered 1.00, param_max_rel_err 8.171e-09, spurious 0 
+        (recovered candidate, 2x-param start)
+    mass-action-parsimonious:
+      result: ok
+      detail: parsimonious=True, spurious 0 (recovered candidate, 2x-param 
+        start)
+  canonical: true
+- name: 
+    viva_sbml_decomposition.composites.recovery.recover_mass_action__1793470642__a94aec
+  status: completed
+  timestamp: 1793470645.9383218
+  emitter:
+    kind: unknown
+  env_id: cfe30fb61894d2e2
+  params: '{}'
+  computed_outcomes:
+    mass-action-trajectory-recovered:
+      result: PASS
+      measured_value: 0.0
+      evaluated_by: code
+      operator: recovery_trajectory/threshold
+      detail: nrmse 0 vs tol 0.05
+      reconcile: divergent
+    mass-action-structure-recovered:
+      result: PASS
+      measured_value: 1.0
+      evaluated_by: code
+      operator: recovery_structure/threshold
+      detail: reactions_recovered 1.00, param_max_rel_err 0, spurious 0
+      reconcile: divergent
+    mass-action-parsimonious:
+      result: PASS
+      measured_value: 0.0
+      evaluated_by: code
+      operator: recovery_parsimony/threshold
+      detail: parsimonious=True, spurious 0
+      reconcile: divergent
+  provenance:
+    params: {}
+    params_captured_at: '2026-10-31'
+    params_source: dashboard-runner
+  outcomes:
+    mass-action-trajectory-recovered:
+      result: ok
+      detail: nrmse 0 vs tol 0.05 (code-graded)
+    mass-action-structure-recovered:
+      result: ok
+      detail: reactions_recovered 1.00, param_max_rel_err 0, spurious 0 
+        (code-graded)
+    mass-action-parsimonious:
+      result: ok
+      detail: parsimonious=True, spurious 0 (code-graded)
+simulation_set:
+- name: baseline-baseline
+  kind: single
+  base_model: viva_sbml_decomposition.composites.recovery.recover_mass_action
+  is_baseline: true
+  status: ran
+pipeline_gate:
+  gate_evaluator:
+    result: passed
+    blocked_by: []
+    evaluated_by: code
+    diverges_from_authored: false
