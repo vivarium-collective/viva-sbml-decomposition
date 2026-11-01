@@ -18,6 +18,20 @@ A code outcome is ``{"result": "PASS"|"FAIL", "measured_value": ..,
 """
 from __future__ import annotations
 
+# Mark our recovery evaluators STORE-LESS: they re-derive their result internally
+# (re-run SINDy + fit against the hidden oracle; run the non-recoverability detector)
+# and read no run data. compute_outcomes grades store-less kinds even when the run
+# store is unresolved (the recover_candidate composite strips the emitter) — so the
+# pipeline now owns the honest grading natively (no manual re-grade).
+try:
+    from discovery_engine.study_evaluator import storeless
+except ImportError:  # engine predates the store-less decorator (discovery-engine #22)
+    def storeless(fn):  # type: ignore[misc]
+        # No-op fallback: the committed computed_outcomes already carry the grades,
+        # so an older engine still renders honestly; the decorator only matters for
+        # a live re-grade once the engine has store-less support.
+        return fn
+
 
 def _code_outcome(result: str, measured_value, operator: str, detail: str) -> dict:
     return {
@@ -95,6 +109,7 @@ def _resolve_models(measure: dict):
     return truth, candidate, meta
 
 
+@storeless
 def _trajectory(test, reader, ws_root):
     from .core import build_core
     from .processes.recovery import SyntheticTargetGenerator, TrajectoryComparator
@@ -120,6 +135,7 @@ def _trajectory(test, reader, ws_root):
     )
 
 
+@storeless
 def _structure(test, reader, ws_root):
     from .core import build_core
     from .processes.recovery import StructuralScorer
@@ -137,6 +153,7 @@ def _structure(test, reader, ws_root):
     )
 
 
+@storeless
 def _parsimony(test, reader, ws_root):
     from .core import build_core
     from .processes.recovery import StructuralScorer
@@ -153,6 +170,7 @@ def _parsimony(test, reader, ws_root):
     )
 
 
+@storeless
 def _bistability(test, reader, ws_root):
     """Does the candidate reproduce the ground-truth switch — two stable states?"""
     import numpy as np
@@ -180,6 +198,7 @@ def _bistability(test, reader, ws_root):
     )
 
 
+@storeless
 def _limit_cycle(test, reader, ws_root):
     """Does the candidate sustain an oscillation (non-decaying late-window amplitude)?"""
     import numpy as np
@@ -202,6 +221,7 @@ def _limit_cycle(test, reader, ws_root):
 
 
 
+@storeless
 def _non_recoverable(test, reader, ws_root):
     from .core import build_core
     from .processes.recovery import NonRecoverabilityDetector

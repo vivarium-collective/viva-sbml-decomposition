@@ -3,7 +3,7 @@ name: recover-oscillator
 investigation: discovery-sbml-recovery
 status: investigating
 title: Recover an oscillator
-confidence: Investigating
+confidence: Refuted
 question: |
   From synthetic data of a limit-cycle oscillator (repressilator or Brusselator),
   can the cycle recover a flat SBML whose topology reproduces the oscillation —
@@ -101,36 +101,32 @@ visualizations: []
 runs:
 - name: recovery-fit:recover-oscillator:1793473958
   status: completed
-  outcomes: &id002
-    oscillator-trajectory-recovered:
-      result: failed
-      detail: nrmse 0.4443 vs tol 0.08
-    oscillator-structure-recovered:
-      result: failed
-      detail: reactions_recovered 0.25, param_max_rel_err 1, spurious 1
-    oscillator-limit-cycle-reproduced:
-      result: failed
-      detail: late-window amplitude 0 vs 0.2
   canonical: true
-  computed_outcomes: &id001
+  computed_outcomes:
     oscillator-trajectory-recovered:
       result: FAIL
       measured_value: 0.444346
       evaluated_by: code
       operator: recovery_trajectory/threshold
       detail: nrmse 0.4443 vs tol 0.08
+      reconcile: no_authored
     oscillator-structure-recovered:
       result: FAIL
       measured_value: 0.25
       evaluated_by: code
       operator: recovery_structure/threshold
       detail: reactions_recovered 0.25, param_max_rel_err 1, spurious 1
+      reconcile: no_authored
     oscillator-limit-cycle-reproduced:
       result: FAIL
       measured_value: 0.0
       evaluated_by: code
       operator: recovery_limit_cycle/threshold
       detail: late-window amplitude 0 vs 0.2
+      reconcile: no_authored
+    _grader:
+      version: 2-storeless
+      store: unresolved
 - name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793472486__12ee42
   status: completed
   timestamp: 1793472489.291925
@@ -138,7 +134,6 @@ runs:
     kind: unknown
   env_id: 422dcba86494d9a1
   params: '{"target": "recover-oscillator"}'
-  computed_outcomes: *id001
   provenance:
     params:
       target:
@@ -146,7 +141,31 @@ runs:
         source: override
     params_captured_at: '2026-10-31'
     params_source: dashboard-runner
-  outcomes: *id002
+  computed_outcomes:
+    oscillator-trajectory-recovered:
+      result: FAIL
+      measured_value: 0.444346
+      evaluated_by: code
+      operator: recovery_trajectory/threshold
+      detail: nrmse 0.4443 vs tol 0.08
+      reconcile: no_authored
+    oscillator-structure-recovered:
+      result: FAIL
+      measured_value: 0.25
+      evaluated_by: code
+      operator: recovery_structure/threshold
+      detail: reactions_recovered 0.25, param_max_rel_err 1, spurious 1
+      reconcile: no_authored
+    oscillator-limit-cycle-reproduced:
+      result: FAIL
+      measured_value: 0.0
+      evaluated_by: code
+      operator: recovery_limit_cycle/threshold
+      detail: late-window amplitude 0 vs 0.2
+      reconcile: no_authored
+    _grader:
+      version: 2-storeless
+      store: unresolved
 simulation_set:
 - name: baseline-baseline
   kind: single

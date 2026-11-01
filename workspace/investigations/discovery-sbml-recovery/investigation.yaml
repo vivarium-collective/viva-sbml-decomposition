@@ -46,7 +46,7 @@ executive:
     context: 'Hill a/(1+v^3) is non-polynomial; mass-action recovery is REFUTED (nrmse 0.58). resolution_route: develop_method | request_expert. Follow-up: recover-gene-switch-rational-laws.'
   - question: Adopt the recoverability-frontier as the investigation's reframed claim?
     context: 'Recoverability is rate-law-class-, data-richness-, and determinism-relative -- not pass/fail. Synthesis study: recoverability-frontier (builds-on all rungs).'
-  computed_verdict_status: passing
+  computed_verdict_status: failing
   computed_acceptance:
     criteria:
     - study: recover-mass-action
@@ -57,26 +57,44 @@ executive:
       result: passing
     - study: recover-enzyme-kinetics
       behavior: enzyme-trajectory-recovered
-      result: passing
+      result: failing
     - study: recover-enzyme-kinetics
       behavior: enzyme-parsimonious
-      result: passing
+      result: failing
     - study: recover-gene-switch
       behavior: gene-switch-trajectory-recovered
-      result: passing
+      result: failing
     - study: recover-gene-switch
       behavior: gene-switch-structure-recovered
-      result: passing
+      result: failing
     - study: recover-oscillator
       behavior: oscillator-trajectory-recovered
-      result: passing
+      result: failing
     - study: recover-oscillator
       behavior: oscillator-structure-recovered
-      result: passing
+      result: failing
     - study: recover-stochastic-abm
       behavior: correctly-flagged-non-recoverable
       result: passing
-    unmet: []
+    unmet:
+    - study: recover-enzyme-kinetics
+      behavior: enzyme-trajectory-recovered
+      result: failing
+    - study: recover-enzyme-kinetics
+      behavior: enzyme-parsimonious
+      result: failing
+    - study: recover-gene-switch
+      behavior: gene-switch-trajectory-recovered
+      result: failing
+    - study: recover-gene-switch
+      behavior: gene-switch-structure-recovered
+      result: failing
+    - study: recover-oscillator
+      behavior: oscillator-trajectory-recovered
+      result: failing
+    - study: recover-oscillator
+      behavior: oscillator-structure-recovered
+      result: failing
     diverges_from_authored: true
 scientific_argument:
   main_claim: |-
