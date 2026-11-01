@@ -9802,13 +9802,29 @@
       var currentPill = iset.current
         ? '<span class="iset-here-chip" title="You are working on this investigation — it is the current git branch." style="' + pillBase + 'background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;font-weight:600">⎇ current branch</span>'
         : '';
-      var statusPill = closed
-        ? '<span class="status-pill" style="' + pillBase + 'background:#e5e7eb;color:#4b5563;border:1px solid #d1d5db"' +
-          (iset.closure_source === 'derived' ? ' title="Closed by the discovery engine: acceptance criteria met by graded tests (derived, not authored)"' : '') + '>Closed' +
-          (iset.closure_source === 'derived' ? '*' : '') + '</span>'
-        : '<span class="status-pill" style="' + pillBase + 'background:' + meta.bg + ';color:' + meta.fg + ';border:1px solid ' + meta.bd + '" title="' + _esc(statusTip) + '">' + _esc(meta.label) + '</span>';
+      // A closed investigation is a RESULT, not a disabled card. Distinguish:
+      //  • derived closure (the engine: acceptance criteria met by graded tests)
+      //    → a success/"done" treatment (green ✓), because reaching closure is an
+      //    accomplishment, not something to grey out;
+      //  • authored closed/archived → intentionally retired: muted, but still
+      //    legible and clickable (not dimmed to look disabled).
+      var archived = iset.status === 'archived';
+      // A CLOSED investigation (authored or engine-derived) is a COMPLETED RESULT, not a
+      // disabled/avoidable item — it reads as an accomplishment (green, never dimmed). Only
+      // ARCHIVED (deliberately retired/shelved) is de-emphasised. Conflating "closed =
+      // finished successfully" with "archived = retired" was what greyed finished work out.
+      var accomplished = closed && !archived;
+      var statusPill = accomplished
+        ? '<span class="status-pill" style="' + pillBase + 'background:#dcfce7;color:#166534;border:1px solid #86efac;font-weight:600" title="' +
+          (iset.closure_source === 'derived'
+            ? 'Closed by the discovery engine: acceptance criteria met by graded tests.'
+            : 'Completed and closed — a finished result.') + '">Closed ✓</span>'
+        : archived
+          ? '<span class="status-pill" style="' + pillBase + 'background:#eef2f7;color:#475569;border:1px solid #cbd5e1" title="Archived by the author — retired, not an active line of work.">Archived</span>'
+          : '<span class="status-pill" style="' + pillBase + 'background:' + meta.bg + ';color:' + meta.fg + ';border:1px solid ' + meta.bd + '" title="' + _esc(statusTip) + '">' + _esc(meta.label) + '</span>';
       var cardStyle = 'background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;cursor:pointer;transition:box-shadow 0.1s,border-color 0.1s;' +
-        (closed ? 'opacity:0.6;' : '');
+        (accomplished ? 'border-color:#bbf7d0;background:linear-gradient(0deg,#f6fef9,#ffffff);'
+         : archived ? 'opacity:0.72;' : '');
       var filterStatus = (closed ? 'closed' : effStatus);
 
       // Per-study status → a compact breakdown line + an expandable study list.
@@ -10309,7 +10325,7 @@
   }
   window._nextStudySlug = _nextStudySlug;
 
-  function _wsOpenStudyTab(slug, tab) {
+  function _wsOpenStudyTab(slug, tab, ev) {
     var st = window._wsStudyTabs;
     st.active = slug;                       // single open study — replaces any prior
     _wsHighlightActiveDagNode(slug);        // mark the open node in the graph
@@ -10329,6 +10345,7 @@
     if (frame) {
       var href = _studyHref(slug);
       if (tab) href += (href.indexOf('?') >= 0 ? '&' : '?') + 'tab=' + encodeURIComponent(tab);
+      if (ev) href += (href.indexOf('?') >= 0 ? '&' : '?') + 'ev=' + encodeURIComponent(ev);
       frame.src = href;
     }
     // Remember the tab we opened on, so the next prev/next step keeps it (the
@@ -10487,6 +10504,20 @@
   function _showInvestigationWorkspace(name) {
     if (!name) return;
     window._wsInvestigation = name;
+    // Entering an investigation workspace IS the canonical "current
+    // investigation" context switch (the same role _openInvestigationDetail
+    // played in the older detail view), so publish the slug the rest of the SPA
+    // keys off — the Discovery-cycle panel, the argument graph, inline-edit, and
+    // sim scoping all read window._currentIsetSlug. Without this, opening an
+    // investigation here left the slug empty and the cycle panel reported "No
+    // investigation open in the workbench." Re-sync the left-rail Studies groups
+    // when it changes, matching _openInvestigationDetail.
+    if (window._currentIsetSlug !== name) {
+      window._currentIsetSlug = name;
+      if (typeof window._renderRailInvestigationGroups === 'function') {
+        try { window._renderRailInvestigationGroups(); } catch (_) { /* ignore */ }
+      }
+    }
     _showWorkspace();
     var title = document.getElementById('ws-title');
     if (title) {
@@ -10794,17 +10825,27 @@
           'border-bottom:1px solid #e5e7eb;white-space:nowrap">' + c[0] + '</th>';
       }).join('');
     var rows = items.map(function (iset) {
-      var closed = (iset.status === 'archived' || iset.status === 'closed');
+      var closed = (iset.status === 'archived' || iset.status === 'closed' || iset.closed === true);
+      var derivedClosed = closed && iset.closure_source === 'derived';
+      var archived = iset.status === 'archived';
       var effStatus = iset.effective_status || iset.status || 'planning';
       var meta = _ISET_TABLE_STATUS_META[effStatus] || {label: effStatus, bg:'#f1f5f9', fg:'#475569', bd:'#cbd5e1'};
       var pillBase = 'font-size:0.72em;border-radius:9999px;padding:1px 9px;white-space:nowrap;';
-      var statusPill = closed
-        ? '<span class="status-pill" style="' + pillBase + 'background:#e5e7eb;color:#4b5563;border:1px solid #d1d5db">Closed</span>'
-        : '<span class="status-pill" style="' + pillBase + 'background:' + meta.bg + ';color:' + meta.fg + ';border:1px solid ' + meta.bd + '">' + _esc(meta.label) + '</span>';
+      // A CLOSED investigation (authored or engine-derived) is a COMPLETED RESULT —
+      // green ✓, full opacity, never dimmed. Only ARCHIVED (deliberately retired) is muted.
+      var accomplished = closed && !archived;
+      var statusPill = accomplished
+        ? '<span class="status-pill" style="' + pillBase + 'background:#dcfce7;color:#166534;border:1px solid #86efac;font-weight:600" title="' +
+          (iset.closure_source === 'derived'
+            ? 'Closed by the discovery engine: acceptance criteria met by graded tests.'
+            : 'Completed and closed — a finished result.') + '">Closed ✓</span>'
+        : archived
+          ? '<span class="status-pill" style="' + pillBase + 'background:#eef2f7;color:#475569;border:1px solid #cbd5e1" title="Archived by the author — retired, not an active line of work.">Archived</span>'
+          : '<span class="status-pill" style="' + pillBase + 'background:' + meta.bg + ';color:' + meta.fg + ';border:1px solid ' + meta.bd + '">' + _esc(meta.label) + '</span>';
       var q = iset.question ? String(iset.question).split('\n')[0].slice(0, 140) : '';
       var rowText = (String(iset.title || iset.name) + ' ' + effStatus + ' ' + q).toLowerCase();
       return '<tr data-row-text="' + _esc(rowText) + '" onclick="_showInvestigationWorkspace(\'' + _esc(iset.name) + '\')" ' +
-        'style="cursor:pointer;border-bottom:1px solid #f1f5f9' + (closed ? ';opacity:0.6' : '') + '" ' +
+        'style="cursor:pointer;border-bottom:1px solid #f1f5f9' + (archived ? ';opacity:0.72' : '') + '" ' +
         'onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'\'">' +
         '<td style="padding:7px 10px;font-weight:600;color:#1e293b">' + _esc(iset.title || iset.name) + '</td>' +
         '<td style="padding:7px 10px;white-space:nowrap">' + statusPill + '</td>' +
@@ -15671,7 +15712,7 @@
   window._studyInInvestigation = _studyInInvestigation;
   window._investigationForStudy = _investigationForStudy;
 
-  function _openStudyEmbeddedNewTab(name, tab) {
+  function _openStudyEmbeddedNewTab(name, tab, ev) {
     // In a popped-out Studies panel window there is no investigation content to
     // show here — route the navigation to the opener (the main window) so the
     // popped-out list CONTROLS the main window's selected study, and reflect the
@@ -15680,7 +15721,7 @@
       if (document.body && document.body.classList.contains('viv-popout') &&
           window.opener && !window.opener.closed &&
           typeof window.opener._openStudyEmbeddedNewTab === 'function') {
-        window.opener._openStudyEmbeddedNewTab(name, tab);
+        window.opener._openStudyEmbeddedNewTab(name, tab, ev);
         // Opening a study from the GRAPH popout surfaces it in the opener (main
         // window), which now has room since the graph vacated the inset — bring
         // that window forward so the open is visible. (Studies popout keeps its
@@ -15704,7 +15745,7 @@
     if (inv) {
       if (window._wsInvestigation !== inv) _showInvestigationWorkspace(inv);
       else _showWorkspace();
-      _wsOpenStudyTab(name, tab);
+      _wsOpenStudyTab(name, tab, ev);
     } else {
       // Ungrouped study: minimal workspace (no graph), just the study tab.
       window._wsInvestigation = null;
@@ -15719,7 +15760,7 @@
       var tk = document.getElementById('ws-title-kicker'); if (tk) tk.textContent = 'Study';
       var a = document.getElementById('ws-actions'); if (a) a.innerHTML = '';
       _wsResetStudyTabs(null);
-      _wsOpenStudyTab(name, tab);
+      _wsOpenStudyTab(name, tab, ev);
     }
     _selectStudyInRail(name);
   }
