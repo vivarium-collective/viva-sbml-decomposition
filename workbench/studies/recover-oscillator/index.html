@@ -547,11 +547,7 @@ window?
 
     <div class="ctr-block">
       <h2 class="overview-label ctr-h">Claim</h2>
-      <p class="ctr-text">From synthetic data of a limit-cycle oscillator (repressilator or Brusselator),
-can the cycle recover a flat SBML whose topology reproduces the oscillation —
-period and amplitude — as sustained dynamics, not just a point-wise fit over one
-window?
-</p>
+      <p class="ctr-text" data-edit-kind="study" data-edit-field="claim" data-edit-value="Not recovered from a single trajectory: the Brusselator limit-cycle structure is under-determined (nrmse 0.44; recovered model does not oscillate). The system IS flat mass-action -- a DATA-RICHNESS/method gap (ensemble trajectories, weak-form SINDy). See follow-up recover-oscillator-data-richness." data-edit-multiline data-edit-label="Claim">Not recovered from a single trajectory: the Brusselator limit-cycle structure is under-determined (nrmse 0.44; recovered model does not oscillate). The system IS flat mass-action -- a DATA-RICHNESS/method gap (ensemble trajectories, weak-form SINDy). See follow-up recover-oscillator-data-richness.</p>
       
     </div>
 
@@ -614,17 +610,17 @@ verify it sustains oscillation with period/amplitude matching the ground truth.
       <div class="ov-metrics">
         
         <div class="ov-metric ov-metric-warn">
-          <div class="ov-metric-v">OK</div>
+          <div class="ov-metric-v">FAILED</div>
           <div class="ov-metric-k">oscillator-trajectory-recovered</div>
         </div>
         
         <div class="ov-metric ov-metric-warn">
-          <div class="ov-metric-v">OK</div>
+          <div class="ov-metric-v">FAILED</div>
           <div class="ov-metric-k">oscillator-structure-recovered</div>
         </div>
         
         <div class="ov-metric ov-metric-warn">
-          <div class="ov-metric-v">OK</div>
+          <div class="ov-metric-v">FAILED</div>
           <div class="ov-metric-k">oscillator-limit-cycle-reproduced</div>
         </div>
         
@@ -639,7 +635,7 @@ verify it sustains oscillation with period/amplitude matching the ground truth.
       <div class="ctr-meta ctr-assess">
         
         <div class="ctr-meta-row"><span class="ctr-meta-k">Confidence</span>
-          <span class="ctr-badge ctr-badge-planned">Planned</span>
+          <span class="ctr-badge ctr-badge-investigating">Investigating</span>
           
           
         </div>
@@ -974,7 +970,7 @@ verify it sustains oscillation with period/amplitude matching the ground truth.
         
         data-pytest-node="oscillator-trajectory-recovered"
         data-classification="accuracy"
-        data-result="ok"
+        data-result="failed"
         style="margin: 0 0 10px 0; padding: 10px 12px; border-left: 4px solid #cbd5e1; background: #f8fafc; border-radius: 4px;">
       
         
@@ -993,7 +989,7 @@ verify it sustains oscillation with period/amplitude matching the ground truth.
         
         
           
-          <code style="font-family:ui-monospace,monospace;color:#475569;margin-right:8px">detail: nrmse 0 vs tol 0.08 (code-graded)</code>
+          <code style="font-family:ui-monospace,monospace;color:#475569;margin-right:8px">detail: nrmse 0.4443 vs tol 0.08</code>
           
         
       </div>
@@ -1002,7 +998,7 @@ verify it sustains oscillation with period/amplitude matching the ground truth.
       <details style="margin-top: 6px; font-size: 0.82em;">
         <summary class="muted" style="cursor: pointer;">Assertion</summary>
         
-        <pre style="background:#fff; padding:8px; margin:4px 0 0 0; border:1px solid #e2e8f0; border-radius:3px; overflow-x:auto;">measure: {"kind": "recovery_trajectory", "target": "recover-oscillator", "tol": 0.08}
+        <pre style="background:#fff; padding:8px; margin:4px 0 0 0; border:1px solid #e2e8f0; border-radius:3px; overflow-x:auto;">measure: {"candidate_model": "@recovered", "kind": "recovery_trajectory", "target": "recover-oscillator", "tol": 0.08}
 pass_if: {"detail": "graded by viva_sbml_decomposition.evaluators (recovery_trajectory)", "op": "threshold"}</pre>
       </details>
       
@@ -1023,7 +1019,7 @@ pass_if: {"detail": "graded by viva_sbml_decomposition.evaluators (recovery_traj
         
         data-pytest-node="oscillator-structure-recovered"
         data-classification="correctness"
-        data-result="ok"
+        data-result="failed"
         style="margin: 0 0 10px 0; padding: 10px 12px; border-left: 4px solid #cbd5e1; background: #f8fafc; border-radius: 4px;">
       
         
@@ -1042,7 +1038,7 @@ pass_if: {"detail": "graded by viva_sbml_decomposition.evaluators (recovery_traj
         
         
           
-          <code style="font-family:ui-monospace,monospace;color:#475569;margin-right:8px">detail: reactions_recovered 1.00, param_max_rel_err 0, spurious 0 (code-graded)</code>
+          <code style="font-family:ui-monospace,monospace;color:#475569;margin-right:8px">detail: reactions_recovered 0.25, param_max_rel_err 1, spurious 1</code>
           
         
       </div>
@@ -1051,7 +1047,7 @@ pass_if: {"detail": "graded by viva_sbml_decomposition.evaluators (recovery_traj
       <details style="margin-top: 6px; font-size: 0.82em;">
         <summary class="muted" style="cursor: pointer;">Assertion</summary>
         
-        <pre style="background:#fff; padding:8px; margin:4px 0 0 0; border:1px solid #e2e8f0; border-radius:3px; overflow-x:auto;">measure: {"kind": "recovery_structure", "param_tol": 0.15, "target": "recover-oscillator"}
+        <pre style="background:#fff; padding:8px; margin:4px 0 0 0; border:1px solid #e2e8f0; border-radius:3px; overflow-x:auto;">measure: {"candidate_model": "@recovered", "kind": "recovery_structure", "param_tol": 0.15, "target": "recover-oscillator"}
 pass_if: {"detail": "graded by viva_sbml_decomposition.evaluators (recovery_structure)", "op": "threshold"}</pre>
       </details>
       
@@ -1072,7 +1068,7 @@ pass_if: {"detail": "graded by viva_sbml_decomposition.evaluators (recovery_stru
         
         data-pytest-node="oscillator-limit-cycle-reproduced"
         data-classification="dynamics"
-        data-result="ok"
+        data-result="failed"
         style="margin: 0 0 10px 0; padding: 10px 12px; border-left: 4px solid #cbd5e1; background: #f8fafc; border-radius: 4px;">
       
         
@@ -1091,7 +1087,7 @@ pass_if: {"detail": "graded by viva_sbml_decomposition.evaluators (recovery_stru
         
         
           
-          <code style="font-family:ui-monospace,monospace;color:#475569;margin-right:8px">detail: late-window amplitude 1.24 vs 0.2 (code-graded)</code>
+          <code style="font-family:ui-monospace,monospace;color:#475569;margin-right:8px">detail: late-window amplitude 0 vs 0.2</code>
           
         
       </div>
@@ -1100,7 +1096,7 @@ pass_if: {"detail": "graded by viva_sbml_decomposition.evaluators (recovery_stru
       <details style="margin-top: 6px; font-size: 0.82em;">
         <summary class="muted" style="cursor: pointer;">Assertion</summary>
         
-        <pre style="background:#fff; padding:8px; margin:4px 0 0 0; border:1px solid #e2e8f0; border-radius:3px; overflow-x:auto;">measure: {"kind": "recovery_limit_cycle", "min_amplitude": 0.2, "target": "recover-oscillator"}
+        <pre style="background:#fff; padding:8px; margin:4px 0 0 0; border:1px solid #e2e8f0; border-radius:3px; overflow-x:auto;">measure: {"candidate_model": "@recovered", "kind": "recovery_limit_cycle", "min_amplitude": 0.2, "target": "recover-oscillator"}
 pass_if: {"detail": "graded by viva_sbml_decomposition.evaluators (recovery_limit_cycle)", "op": "threshold"}</pre>
       </details>
       
@@ -1169,7 +1165,7 @@ pass_if: {"detail": "graded by viva_sbml_decomposition.evaluators (recovery_limi
         
       </span>
       
-      <span class="status-step set gate-status-passed">
+      <span class="status-step  gate-status-blocked">
         <span class="dot"></span>5 · Decision
         
         
@@ -1264,9 +1260,9 @@ pass_if: {"detail": "graded by viva_sbml_decomposition.evaluators (recovery_limi
         evaluator's result from the behavior-test outcomes — the evaluation the
         conclusion rests on.</p>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span class="gate-status-passed" style="padding:2px 12px;border-radius:9999px;font-weight:700;font-size:0.85em">passed</span>
+        <span class="gate-status-failed" style="padding:2px 12px;border-radius:9999px;font-weight:700;font-size:0.85em">failed</span>
         <span class="muted small">evaluated by code</span>
-        <span class="muted small">3/3 passed</span>
+        <span class="muted small">0/3 passed · 3 failed</span>
       </div>
       
     </div>
@@ -1361,7 +1357,7 @@ pass_if: {"detail": "graded by viva_sbml_decomposition.evaluators (recovery_limi
 </section>
 
 </main>
-<script>window.__DASH_CONFIG__ = { mode: "snapshot", interactiveUrl: "https://github.com/vivarium-collective/viva-sbml-decomposition", basePath: "/viva-sbml-decomposition/workbench", inputsDownloadBase: "https://github.com/vivarium-collective/viva-sbml-decomposition/raw/main", provenance: {"repo_slug": "vivarium-collective/viva-sbml-decomposition", "repo_url": "https://github.com/vivarium-collective/viva-sbml-decomposition", "commit": "f05354b5a15f06cafd5fc4f478c4023d6c147be9", "commit_url": "https://github.com/vivarium-collective/viva-sbml-decomposition/commit/f05354b5a15f06cafd5fc4f478c4023d6c147be9", "branch": "main", "lockfile": "uv.lock@70f04d6f3931", "generated_at": "2026-11-01 03:27 UTC"} };</script>
+<script>window.__DASH_CONFIG__ = { mode: "snapshot", interactiveUrl: "https://github.com/vivarium-collective/viva-sbml-decomposition", basePath: "/viva-sbml-decomposition/workbench", inputsDownloadBase: "https://github.com/vivarium-collective/viva-sbml-decomposition/raw/main", provenance: {"repo_slug": "vivarium-collective/viva-sbml-decomposition", "repo_url": "https://github.com/vivarium-collective/viva-sbml-decomposition", "commit": "37f4803039d70ede8c1ced4242f28a6c7b45dad9", "commit_url": "https://github.com/vivarium-collective/viva-sbml-decomposition/commit/37f4803039d70ede8c1ced4242f28a6c7b45dad9", "branch": "main", "lockfile": "uv.lock@70f04d6f3931", "generated_at": "2026-11-01 05:48 UTC"} };</script>
 <script src="/viva-sbml-decomposition/workbench/assets/data-source.js"></script>
 <script src="/viva-sbml-decomposition/workbench/assets/toast.js"></script>
 <script>
