@@ -292,9 +292,3 @@ def _render_one(address, config, runs_db, study_yaml, overrides=None):
 # ## Study: `recoverability-frontier`
 #
 # _study.yaml not found — skipped._
-
-# ## Open decisions
-# - Enzyme: adopt moiety-aware regression?
-# - Oscillator: acquire ensemble data + weak-form SINDy?
-# - Gene-switch: extend to rational rate laws, or expert-define the admissible rate-law class?
-# - Adopt the recoverability-frontier as the investigation's reframed claim?
