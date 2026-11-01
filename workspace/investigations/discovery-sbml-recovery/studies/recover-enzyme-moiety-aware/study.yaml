@@ -1,0 +1,39 @@
+schema_version: 3
+name: recover-enzyme-moiety-aware
+investigation: discovery-sbml-recovery
+created: '2026-11-01'
+status: planning
+kind: refinement
+confidence: Planned
+title: Moiety-aware recovery of the enzyme network
+question: |-
+  Does a moiety-aware regression (factoring out the conserved moiety E+ES=const before fitting) recover the Michaelis-Menten enzyme network where the naive from-data SINDy is rank-deficient and fails (nrmse 0.11, 31 spurious)?
+hypothesis: |-
+  Removing the conserved-moiety rank deficiency lets the sparse fit isolate the true three reactions (S+E->ES, ES->S+E, ES->E+P) within the 0.05 trajectory tolerance. The system is flat mass-action, so this is a method gap.
+objective: |-
+  Develop + test moiety-aware regression (resolution_route: develop_method), spawned by the refuted-method finding of recover-enzyme-kinetics.
+parent_studies:
+- study: recover-enzyme-kinetics
+  relation: builds-on
+  provides:
+  - nrmse
+  - spurious_count
+  - conserved_moiety
+baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.recovery.recover_candidate
+  params:
+    target: recover-enzyme-kinetics
+variants: []
+interventions: []
+expected_behavior: []
+readouts: []
+behavior_tests: []
+findings: []
+visualizations: []
+runs: []
+simulation_set: []
+resolution_route:
+  routes:
+  - develop_method
+  mode: all

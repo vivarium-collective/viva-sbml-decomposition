@@ -29,15 +29,65 @@ def _code_outcome(result: str, measured_value, operator: str, detail: str) -> di
     }
 
 
+_RECOVERED_CACHE: dict = {}
+
+
+def _recovered_candidate(target: str, observed):
+    """Run the ACTUAL recovery search (SINDy structure discovery + rate-law fit)
+    and return the recovered flat-SBML Antimony — the candidate the build loop is
+    meant to produce. Cached per target (a study's trajectory/structure/parsimony
+    tests share one recovery).
+
+    This is what makes the gate grade REAL recovery instead of the identity
+    baseline (candidate = truth): a system the pipeline cannot yet recover then
+    fails honestly (nrmse > tol → refuted/investigating) instead of passing
+    trivially. If the search raises or yields nothing, a reaction-free model is
+    returned so the gate fails honestly rather than crashing."""
+    if target in _RECOVERED_CACHE:
+        return _RECOVERED_CACHE[target]
+    from .core import build_core
+    from .models.recovery_targets import RECOVERY_TARGETS
+    from .processes.recovery import RateLawFitter, ReactionProposer
+
+    meta = RECOVERY_TARGETS[target]["meta"]
+    sp = list(observed) if observed else list(meta["species"])
+    cand = None
+    try:
+        core = build_core()
+        prop = ReactionProposer(
+            config={"mode": "from_data", "target": target, "observed": sp, "species": sp},
+            core=core,
+        ).update({})
+        fit = RateLawFitter(
+            config={"candidate_antimony": prop["candidate_antimony"], "target": target,
+                    "observed": sp, "method": "auto"},
+            core=core,
+        ).update({})
+        cand = fit.get("fitted_antimony") or prop.get("candidate_antimony")
+    except Exception:
+        cand = None
+    if not cand:
+        cand = "model recovered_empty()\n  species " + ", ".join(sp) + ";\nend"
+    _RECOVERED_CACHE[target] = cand
+    return cand
+
+
 def _resolve_models(measure: dict):
-    """(truth_antimony, candidate_antimony, meta) from a measure block."""
+    """(truth_antimony, candidate_antimony, meta) from a measure block.
+
+    ``candidate_model: "@recovered"`` grades the REAL recovery-search output (what
+    the build loop produces); absent/empty is the identity baseline (candidate =
+    truth), retained for back-compat; a RECOVERY_TARGETS slug or raw Antimony is
+    used verbatim."""
     from .models.recovery_targets import RECOVERY_TARGETS
 
     entry = RECOVERY_TARGETS[measure["target"]]
     truth, meta = entry["antimony"], entry["meta"]
     cand = measure.get("candidate_model")
-    if not cand:
-        candidate = truth  # identity baseline
+    if cand == "@recovered":
+        candidate = _recovered_candidate(measure["target"], measure.get("observed"))
+    elif not cand:
+        candidate = truth  # identity baseline (back-compat)
     elif cand in RECOVERY_TARGETS:
         candidate = RECOVERY_TARGETS[cand]["antimony"]
     else:

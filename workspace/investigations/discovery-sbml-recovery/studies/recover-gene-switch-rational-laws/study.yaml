@@ -1,0 +1,40 @@
+schema_version: 3
+name: recover-gene-switch-rational-laws
+investigation: discovery-sbml-recovery
+created: '2026-11-01'
+status: planning
+kind: refinement
+confidence: Planned
+title: 'Recovery beyond mass-action: rational/Hill rate laws'
+question: |-
+  With the flat-MASS-ACTION claim refuted for the bistable toggle (Hill a/(1+v^n) is non-polynomial), can a rational/Hill rate-law library recover it as a faithful (non-mass-action) flat SBML -- and is that the right target, or should the expert define what 'faithful flat SBML' admits for Hill-regulated systems?
+hypothesis: |-
+  Extending the proposer to rational rate laws recovers the switch where mass-action provably cannot. Open question for the expert: the admissible rate-law class for 'faithful flat SBML'.
+objective: |-
+  Develop a rational-rate-law recovery path and/or request an expert pointer (resolution_route: develop_method | request_expert), spawned by the REFUTATION in recover-gene-switch.
+parent_studies:
+- study: recover-gene-switch
+  relation: builds-on
+  provides:
+  - nrmse
+  - reactions_recovered
+  - rate_law_class
+baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.recovery.recover_candidate
+  params:
+    target: recover-gene-switch
+variants: []
+interventions: []
+expected_behavior: []
+readouts: []
+behavior_tests: []
+findings: []
+visualizations: []
+runs: []
+simulation_set: []
+resolution_route:
+  routes:
+  - develop_method
+  - request_expert
+  mode: any

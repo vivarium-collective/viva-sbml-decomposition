@@ -4,7 +4,7 @@ investigation: discovery-sbml-recovery
 status: ran
 kind: adversarial
 title: Reject a stochastic system (no flat-SBML form)
-confidence: Planned
+confidence: Accepted
 question: |
   Does the recovery pipeline correctly REFUSE to recover a flat SBML from a single
   low-copy stochastic trajectory — recognizing the ABM/stochastic boundary where no

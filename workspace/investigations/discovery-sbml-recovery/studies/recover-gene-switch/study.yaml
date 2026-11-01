@@ -1,9 +1,9 @@
 schema_version: 3
 name: recover-gene-switch
 investigation: discovery-sbml-recovery
-status: ran
+status: investigating
 title: Recover a Hill gene switch
-confidence: Planned
+confidence: Refuted
 question: |
   From synthetic data of a bistable Hill-repression gene switch, can the cycle
   recover a flat SBML that reproduces both stable branches and the nonlinear
@@ -38,25 +38,17 @@ variants: []
 interventions: []
 expected_behavior:
 - name: gene-switch-trajectory-recovered
-  observable: recovered-model simulation vs synthetic targets from both basins 
-    (shared grid)
-  condition: normalized RMSE < 0.05 on observed species for trajectories in both
-    stable branches
-  rationale: a recovery that fits only one branch has missed the bistability 
-    that defines the system.
+  observable: recovered-model simulation vs synthetic targets from both basins (shared grid)
+  condition: normalized RMSE < 0.05 on observed species for trajectories in both stable branches
+  rationale: a recovery that fits only one branch has missed the bistability that defines the system.
 - name: gene-switch-structure-recovered
-  observable: recovered regulatory term vs ground truth (Hill coefficient n, 
-    threshold K)
-  condition: a Hill (or equivalently nonlinear) repression term is recovered 
-    with n and K within 15% of truth
-  rationale: the switch behavior comes from the nonlinear term; recovering it is
-    what distinguishes mechanism from curve-fit.
+  observable: recovered regulatory term vs ground truth (Hill coefficient n, threshold K)
+  condition: a Hill (or equivalently nonlinear) repression term is recovered with n and K within 15% of truth
+  rationale: the switch behavior comes from the nonlinear term; recovering it is what distinguishes mechanism from curve-fit.
 - name: gene-switch-bistability-reproduced
   observable: steady states of the recovered model across initial conditions
-  condition: the recovered model exhibits two stable steady states matching the 
-    ground-truth switch (qualitative)
-  rationale: reproducing the qualitative bistable structure is the real test, 
-    beyond point-wise trajectory fit.
+  condition: the recovered model exhibits two stable steady states matching the ground-truth switch (qualitative)
+  rationale: reproducing the qualitative bistable structure is the real test, beyond point-wise trajectory fit.
 readouts:
 - name: u
   description: Species u trajectory from the candidate run.
@@ -73,6 +65,7 @@ behavior_tests:
     kind: recovery_trajectory
     target: recover-gene-switch
     tol: 0.05
+    candidate_model: '@recovered'
   pass_if:
     op: threshold
     detail: graded by viva_sbml_decomposition.evaluators (recovery_trajectory)
@@ -84,6 +77,7 @@ behavior_tests:
     kind: recovery_structure
     target: recover-gene-switch
     param_tol: 0.15
+    candidate_model: '@recovered'
   pass_if:
     op: threshold
     detail: graded by viva_sbml_decomposition.evaluators (recovery_structure)
@@ -95,6 +89,7 @@ behavior_tests:
     kind: recovery_bistability
     target: recover-gene-switch
     min_separation: 0.5
+    candidate_model: '@recovered'
   pass_if:
     op: threshold
     detail: graded by viva_sbml_decomposition.evaluators (recovery_bistability)
@@ -105,49 +100,44 @@ visualizations: []
 runs:
 - name: recovery-fit:recover-gene-switch:1793473955
   status: completed
-  outcomes:
+  outcomes: &id002
     gene-switch-trajectory-recovered:
-      result: ok
-      detail: nrmse 1.711e-09 vs tol 0.05 (recovered candidate, 2x-param start)
+      result: failed
+      detail: nrmse 0.5804 vs tol 0.05
     gene-switch-structure-recovered:
-      result: ok
-      detail: reactions_recovered 1.00, param_max_rel_err 8.155e-09, spurious 0 
-        (recovered candidate, 2x-param start)
+      result: failed
+      detail: reactions_recovered 0.00, param_max_rel_err 0, spurious 2
     gene-switch-bistability-reproduced:
-      result: ok
-      detail: steady-state separation 5.57 vs 0.5 (recovered candidate, 2x-param
-        start)
+      result: passed
+      detail: steady-state separation 0.801 vs 0.5
   canonical: true
-- name: 
-    viva_sbml_decomposition.composites.recovery.recover_candidate__1793472479__93a6c0
+  computed_outcomes: &id001
+    gene-switch-trajectory-recovered:
+      result: FAIL
+      measured_value: 0.580434
+      evaluated_by: code
+      operator: recovery_trajectory/threshold
+      detail: nrmse 0.5804 vs tol 0.05
+    gene-switch-structure-recovered:
+      result: FAIL
+      measured_value: 0.0
+      evaluated_by: code
+      operator: recovery_structure/threshold
+      detail: reactions_recovered 0.00, param_max_rel_err 0, spurious 2
+    gene-switch-bistability-reproduced:
+      result: PASS
+      measured_value: 0.8012
+      evaluated_by: code
+      operator: recovery_bistability/threshold
+      detail: steady-state separation 0.801 vs 0.5
+- name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793472479__93a6c0
   status: completed
   timestamp: 1793472482.307564
   emitter:
     kind: unknown
   env_id: 422dcba86494d9a1
   params: '{"target": "recover-gene-switch"}'
-  computed_outcomes:
-    gene-switch-trajectory-recovered:
-      result: PASS
-      measured_value: 0.0
-      evaluated_by: code
-      operator: recovery_trajectory/threshold
-      detail: nrmse 0 vs tol 0.05
-      reconcile: agree
-    gene-switch-structure-recovered:
-      result: PASS
-      measured_value: 1.0
-      evaluated_by: code
-      operator: recovery_structure/threshold
-      detail: reactions_recovered 1.00, param_max_rel_err 0, spurious 0
-      reconcile: agree
-    gene-switch-bistability-reproduced:
-      result: PASS
-      measured_value: 5.5684
-      evaluated_by: code
-      operator: recovery_bistability/threshold
-      detail: steady-state separation 5.57 vs 0.5
-      reconcile: divergent
+  computed_outcomes: *id001
   provenance:
     params:
       target:
@@ -155,17 +145,7 @@ runs:
         source: override
     params_captured_at: '2026-10-31'
     params_source: dashboard-runner
-  outcomes:
-    gene-switch-trajectory-recovered:
-      result: ok
-      detail: nrmse 0 vs tol 0.05 (code-graded)
-    gene-switch-structure-recovered:
-      result: ok
-      detail: reactions_recovered 1.00, param_max_rel_err 0, spurious 0 
-        (code-graded)
-    gene-switch-bistability-reproduced:
-      result: ok
-      detail: steady-state separation 5.57 vs 0.5 (code-graded)
+  outcomes: *id002
 simulation_set:
 - name: baseline-baseline
   kind: single
@@ -179,7 +159,10 @@ simulation_set:
   - v
 pipeline_gate:
   gate_evaluator:
-    result: passed
-    blocked_by: []
+    result: failed
+    blocked_by:
+    - gene-switch-trajectory-recovered
+    - gene-switch-structure-recovered
     evaluated_by: code
     diverges_from_authored: false
+claim: "REFUTED as flat-MASS-ACTION-recoverable: the switch's Hill kinetics a/(1+v^3) are non-polynomial, so no mass-action network fits (nrmse 0.58, 0 reactions recovered). Recoverability is rate-law-class-relative -- a faithful flat SBML needs rational rate laws. See follow-up recover-gene-switch-rational-laws."

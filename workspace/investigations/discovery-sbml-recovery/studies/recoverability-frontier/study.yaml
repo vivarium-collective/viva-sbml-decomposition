@@ -1,0 +1,55 @@
+schema_version: 3
+name: recoverability-frontier
+investigation: discovery-sbml-recovery
+created: '2026-11-01'
+status: planning
+kind: synthesis
+confidence: Investigating
+title: The recoverability frontier (synthesis)
+question: |-
+  Across the ladder, what determines whether a system is recoverable as a faithful flat SBML model from data?
+hypothesis: |-
+  Recoverability is not binary -- it is relative to (i) the RATE-LAW CLASS (mass-action recovers; Hill does not, without rational laws), (ii) DATA RICHNESS (one limit-cycle trajectory under-determines structure), and (iii) DETERMINISM (stochastic/low-copy systems have no flat form at all). The cycle's value is mapping this frontier.
+objective: |-
+  Synthesize the rungs into the recoverability-frontier concept (builds-on all member studies); the emergent, reframed claim of the investigation.
+parent_studies:
+- study: recover-mass-action
+  relation: builds-on
+  provides:
+  - nrmse
+- study: recover-enzyme-kinetics
+  relation: builds-on
+  provides:
+  - nrmse
+  - conserved_moiety
+- study: recover-oscillator
+  relation: builds-on
+  provides:
+  - nrmse
+  - data_richness
+- study: recover-gene-switch
+  relation: builds-on
+  provides:
+  - nrmse
+  - rate_law_class
+- study: recover-stochastic-abm
+  relation: builds-on
+  provides:
+  - min_r2
+  - stochasticity
+baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.recovery.recover_candidate
+  params:
+    target: recover-mass-action
+variants: []
+interventions: []
+expected_behavior: []
+readouts: []
+behavior_tests: []
+findings: []
+visualizations: []
+runs: []
+simulation_set: []
+claim: |-
+  Recoverability is rate-law-class-, data-richness-, and determinism-relative -- not a single pass/fail. Mass-action recovers; Michaelis-Menten needs moiety-aware fitting; the oscillator needs richer data; the Hill switch is unrecoverable as mass-action (needs rational laws); the stochastic system has no flat form at all. The frontier -- not a 5/5 pass -- is the finding.
