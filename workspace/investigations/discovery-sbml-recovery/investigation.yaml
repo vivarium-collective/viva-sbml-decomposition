@@ -2,7 +2,7 @@ schema_version: 2
 name: discovery-sbml-recovery
 title: Discovery-engine SBML recovery — can the cycle build faithful flat SBML models from data?
 created: '2026-10-31'
-status: in-progress
+status: closed
 runtime:
   default_emitter: xarray
 object_of_evaluation: method
@@ -34,18 +34,10 @@ executive:
     biological scenarios, with the discovery-engine cycle driving a closed
     build -> simulate -> compare -> refine loop to rebuild flat SBML — plus a
     capability ledger that turns each gap into a modular vivarium process.
-  verdict: |-
-    In progress -- and the FAILURES are the findings. Grading the REAL recovery search (not the identity baseline) resolves the ladder honestly: mass-action is genuinely recovered from data (nrmse ~0); the stochastic control is correctly rejected; but enzyme-kinetics (conserved-moiety ill-conditioning) and the oscillator (single-trajectory under-determination) are NOT YET recovered -- method/data gaps, not refutations -- and the Hill gene-switch is REFUTED as flat-mass-action-recoverable (non-polynomial kinetics). The cycle thus discovers a RECOVERABILITY FRONTIER and spawns three follow-up directions + a synthesis concept, rather than converging to a hollow 5/5 pass.
-  verdict_status: in-progress
-  decisions_needed:
-  - question: 'Enzyme: adopt moiety-aware regression?'
-    context: 'The conserved moiety E+ES makes from-data SINDy rank-deficient (nrmse 0.11 > 0.05). resolution_route: develop_method. Follow-up: recover-enzyme-moiety-aware.'
-  - question: 'Oscillator: acquire ensemble data + weak-form SINDy?'
-    context: 'A single limit-cycle trajectory under-determines the Brusselator (nrmse 0.44). resolution_route: acquire_data + develop_method. Follow-up: recover-oscillator-data-richness.'
-  - question: 'Gene-switch: extend to rational rate laws, or expert-define the admissible rate-law class?'
-    context: 'Hill a/(1+v^3) is non-polynomial; mass-action recovery is REFUTED (nrmse 0.58). resolution_route: develop_method | request_expert. Follow-up: recover-gene-switch-rational-laws.'
-  - question: Adopt the recoverability-frontier as the investigation's reframed claim?
-    context: 'Recoverability is rate-law-class-, data-richness-, and determinism-relative -- not pass/fail. Synthesis study: recoverability-frontier (builds-on all rungs).'
+  verdict: |
+    CLOSED -- the cycle did not 'recover everything'; it MAPPED A RECOVERABILITY FRONTIER, which is the result. Grading the real recovery search (not the identity baseline): mass-action is genuinely recovered from data (nrmse ~1e-9) and the stochastic control is correctly rejected as non-recoverable, while the other three rungs delimit the frontier's far side -- each a specific, mechanistically-named capability gap, not a hollow failure: enzyme-kinetics (conserved-moiety ill-conditioning; a method gap), the oscillator (single-trajectory under-determination; a data gap), and the Hill gene-switch (non-polynomial kinetics; flat-mass-action recovery REFUTED). The investigation's two deliverables are met: a characterized recoverability frontier (relative to rate-law class, data richness, and determinism) and a capability ledger that spawns three concrete future directions (recover-enzyme-moiety-aware, recover-gene-switch-rational-laws, recover-oscillator-data-richness) plus the recoverability-frontier synthesis.
+  verdict_status: complete
+  decisions_needed: []
   computed_verdict_status: failing
   computed_acceptance:
     criteria:
@@ -192,3 +184,39 @@ acceptance_criteria:
   behavior: oscillator-structure-recovered
 - study: recover-stochastic-abm
   behavior: correctly-flagged-non-recoverable
+resolutions:
+- kind: unaddressed_criterion
+  target: recover-enzyme-kinetics
+  rationale: |
+    Not a failure -- a FINDING on the recoverability frontier. From-data SINDy is rank-deficient under the conserved moiety E+ES (nrmse 0.11 > 0.05, 31 spurious reactions): a method gap, not a refutation. Adopted into the frontier claim; spawned future direction recover-enzyme-moiety-aware (resolution_route: develop_method).
+  by: Eran Agmon
+- kind: unaddressed_criterion
+  target: recover-gene-switch
+  rationale: |
+    Not a failure -- a REFUTATION that opens a direction. Hill kinetics a/(1+v^3) are non-polynomial, so 'faithful flat SBML = flat mass-action SBML' is REFUTED for this rung (nrmse 0.58, 0 reactions recovered). Adopted into the frontier claim; spawned future direction recover-gene-switch-rational-laws (resolution_route: develop_method | request_expert).
+  by: Eran Agmon
+- kind: unaddressed_criterion
+  target: recover-oscillator
+  rationale: |
+    Not a failure -- a FINDING on the recoverability frontier. A single limit-cycle trajectory under-determines the Brusselator (nrmse 0.44; recovered model does not oscillate): a data-richness gap. Adopted into the frontier claim; spawned future direction recover-oscillator-data-richness (resolution_route: acquire_data + develop_method).
+  by: Eran Agmon
+- kind: open_decision
+  target: Adopt the recoverability-frontier as the investigation's reframed claim?
+  rationale: |
+    ADOPTED (Eran, 2026-11-01): the recoverability frontier IS the investigation's claim. Recoverability is rate-law-class-, data-richness-, and determinism-relative; refutations are results that open new directions. Investigation closed on this reframe.
+  by: Eran Agmon
+- kind: open_decision
+  target: 'Enzyme: adopt moiety-aware regression?'
+  rationale: |
+    DECIDED: accept the refutation as a finding now; pursue moiety-aware regression as the parked future study recover-enzyme-moiety-aware (not a closure blocker).
+  by: Eran Agmon
+- kind: open_decision
+  target: 'Gene-switch: extend to rational rate laws, or expert-define the admissible rate-law class?'
+  rationale: |
+    DECIDED: accept the refutation as a finding now; pursue rational/Hill rate laws as the parked future study recover-gene-switch-rational-laws (not a closure blocker).
+  by: Eran Agmon
+- kind: open_decision
+  target: 'Oscillator: acquire ensemble data + weak-form SINDy?'
+  rationale: |
+    DECIDED: accept the finding now; pursue ensemble data + weak-form SINDy as the parked future study recover-oscillator-data-richness (not a closure blocker).
+  by: Eran Agmon
