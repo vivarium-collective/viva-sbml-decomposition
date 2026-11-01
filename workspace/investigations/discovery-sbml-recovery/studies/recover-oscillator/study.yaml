@@ -1,9 +1,9 @@
 schema_version: 3
 name: recover-oscillator
 investigation: discovery-sbml-recovery
-status: ran
+status: investigating
 title: Recover an oscillator
-confidence: Planned
+confidence: Investigating
 question: |
   From synthetic data of a limit-cycle oscillator (repressilator or Brusselator),
   can the cycle recover a flat SBML whose topology reproduces the oscillation —
@@ -66,6 +66,7 @@ behavior_tests:
     kind: recovery_trajectory
     target: recover-oscillator
     tol: 0.08
+    candidate_model: '@recovered'
   pass_if:
     op: threshold
     detail: graded by viva_sbml_decomposition.evaluators (recovery_trajectory)
@@ -77,6 +78,7 @@ behavior_tests:
     kind: recovery_structure
     target: recover-oscillator
     param_tol: 0.15
+    candidate_model: '@recovered'
   pass_if:
     op: threshold
     detail: graded by viva_sbml_decomposition.evaluators (recovery_structure)
@@ -88,6 +90,7 @@ behavior_tests:
     kind: recovery_limit_cycle
     target: recover-oscillator
     min_amplitude: 0.2
+    candidate_model: '@recovered'
   pass_if:
     op: threshold
     detail: graded by viva_sbml_decomposition.evaluators (recovery_limit_cycle)
@@ -172,3 +175,4 @@ pipeline_gate:
     blocked_by: []
     evaluated_by: code
     diverges_from_authored: false
+claim: 'Not recovered from a single trajectory: the Brusselator limit-cycle structure is under-determined (nrmse 0.44; recovered model does not oscillate). The system IS flat mass-action -- a DATA-RICHNESS/method gap (ensemble trajectories, weak-form SINDy). See follow-up recover-oscillator-data-richness.'

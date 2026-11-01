@@ -1,0 +1,36 @@
+schema_version: 3
+name: recover-oscillator-data-richness
+investigation: discovery-sbml-recovery
+created: '2026-11-01'
+status: planning
+kind: refinement
+confidence: Planned
+title: Data richness for limit-cycle structure discovery
+question: |-
+  Does richer data -- an ensemble of trajectories from varied initial conditions, and/or a weak-form (integral) SINDy formulation -- recover the Brusselator limit-cycle network that a single trajectory under-determines (nrmse 0.44)?
+hypothesis: |-
+  Multiple excitations plus weak-form derivatives break the monomial correlation and recover the source/sink + autocatalytic (2X+Y->3X) structure within tol. A data-richness + method gap, not a refutation of recoverability.
+objective: |-
+  Acquire ensemble data + develop weak-form SINDy (resolution_route: acquire_data + develop_method), spawned by recover-oscillator.
+parent_studies:
+- study: recover-oscillator
+  relation: builds-on
+  provides:
+  - nrmse
+  - reactions_recovered
+  - late_window_amplitude
+baseline:
+variants: []
+interventions: []
+expected_behavior: []
+readouts: []
+behavior_tests: []
+findings: []
+visualizations: []
+runs: []
+simulation_set: []
+resolution_route:
+  routes:
+  - acquire_data
+  - develop_method
+  mode: all
