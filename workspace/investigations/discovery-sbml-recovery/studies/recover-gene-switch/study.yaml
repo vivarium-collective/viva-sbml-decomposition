@@ -124,8 +124,10 @@ runs:
       detail: steady-state separation 0.801 vs 0.5
       reconcile: no_authored
     _grader:
-      version: 2-storeless
-      store: unresolved
+      version: 3-freshness
+      graded_at: '2026-11-01T19:41:08.768938+00:00'
+      inputs_hash: f087d5a3e1618e0a
+      store: store_less
 - name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793472479__93a6c0
   status: completed
   timestamp: 1793472482.307564
@@ -163,8 +165,10 @@ runs:
       detail: steady-state separation 0.801 vs 0.5
       reconcile: no_authored
     _grader:
-      version: 2-storeless
-      store: unresolved
+      version: 3-freshness
+      graded_at: '2026-11-01T19:41:08.830124+00:00'
+      inputs_hash: 725b4c8b07c61906
+      store: store_less
 simulation_set:
 - name: baseline-baseline
   kind: single

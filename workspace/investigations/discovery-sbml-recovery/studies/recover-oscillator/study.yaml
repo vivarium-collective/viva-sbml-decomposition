@@ -125,8 +125,10 @@ runs:
       detail: late-window amplitude 0 vs 0.2
       reconcile: no_authored
     _grader:
-      version: 2-storeless
-      store: unresolved
+      version: 3-freshness
+      graded_at: '2026-11-01T19:41:09.253453+00:00'
+      inputs_hash: bf15594389c06e20
+      store: store_less
 - name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793472486__12ee42
   status: completed
   timestamp: 1793472489.291925
@@ -164,8 +166,10 @@ runs:
       detail: late-window amplitude 0 vs 0.2
       reconcile: no_authored
     _grader:
-      version: 2-storeless
-      store: unresolved
+      version: 3-freshness
+      graded_at: '2026-11-01T19:41:09.313520+00:00'
+      inputs_hash: 6280dd2bb49fb910
+      store: store_less
 simulation_set:
 - name: baseline-baseline
   kind: single

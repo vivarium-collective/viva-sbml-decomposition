@@ -109,8 +109,10 @@ runs:
       detail: best polynomial-RHS min R^2 0.0534 vs 0.9 (stochastic)
       reconcile: no_authored
     _grader:
-      version: 2-storeless
-      store: unresolved
+      version: 3-freshness
+      graded_at: '2026-11-01T19:41:09.347785+00:00'
+      inputs_hash: 45709e1efdd047d6
+      store: store_less
 simulation_set:
 - name: baseline-baseline
   kind: single
