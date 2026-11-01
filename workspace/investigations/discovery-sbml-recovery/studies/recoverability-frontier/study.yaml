@@ -38,6 +38,10 @@ parent_studies:
   - min_r2
   - stochasticity
 baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.recovery.recover_candidate
+  params:
+    target: recover-mass-action
 variants: []
 interventions: []
 expected_behavior: []

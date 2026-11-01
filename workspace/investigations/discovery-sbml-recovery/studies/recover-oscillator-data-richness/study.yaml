@@ -20,6 +20,10 @@ parent_studies:
   - reactions_recovered
   - late_window_amplitude
 baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.recovery.recover_candidate
+  params:
+    target: recover-oscillator
 variants: []
 interventions: []
 expected_behavior: []

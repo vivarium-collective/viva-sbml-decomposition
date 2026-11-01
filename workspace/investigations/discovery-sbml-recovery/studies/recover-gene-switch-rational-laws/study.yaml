@@ -20,6 +20,10 @@ parent_studies:
   - reactions_recovered
   - rate_law_class
 baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.recovery.recover_candidate
+  params:
+    target: recover-gene-switch
 variants: []
 interventions: []
 expected_behavior: []

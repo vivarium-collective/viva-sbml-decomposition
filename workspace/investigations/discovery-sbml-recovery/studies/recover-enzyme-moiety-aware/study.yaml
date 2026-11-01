@@ -20,6 +20,10 @@ parent_studies:
   - spurious_count
   - conserved_moiety
 baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.recovery.recover_candidate
+  params:
+    target: recover-enzyme-kinetics
 variants: []
 interventions: []
 expected_behavior: []
