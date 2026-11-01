@@ -100,36 +100,32 @@ visualizations: []
 runs:
 - name: recovery-fit:recover-gene-switch:1793473955
   status: completed
-  outcomes: &id002
-    gene-switch-trajectory-recovered:
-      result: failed
-      detail: nrmse 0.5804 vs tol 0.05
-    gene-switch-structure-recovered:
-      result: failed
-      detail: reactions_recovered 0.00, param_max_rel_err 0, spurious 2
-    gene-switch-bistability-reproduced:
-      result: passed
-      detail: steady-state separation 0.801 vs 0.5
   canonical: true
-  computed_outcomes: &id001
+  computed_outcomes:
     gene-switch-trajectory-recovered:
       result: FAIL
       measured_value: 0.580434
       evaluated_by: code
       operator: recovery_trajectory/threshold
       detail: nrmse 0.5804 vs tol 0.05
+      reconcile: no_authored
     gene-switch-structure-recovered:
       result: FAIL
       measured_value: 0.0
       evaluated_by: code
       operator: recovery_structure/threshold
       detail: reactions_recovered 0.00, param_max_rel_err 0, spurious 2
+      reconcile: no_authored
     gene-switch-bistability-reproduced:
       result: PASS
       measured_value: 0.8012
       evaluated_by: code
       operator: recovery_bistability/threshold
       detail: steady-state separation 0.801 vs 0.5
+      reconcile: no_authored
+    _grader:
+      version: 2-storeless
+      store: unresolved
 - name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793472479__93a6c0
   status: completed
   timestamp: 1793472482.307564
@@ -137,7 +133,6 @@ runs:
     kind: unknown
   env_id: 422dcba86494d9a1
   params: '{"target": "recover-gene-switch"}'
-  computed_outcomes: *id001
   provenance:
     params:
       target:
@@ -145,7 +140,31 @@ runs:
         source: override
     params_captured_at: '2026-10-31'
     params_source: dashboard-runner
-  outcomes: *id002
+  computed_outcomes:
+    gene-switch-trajectory-recovered:
+      result: FAIL
+      measured_value: 0.580434
+      evaluated_by: code
+      operator: recovery_trajectory/threshold
+      detail: nrmse 0.5804 vs tol 0.05
+      reconcile: no_authored
+    gene-switch-structure-recovered:
+      result: FAIL
+      measured_value: 0.0
+      evaluated_by: code
+      operator: recovery_structure/threshold
+      detail: reactions_recovered 0.00, param_max_rel_err 0, spurious 2
+      reconcile: no_authored
+    gene-switch-bistability-reproduced:
+      result: PASS
+      measured_value: 0.8012
+      evaluated_by: code
+      operator: recovery_bistability/threshold
+      detail: steady-state separation 0.801 vs 0.5
+      reconcile: no_authored
+    _grader:
+      version: 2-storeless
+      store: unresolved
 simulation_set:
 - name: baseline-baseline
   kind: single

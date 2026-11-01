@@ -93,14 +93,6 @@ runs:
     kind: unknown
   env_id: bab25b0358b3edb8
   params: '{"target": "recover-stochastic-abm"}'
-  computed_outcomes:
-    correctly-flagged-non-recoverable:
-      result: PASS
-      measured_value: 0.0534
-      evaluated_by: code
-      operator: recovery_non_recoverable/threshold
-      detail: best polynomial-RHS min R^2 0.0534 vs 0.9 (stochastic)
-      reconcile: agree
   provenance:
     params:
       target:
@@ -108,10 +100,17 @@ runs:
         source: override
     params_captured_at: '2026-10-31'
     params_source: dashboard-runner
-  outcomes:
+  computed_outcomes:
     correctly-flagged-non-recoverable:
-      result: ok
-      detail: best polynomial-RHS min R^2 0.0534 vs 0.9 (stochastic) (code-graded)
+      result: PASS
+      measured_value: 0.0534
+      evaluated_by: code
+      operator: recovery_non_recoverable/threshold
+      detail: best polynomial-RHS min R^2 0.0534 vs 0.9 (stochastic)
+      reconcile: no_authored
+    _grader:
+      version: 2-storeless
+      store: unresolved
 simulation_set:
 - name: baseline-baseline
   kind: single
