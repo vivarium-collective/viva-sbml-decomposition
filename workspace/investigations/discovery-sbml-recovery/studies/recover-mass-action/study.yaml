@@ -128,8 +128,10 @@ runs:
       detail: parsimonious=True, spurious 0
       reconcile: no_authored
     _grader:
-      version: 2-storeless
-      store: unresolved
+      version: 3-freshness
+      graded_at: '2026-11-01T19:41:09.039479+00:00'
+      inputs_hash: 6607f7824c7342bd
+      store: store_less
 - name: viva_sbml_decomposition.composites.recovery.recover_mass_action__1793470642__a94aec
   status: completed
   timestamp: 1793470645.9383218
@@ -164,8 +166,10 @@ runs:
       detail: parsimonious=True, spurious 0
       reconcile: no_authored
     _grader:
-      version: 2-storeless
-      store: unresolved
+      version: 3-freshness
+      graded_at: '2026-11-01T19:41:09.120812+00:00'
+      inputs_hash: 4631dcdb480374fb
+      store: store_less
 simulation_set:
 - name: baseline-baseline
   kind: single

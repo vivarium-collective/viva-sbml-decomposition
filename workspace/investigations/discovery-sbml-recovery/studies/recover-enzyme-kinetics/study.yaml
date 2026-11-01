@@ -131,8 +131,10 @@ runs:
       detail: parsimonious=False, spurious 31
       reconcile: no_authored
     _grader:
-      version: 2-storeless
-      store: unresolved
+      version: 3-freshness
+      graded_at: '2026-11-01T19:41:08.417188+00:00'
+      inputs_hash: 75ab23b6e1fe6256
+      store: store_less
 - name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793472471__bb7110
   status: completed
   timestamp: 1793472475.084647
@@ -170,8 +172,10 @@ runs:
       detail: parsimonious=False, spurious 31
       reconcile: no_authored
     _grader:
-      version: 2-storeless
-      store: unresolved
+      version: 3-freshness
+      graded_at: '2026-11-01T19:41:08.596602+00:00'
+      inputs_hash: e131d1af1a97db4c
+      store: store_less
 simulation_set:
 - name: baseline-baseline
   kind: single
