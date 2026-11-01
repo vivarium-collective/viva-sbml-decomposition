@@ -101,17 +101,36 @@ visualizations: []
 runs:
 - name: recovery-fit:recover-oscillator:1793473958
   status: completed
-  outcomes:
+  outcomes: &id002
     oscillator-trajectory-recovered:
-      result: ok
-      detail: nrmse 6.518e-07 vs tol 0.08 (recovered candidate, 2x-param start)
+      result: failed
+      detail: nrmse 0.4443 vs tol 0.08
     oscillator-structure-recovered:
-      result: ok
-      detail: reactions_recovered 1.00, param_max_rel_err 7.319e-08, spurious 0 (recovered candidate, 2x-param start)
+      result: failed
+      detail: reactions_recovered 0.25, param_max_rel_err 1, spurious 1
     oscillator-limit-cycle-reproduced:
-      result: ok
-      detail: late-window amplitude 1.24 vs 0.2 (recovered candidate, 2x-param start)
+      result: failed
+      detail: late-window amplitude 0 vs 0.2
   canonical: true
+  computed_outcomes: &id001
+    oscillator-trajectory-recovered:
+      result: FAIL
+      measured_value: 0.444346
+      evaluated_by: code
+      operator: recovery_trajectory/threshold
+      detail: nrmse 0.4443 vs tol 0.08
+    oscillator-structure-recovered:
+      result: FAIL
+      measured_value: 0.25
+      evaluated_by: code
+      operator: recovery_structure/threshold
+      detail: reactions_recovered 0.25, param_max_rel_err 1, spurious 1
+    oscillator-limit-cycle-reproduced:
+      result: FAIL
+      measured_value: 0.0
+      evaluated_by: code
+      operator: recovery_limit_cycle/threshold
+      detail: late-window amplitude 0 vs 0.2
 - name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793472486__12ee42
   status: completed
   timestamp: 1793472489.291925
@@ -119,28 +138,7 @@ runs:
     kind: unknown
   env_id: 422dcba86494d9a1
   params: '{"target": "recover-oscillator"}'
-  computed_outcomes:
-    oscillator-trajectory-recovered:
-      result: PASS
-      measured_value: 0.0
-      evaluated_by: code
-      operator: recovery_trajectory/threshold
-      detail: nrmse 0 vs tol 0.08
-      reconcile: agree
-    oscillator-structure-recovered:
-      result: PASS
-      measured_value: 1.0
-      evaluated_by: code
-      operator: recovery_structure/threshold
-      detail: reactions_recovered 1.00, param_max_rel_err 0, spurious 0
-      reconcile: agree
-    oscillator-limit-cycle-reproduced:
-      result: PASS
-      measured_value: 1.2427
-      evaluated_by: code
-      operator: recovery_limit_cycle/threshold
-      detail: late-window amplitude 1.24 vs 0.2
-      reconcile: divergent
+  computed_outcomes: *id001
   provenance:
     params:
       target:
@@ -148,16 +146,7 @@ runs:
         source: override
     params_captured_at: '2026-10-31'
     params_source: dashboard-runner
-  outcomes:
-    oscillator-trajectory-recovered:
-      result: ok
-      detail: nrmse 0 vs tol 0.08 (code-graded)
-    oscillator-structure-recovered:
-      result: ok
-      detail: reactions_recovered 1.00, param_max_rel_err 0, spurious 0 (code-graded)
-    oscillator-limit-cycle-reproduced:
-      result: ok
-      detail: late-window amplitude 1.24 vs 0.2 (code-graded)
+  outcomes: *id002
 simulation_set:
 - name: baseline-baseline
   kind: single
@@ -171,8 +160,11 @@ simulation_set:
   - Y
 pipeline_gate:
   gate_evaluator:
-    result: passed
-    blocked_by: []
+    result: failed
+    blocked_by:
+    - oscillator-trajectory-recovered
+    - oscillator-structure-recovered
+    - oscillator-limit-cycle-reproduced
     evaluated_by: code
     diverges_from_authored: false
 claim: 'Not recovered from a single trajectory: the Brusselator limit-cycle structure is under-determined (nrmse 0.44; recovered model does not oscillate). The system IS flat mass-action -- a DATA-RICHNESS/method gap (ensemble trajectories, weak-form SINDy). See follow-up recover-oscillator-data-richness.'

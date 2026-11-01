@@ -107,17 +107,36 @@ visualizations: []
 runs:
 - name: recovery-fit:recover-enzyme-kinetics:1793473953
   status: completed
-  outcomes:
+  outcomes: &id002
     enzyme-trajectory-recovered:
-      result: ok
-      detail: nrmse 1.08e-09 vs tol 0.05 (recovered candidate, 2x-param start)
+      result: failed
+      detail: nrmse 0.1142 vs tol 0.05
     enzyme-structure-recovered:
-      result: ok
-      detail: reactions_recovered 1.00, param_max_rel_err 9.875e-08, spurious 0 (recovered candidate, 2x-param start)
+      result: failed
+      detail: reactions_recovered 1.00, param_max_rel_err 1, spurious 31
     enzyme-parsimonious:
-      result: ok
-      detail: parsimonious=True, spurious 0 (recovered candidate, 2x-param start)
+      result: failed
+      detail: parsimonious=False, spurious 31
   canonical: true
+  computed_outcomes: &id001
+    enzyme-trajectory-recovered:
+      result: FAIL
+      measured_value: 0.114151
+      evaluated_by: code
+      operator: recovery_trajectory/threshold
+      detail: nrmse 0.1142 vs tol 0.05
+    enzyme-structure-recovered:
+      result: FAIL
+      measured_value: 1.0
+      evaluated_by: code
+      operator: recovery_structure/threshold
+      detail: reactions_recovered 1.00, param_max_rel_err 1, spurious 31
+    enzyme-parsimonious:
+      result: FAIL
+      measured_value: 31.0
+      evaluated_by: code
+      operator: recovery_parsimony/threshold
+      detail: parsimonious=False, spurious 31
 - name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793472471__bb7110
   status: completed
   timestamp: 1793472475.084647
@@ -125,28 +144,7 @@ runs:
     kind: unknown
   env_id: 422dcba86494d9a1
   params: '{"target": "recover-enzyme-kinetics"}'
-  computed_outcomes:
-    enzyme-trajectory-recovered:
-      result: PASS
-      measured_value: 0.0
-      evaluated_by: code
-      operator: recovery_trajectory/threshold
-      detail: nrmse 0 vs tol 0.05
-      reconcile: agree
-    enzyme-structure-recovered:
-      result: PASS
-      measured_value: 1.0
-      evaluated_by: code
-      operator: recovery_structure/threshold
-      detail: reactions_recovered 1.00, param_max_rel_err 0, spurious 0
-      reconcile: agree
-    enzyme-parsimonious:
-      result: PASS
-      measured_value: 0.0
-      evaluated_by: code
-      operator: recovery_parsimony/threshold
-      detail: parsimonious=True, spurious 0
-      reconcile: agree
+  computed_outcomes: *id001
   provenance:
     params:
       target:
@@ -154,16 +152,7 @@ runs:
         source: override
     params_captured_at: '2026-10-31'
     params_source: dashboard-runner
-  outcomes:
-    enzyme-trajectory-recovered:
-      result: ok
-      detail: nrmse 0 vs tol 0.05 (code-graded)
-    enzyme-structure-recovered:
-      result: ok
-      detail: reactions_recovered 1.00, param_max_rel_err 0, spurious 0 (code-graded)
-    enzyme-parsimonious:
-      result: ok
-      detail: parsimonious=True, spurious 0 (code-graded)
+  outcomes: *id002
 simulation_set:
 - name: baseline-baseline
   kind: single
@@ -179,8 +168,11 @@ simulation_set:
   - P
 pipeline_gate:
   gate_evaluator:
-    result: passed
-    blocked_by: []
+    result: failed
+    blocked_by:
+    - enzyme-trajectory-recovered
+    - enzyme-structure-recovered
+    - enzyme-parsimonious
     evaluated_by: code
     diverges_from_authored: false
 claim: 'Not yet recovered: the conserved moiety (E+ES const) makes the from-data regression ill-conditioned (nrmse 0.11 > 0.05 tol, 31 spurious reactions). The system IS flat mass-action -- a METHOD gap (needs moiety-aware regression). See follow-up recover-enzyme-moiety-aware.'

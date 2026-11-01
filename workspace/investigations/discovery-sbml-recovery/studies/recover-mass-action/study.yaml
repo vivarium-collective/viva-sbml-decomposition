@@ -104,17 +104,36 @@ visualizations: []
 runs:
 - name: recovery-fit:recover-mass-action:1793473950
   status: completed
-  outcomes:
+  outcomes: &id002
     mass-action-trajectory-recovered:
-      result: ok
-      detail: nrmse 1.492e-09 vs tol 0.05 (recovered candidate, 2x-param start)
+      result: passed
+      detail: nrmse 1.492e-09 vs tol 0.05
     mass-action-structure-recovered:
-      result: ok
-      detail: reactions_recovered 1.00, param_max_rel_err 8.171e-09, spurious 0 (recovered candidate, 2x-param start)
+      result: passed
+      detail: reactions_recovered 1.00, param_max_rel_err 8.217e-09, spurious 0
     mass-action-parsimonious:
-      result: ok
-      detail: parsimonious=True, spurious 0 (recovered candidate, 2x-param start)
+      result: passed
+      detail: parsimonious=True, spurious 0
   canonical: true
+  computed_outcomes: &id001
+    mass-action-trajectory-recovered:
+      result: PASS
+      measured_value: 0.0
+      evaluated_by: code
+      operator: recovery_trajectory/threshold
+      detail: nrmse 1.492e-09 vs tol 0.05
+    mass-action-structure-recovered:
+      result: PASS
+      measured_value: 1.0
+      evaluated_by: code
+      operator: recovery_structure/threshold
+      detail: reactions_recovered 1.00, param_max_rel_err 8.217e-09, spurious 0
+    mass-action-parsimonious:
+      result: PASS
+      measured_value: 0.0
+      evaluated_by: code
+      operator: recovery_parsimony/threshold
+      detail: parsimonious=True, spurious 0
 - name: viva_sbml_decomposition.composites.recovery.recover_mass_action__1793470642__a94aec
   status: completed
   timestamp: 1793470645.9383218
@@ -122,42 +141,12 @@ runs:
     kind: unknown
   env_id: cfe30fb61894d2e2
   params: '{}'
-  computed_outcomes:
-    mass-action-trajectory-recovered:
-      result: PASS
-      measured_value: 0.0
-      evaluated_by: code
-      operator: recovery_trajectory/threshold
-      detail: nrmse 0 vs tol 0.05
-      reconcile: divergent
-    mass-action-structure-recovered:
-      result: PASS
-      measured_value: 1.0
-      evaluated_by: code
-      operator: recovery_structure/threshold
-      detail: reactions_recovered 1.00, param_max_rel_err 0, spurious 0
-      reconcile: divergent
-    mass-action-parsimonious:
-      result: PASS
-      measured_value: 0.0
-      evaluated_by: code
-      operator: recovery_parsimony/threshold
-      detail: parsimonious=True, spurious 0
-      reconcile: divergent
+  computed_outcomes: *id001
   provenance:
     params: {}
     params_captured_at: '2026-10-31'
     params_source: dashboard-runner
-  outcomes:
-    mass-action-trajectory-recovered:
-      result: ok
-      detail: nrmse 0 vs tol 0.05 (code-graded)
-    mass-action-structure-recovered:
-      result: ok
-      detail: reactions_recovered 1.00, param_max_rel_err 0, spurious 0 (code-graded)
-    mass-action-parsimonious:
-      result: ok
-      detail: parsimonious=True, spurious 0 (code-graded)
+  outcomes: *id002
 simulation_set:
 - name: baseline-baseline
   kind: single
