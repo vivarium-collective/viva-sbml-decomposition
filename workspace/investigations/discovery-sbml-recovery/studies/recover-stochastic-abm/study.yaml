@@ -70,7 +70,15 @@ behavior_tests:
   requires_simulation: true
   description: Passes by correctly REJECTING the system as not recoverable as a flat SBML. Graded by the NonRecoverabilityDetector.
 findings: []
-visualizations: []
+visualizations:
+- name: non_recoverability_evidence
+  address: local:NonRecoverabilityEvidence
+  config: {}
+  covers:
+  - recovery_non_recoverable
+  - A
+  - B
+  - C
 pipeline_gate:
   gate_evaluator:
     result: passed
