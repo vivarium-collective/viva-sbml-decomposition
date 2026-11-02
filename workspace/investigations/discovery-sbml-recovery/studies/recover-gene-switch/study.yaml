@@ -1,7 +1,7 @@
 schema_version: 3
 name: recover-gene-switch
 investigation: discovery-sbml-recovery
-status: investigating
+status: complete
 title: Recover a Hill gene switch
 confidence: Refuted
 question: |
