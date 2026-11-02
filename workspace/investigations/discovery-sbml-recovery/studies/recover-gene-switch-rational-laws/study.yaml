@@ -2,7 +2,7 @@ schema_version: 3
 name: recover-gene-switch-rational-laws
 investigation: discovery-sbml-recovery
 created: '2026-11-01'
-status: planning
+status: planned
 kind: refinement
 confidence: Planned
 title: 'Recovery beyond mass-action: rational/Hill rate laws'
@@ -38,3 +38,4 @@ resolution_route:
   - develop_method
   - request_expert
   mode: any
+parked: true

@@ -2,7 +2,7 @@ schema_version: 3
 name: recover-oscillator-data-richness
 investigation: discovery-sbml-recovery
 created: '2026-11-01'
-status: planning
+status: planned
 kind: refinement
 confidence: Planned
 title: Data richness for limit-cycle structure discovery
@@ -38,3 +38,4 @@ resolution_route:
   - acquire_data
   - develop_method
   mode: all
+parked: true

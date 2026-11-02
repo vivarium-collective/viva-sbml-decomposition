@@ -1,7 +1,7 @@
 schema_version: 3
 name: recover-stochastic-abm
 investigation: discovery-sbml-recovery
-status: ran
+status: complete
 kind: adversarial
 title: Reject a stochastic system (no flat-SBML form)
 confidence: Accepted
