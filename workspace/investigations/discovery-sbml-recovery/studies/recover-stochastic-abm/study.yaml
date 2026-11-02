@@ -4,6 +4,7 @@ investigation: discovery-sbml-recovery
 status: complete
 kind: adversarial
 title: Reject a stochastic system (no flat-SBML form)
+claim: 'Correctly rejected as non-recoverable: the detector flags the single low-copy stochastic trajectory (best polynomial-RHS worst-species R^2 = 0.05, well below the 0.9 tol) -- no deterministic flat SBML fits single-path shot noise. The network IS flat mass-action only in the large-population mean-field limit; the adversarial passes by refusing to overfit noise (the ABM/stochastic boundary).'
 confidence: Accepted
 question: |
   Does the recovery pipeline correctly REFUSE to recover a flat SBML from a single
