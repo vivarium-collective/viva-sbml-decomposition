@@ -1,7 +1,7 @@
 schema_version: 3
 name: recover-gene-switch
 investigation: discovery-sbml-recovery
-status: complete
+status: ran
 title: Recover a Hill gene switch
 confidence: Refuted
 question: |
@@ -98,7 +98,7 @@ behavior_tests:
 findings: []
 visualizations: []
 runs:
-- name: recovery-fit:recover-gene-switch:1793473955
+- name: recovery-fit:recover-gene-switch:1794591296
   status: completed
   canonical: true
   computed_outcomes:
@@ -125,8 +125,8 @@ runs:
       reconcile: no_authored
     _grader:
       version: 3-freshness
-      graded_at: '2026-11-01T19:41:08.768938+00:00'
-      inputs_hash: f087d5a3e1618e0a
+      graded_at: '2026-11-13T17:34:58.519941+00:00'
+      inputs_hash: 9cf0380b6da634f2
       store: store_less
 - name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793472479__93a6c0
   status: completed

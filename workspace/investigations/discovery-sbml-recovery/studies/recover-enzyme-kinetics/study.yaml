@@ -1,7 +1,7 @@
 schema_version: 3
 name: recover-enzyme-kinetics
 investigation: discovery-sbml-recovery
-status: complete
+status: ran
 title: Recover enzyme kinetics (Michaelis-Menten)
 confidence: Refuted
 question: |
@@ -105,7 +105,7 @@ behavior_tests:
 findings: []
 visualizations: []
 runs:
-- name: recovery-fit:recover-enzyme-kinetics:1793473953
+- name: recovery-fit:recover-enzyme-kinetics:1794591290
   status: completed
   canonical: true
   computed_outcomes:
@@ -132,8 +132,8 @@ runs:
       reconcile: no_authored
     _grader:
       version: 3-freshness
-      graded_at: '2026-11-01T19:41:08.417188+00:00'
-      inputs_hash: 75ab23b6e1fe6256
+      graded_at: '2026-11-13T17:34:53.164991+00:00'
+      inputs_hash: 8ab1bad3ffa2bc51
       store: store_less
 - name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793472471__bb7110
   status: completed

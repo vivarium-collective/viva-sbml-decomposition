@@ -1,7 +1,7 @@
 schema_version: 3
 name: recover-stochastic-abm
 investigation: discovery-sbml-recovery
-status: complete
+status: ran
 kind: adversarial
 title: Reject a stochastic system (no flat-SBML form)
 claim: 'Correctly rejected as non-recoverable: the detector flags the single low-copy stochastic trajectory (best polynomial-RHS worst-species R^2 = 0.05, well below the 0.9 tol) -- no deterministic flat SBML fits single-path shot noise. The network IS flat mass-action only in the large-population mean-field limit; the adversarial passes by refusing to overfit noise (the ABM/stochastic boundary).'
@@ -87,6 +87,22 @@ pipeline_gate:
     evaluated_by: code
     diverges_from_authored: false
 runs:
+- name: recovery-fit:recover-stochastic-abm:1794591306
+  status: completed
+  canonical: true
+  computed_outcomes:
+    correctly-flagged-non-recoverable:
+      result: PASS
+      measured_value: 0.0534
+      evaluated_by: code
+      operator: recovery_non_recoverable/threshold
+      detail: best polynomial-RHS min R^2 0.0534 vs 0.9 (stochastic)
+      reconcile: no_authored
+    _grader:
+      version: 3-freshness
+      graded_at: '2026-11-13T17:35:08.824660+00:00'
+      inputs_hash: 1c4b7db78dc1797d
+      store: store_less
 - name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793476030__730600
   status: completed
   timestamp: 1793476033.9370408

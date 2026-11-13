@@ -23,14 +23,17 @@ from __future__ import annotations
 # and read no run data. compute_outcomes grades store-less kinds even when the run
 # store is unresolved (the recover_candidate composite strips the emitter) — so the
 # pipeline now owns the honest grading natively (no manual re-grade).
-try:
-    from discovery_engine.study_evaluator import storeless
-except ImportError:  # engine predates the store-less decorator (discovery-engine #22)
-    def storeless(fn):  # type: ignore[misc]
-        # No-op fallback: the committed computed_outcomes already carry the grades,
-        # so an older engine still renders honestly; the decorator only matters for
-        # a live re-grade once the engine has store-less support.
-        return fn
+try:  # engine ≥ nested study.* layout (viva-discovery-engine)
+    from discovery_engine.study.evaluator import storeless
+except ImportError:
+    try:  # older engine: flat module layout
+        from discovery_engine.study_evaluator import storeless
+    except ImportError:  # engine predates the store-less decorator (discovery-engine #22)
+        def storeless(fn):  # type: ignore[misc]
+            # No-op fallback: the committed computed_outcomes already carry the grades,
+            # so an older engine still renders honestly; the decorator only matters for
+            # a live re-grade once the engine has store-less support.
+            return fn
 
 
 def _code_outcome(result: str, measured_value, operator: str, detail: str) -> dict:

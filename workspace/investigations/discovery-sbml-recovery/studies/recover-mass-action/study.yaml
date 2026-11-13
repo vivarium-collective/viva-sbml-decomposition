@@ -1,7 +1,7 @@
 schema_version: 3
 name: recover-mass-action
 investigation: discovery-sbml-recovery
-status: complete
+status: ran
 title: Recover mass-action kinetics
 confidence: Accepted
 question: |
@@ -102,7 +102,7 @@ behavior_tests:
 findings: []
 visualizations: []
 runs:
-- name: recovery-fit:recover-mass-action:1793473950
+- name: recovery-fit:recover-mass-action:1794591285
   status: completed
   canonical: true
   computed_outcomes:
@@ -129,8 +129,8 @@ runs:
       reconcile: no_authored
     _grader:
       version: 3-freshness
-      graded_at: '2026-11-01T19:41:09.039479+00:00'
-      inputs_hash: 6607f7824c7342bd
+      graded_at: '2026-11-13T17:34:47.459398+00:00'
+      inputs_hash: a994e446edaecc01
       store: store_less
 - name: viva_sbml_decomposition.composites.recovery.recover_mass_action__1793470642__a94aec
   status: completed

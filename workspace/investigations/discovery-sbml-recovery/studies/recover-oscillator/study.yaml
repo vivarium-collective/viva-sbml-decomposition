@@ -1,7 +1,7 @@
 schema_version: 3
 name: recover-oscillator
 investigation: discovery-sbml-recovery
-status: complete
+status: ran
 title: Recover an oscillator
 confidence: Refuted
 question: |
@@ -99,7 +99,7 @@ behavior_tests:
 findings: []
 visualizations: []
 runs:
-- name: recovery-fit:recover-oscillator:1793473958
+- name: recovery-fit:recover-oscillator:1794591301
   status: completed
   canonical: true
   computed_outcomes:
@@ -126,8 +126,8 @@ runs:
       reconcile: no_authored
     _grader:
       version: 3-freshness
-      graded_at: '2026-11-01T19:41:09.253453+00:00'
-      inputs_hash: bf15594389c06e20
+      graded_at: '2026-11-13T17:35:03.757529+00:00'
+      inputs_hash: 6967d2a426ab8593
       store: store_less
 - name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793472486__12ee42
   status: completed

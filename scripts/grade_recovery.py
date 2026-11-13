@@ -15,11 +15,15 @@ import sys
 from pathlib import Path
 
 import ruamel.yaml
-from ruamel.yaml.comments import CommentedMap
 
-from discovery_engine.study_evaluator import clear_workspace_evaluator_cache, compute_outcomes
-from discovery_engine.study_outcomes import canonical_run
-from discovery_engine.study_verdict import roll_up_verdict, write_gate_evaluator
+try:  # engine ≥ nested study.* layout (viva-discovery-engine)
+    from discovery_engine.study.evaluator import clear_workspace_evaluator_cache, compute_outcomes
+    from discovery_engine.study.outcomes import canonical_run
+    from discovery_engine.study.verdict import roll_up_verdict, write_gate_evaluator
+except ImportError:  # older engine: flat module layout
+    from discovery_engine.study_evaluator import clear_workspace_evaluator_cache, compute_outcomes
+    from discovery_engine.study_outcomes import canonical_run
+    from discovery_engine.study_verdict import roll_up_verdict, write_gate_evaluator
 
 
 def _ws_root() -> Path:
@@ -44,26 +48,20 @@ def grade(study_slug: str, inv_slug: str = "discovery-sbml-recovery") -> dict:
     p = sd / "study.yaml"
     d = y.load(p.read_text())
     run = canonical_run(d.get("runs")) or {}
-    co = run.get("computed_outcomes") or {}
-    outs = run.get("outcomes")
-    if not isinstance(outs, (dict, CommentedMap)):
-        outs = CommentedMap()
-        run["outcomes"] = outs
-    promoted = 0
-    for name, c in co.items():
-        if isinstance(c, dict) and str(c.get("result", "")).upper() in ("PASS", "FAIL"):
-            outs[name] = {
-                "result": "ok" if c["result"] == "PASS" else "fail",
-                "detail": str(c.get("detail", "")) + " (code-graded)",
-            }
-            promoted += 1
+    # Recovery is code-authoritative: compute_outcomes (above) wrote the computed
+    # grades into the canonical run, and the verdict reads them computed-first
+    # (discovery_engine.study_outcomes.canonical_graded_outcomes). We deliberately
+    # do NOT promote them into an authored `outcomes` block: a promoted copy can
+    # never truly diverge, and an authored ok/fail copy compared against computed
+    # PASS/FAIL only produced a spurious `reconcile: divergent` in the rendered
+    # report. With no authored copy the honest reconcile flag is `no_authored`.
     if run:
         d["status"] = "ran"
     with p.open("w") as f:
         y.dump(d, f)
     write_gate_evaluator(sd)
     verdict = roll_up_verdict(ruamel.yaml.YAML().load(p.read_text()))
-    print(f"{study_slug}: promoted {promoted} outcome(s) -> gate {verdict.get('result')}")
+    print(f"{study_slug}: code-graded -> gate {verdict.get('result')}")
     return verdict
 
 
