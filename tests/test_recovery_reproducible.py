@@ -12,10 +12,15 @@ import copy
 import os
 import pathlib
 import subprocess
+import sys
 
 import yaml
 
-VENV = "/Users/eranagmon/code/viva-sbml-decomposition/.venv/bin/python"
+# The interpreter running the tests — portable across machines and CI, unlike a
+# hardcoded venv path. It has the workspace deps installed (same env pytest runs
+# in); the recover/grade subprocesses import viva_sbml_decomposition from
+# PYTHONPATH=. (the worktree) below.
+VENV = sys.executable
 INV = "discovery-sbml-recovery"
 # The five studies that carry acceptance criteria and have a recovery target in
 # RECOVERY_TARGETS. The other dirs under studies/ are non-graded future-direction
