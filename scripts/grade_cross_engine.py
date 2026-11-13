@@ -68,7 +68,28 @@ def grade() -> dict:
     write_gate_evaluator(sd)
     verdict = roll_up_verdict(ruamel.yaml.YAML().load(p.read_text()))
     print(f"{SLUG}: gate -> {verdict.get('result')}")
+
+    _write_figure_data(ws)
     return verdict
+
+
+def _write_figure_data(ws: Path) -> None:
+    """Commit the per-engine agreement as a small JSON for the figure to read, so
+    the report renders deterministically (no live COPASI at render time)."""
+    import json
+
+    from viva_sbml_decomposition.harness.cross_engine import cross_engine_agreement
+    from viva_sbml_decomposition.models.glycolysis import GLYCOLYSIS_ANTIMONY, GLYCOLYSIS_META
+
+    res = cross_engine_agreement(
+        GLYCOLYSIS_ANTIMONY, t_end=GLYCOLYSIS_META["t_end"], n_points=301)
+    out = ws / "viva_sbml_decomposition" / "visualizations" / "cross_engine_data.json"
+    out.write_text(json.dumps({
+        "model": "glycolysis", "reference": res["reference"],
+        "agreement": res["agreement"], "aborted": res["aborted"],
+        "note": "max relative error of each engine's monolithic run vs tellurium; COPASI not bit-reproducible",
+    }, indent=2) + "\n")
+    print(f"{SLUG}: wrote figure data -> {out.name} ({res['agreement']})")
 
 
 if __name__ == "__main__":

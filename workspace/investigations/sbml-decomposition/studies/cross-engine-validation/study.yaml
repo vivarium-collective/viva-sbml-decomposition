@@ -58,6 +58,11 @@ readouts:
   description: Per-engine max relative error of the monolithic glycolysis trajectory vs the tellurium reference.
   identifier: cross_engine_max_rel_err
   units: relative error
+visualizations:
+- name: cross_engine_agreement
+  title: Engines agree (~1e-7); the decomposition split is the cost (~1e-1)
+  readouts:
+  - cross_engine_max_rel_err
 behavior_tests:
 - name: engines-agree-on-the-same-model
   classification: accuracy
@@ -75,7 +80,7 @@ behavior_tests:
   description: 'Monolithic glycolysis in tellurium vs COPASI vs the native process, compared on the shared grid. Measured ~1e-7 for both COPASI and native against tellurium (far below the 0.857->0.0066 additive-split error of mechanical-split-cost). COPASI is not bit-reproducible and may abort (~1-in-6), which is tolerated and reported, not a pass.'
   requires_simulation: true
 runs:
-- name: cross-engine:1794599385
+- name: cross-engine:1794599634
   status: completed
   canonical: true
   computed_outcomes:
@@ -88,8 +93,8 @@ runs:
       reconcile: no_authored
     _grader:
       version: 3-freshness
-      graded_at: '2026-11-13T19:49:53.262125+00:00'
-      inputs_hash: 54698229634c4104
+      graded_at: '2026-11-13T19:54:01.681639+00:00'
+      inputs_hash: 9ede535a749aeb3a
       store: store_less
 pipeline_gate:
   gate_evaluator:
