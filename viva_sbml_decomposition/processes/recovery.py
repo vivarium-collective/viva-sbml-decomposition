@@ -28,9 +28,9 @@ from process_bigraph.emitter import RAMEmitter
 
 
 def _load(antimony: str):
-    import tellurium as te
+    from .._tellurium import load
 
-    return te.loada(antimony)
+    return load(antimony)
 
 
 class SyntheticTargetGenerator(Step):
@@ -166,9 +166,10 @@ def _reactions_from_antimony(antimony: str) -> dict:
     parameter named in the rate expression).
     """
     import libsbml
-    import tellurium as te
 
-    sbml = te.loada(antimony).getCurrentSBML()
+    from .._tellurium import load
+
+    sbml = load(antimony).getCurrentSBML()
     model = libsbml.readSBMLFromString(sbml).getModel()
     globals_ = {
         model.getParameter(i).getId(): float(model.getParameter(i).getValue())

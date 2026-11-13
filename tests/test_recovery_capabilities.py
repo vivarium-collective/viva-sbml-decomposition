@@ -11,7 +11,7 @@ from viva_sbml_decomposition.models.recovery_targets import (
     RECOVERY_TARGETS,
 )
 from viva_sbml_decomposition.composites.engine_monolithic import run_engine_monolithic
-from viva_sbml_decomposition.composites.recovery import recover_candidate, recover_mass_action
+from viva_sbml_decomposition.composites.recovery import recover_candidate
 from viva_sbml_decomposition.processes.recovery import (
     RateLawFitter,
     ReactionProposer,
@@ -179,11 +179,12 @@ def test_structural_spurious_reaction_not_parsimonious(core):
     assert res["structure_recovered"] is False  # require_no_spurious default
 
 
-# --- recover_mass_action composite + end-to-end loop ------------------------
+# --- recovery composite + end-to-end loop ------------------------
 
-def test_recover_mass_action_composite_builds():
-    doc = recover_mass_action()
-    assert isinstance(doc, dict) and doc, "composite should return a non-empty document"
+def test_recover_mass_action_composite_removed():
+    # Consolidated into the generic recover_candidate(target="recover-mass-action").
+    import viva_sbml_decomposition.composites.recovery as r
+    assert not hasattr(r, "recover_mass_action")
 
 
 def test_recovery_loop_identity_end_to_end(core):
@@ -194,7 +195,7 @@ def test_recovery_loop_identity_end_to_end(core):
         core=core,
     )
     target = gen.update({})
-    # Candidate run via the recover_mass_action composite path (identity: candidate == truth).
+    # Candidate run via the recovery candidate path (identity: candidate == truth).
     traj, t = run_engine_monolithic(MASS_ACTION_ANTIMONY, "tellurium", n_steps=100, t_end=10.0)
     candidate = {s: [float(v) for v in traj[s]] for s in ["A", "B", "C"]}
     # Trajectory comparison: identity recovers the target to tight tolerance.

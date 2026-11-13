@@ -67,7 +67,6 @@ composites and investigations; regenerate any time with
 | `predator_prey_meanfield` | Mean-field reduction: the deterministic Lotka-Volterra ODE as Antimony integrated by libroadrunner/CVODE in a TelluriumProcess — the SBML reduction of the stochastic ABM. Faithful only in the large-p… |
 | `reaction_split` | Generic reaction split: a model's reactions partitioned by `seam` (aldolase \| mechanical \| explicit upper/lower lists) into two process nodes, each in its own engine (tellurium \| copasi \| native), co… |
 | `recover_candidate` | Generic candidate-model run for any recovery-ladder study: integrates the candidate flat-SBML monolithically in tellurium and emits its species trajectories. `target` selects the ground-truth oracle… |
-| `recover_mass_action` | Candidate-model run for the recover-mass-action study: a flat SBML/Antimony candidate integrated monolithically in tellurium (libroadrunner), emitting A/B/C trajectories to compare against the hidden… |
 <!-- END:composites -->
 
 > **COPASI engine caveat (`engine_monolithic` / `reaction_split` with

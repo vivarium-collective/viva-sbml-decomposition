@@ -60,16 +60,14 @@ no dedicated accuracy benchmark of its own, so it is kept off the accuracy axis 
 design. (The exemption is NOT because cross-engine coupling's numbers differ — it solves the same
 ODEs and reproduces the biological modular seam to ~1e-7; see ``reaction_split``.)
 
-The ``accuracy`` field here is a **placeholder** (``None`` for every arm): this
-module scores composability only. The real per-arm accuracy numbers come from the
-accuracy harness on an actual run (Task 11/12), keyed on ``accuracy_exempt`` to
-skip cross-engine coupling.
+This module scores composability only; the real per-arm accuracy numbers come
+from the accuracy harness on an actual run (Task 11/12), keyed on
+``accuracy_exempt`` to skip cross-engine coupling.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Optional
 
 
 class Level(IntEnum):
@@ -113,11 +111,10 @@ class ComposabilityScore:
     ``substitutability`` / ``coupling_readiness`` / ``multiscale_fit`` are each a
     :class:`Level` (0..3). ``accuracy_exempt`` is the distinguishing flag the
     Task-12 viz assembler keys off: ``True`` only for arm6 / cross-engine-coupling (the composability
-    existence proof, kept off the accuracy axis), ``False`` for the other five. The
-    ``accuracy`` field is a placeholder (``None`` here for every arm) — this module
-    scores composability only; real accuracy comes from the accuracy harness on a
-    run (Task 11/12). ``rationale`` is the written justification tying the scores
-    to the documented criteria.
+    existence proof, kept off the accuracy axis), ``False`` for the other five.
+    Real per-arm accuracy comes from the accuracy harness (Task 11/12), not this
+    rubric. ``rationale`` is the written justification tying the scores to the
+    documented criteria.
     """
 
     arm_id: str
@@ -125,7 +122,6 @@ class ComposabilityScore:
     coupling_readiness: int
     multiscale_fit: int
     accuracy_exempt: bool
-    accuracy: Optional[float]
     rationale: str
 
 
@@ -137,7 +133,6 @@ _RUBRIC = {
         coupling_readiness=Level.LOW,
         multiscale_fit=Level.LOW,
         accuracy_exempt=False,
-        accuracy=None,
         rationale=(
             "SBML in Tellurium (monolithic): one opaque SBML/libroadrunner object. Nothing is "
             "individually addressable to swap, there is no shared store to wire a "
@@ -151,7 +146,6 @@ _RUBRIC = {
         coupling_readiness=Level.MED,
         multiscale_fit=Level.MED,
         accuracy_exempt=False,
-        accuracy=None,
         rationale=(
             "Mechanical split (additive coupling): reactions are partitioned into two groups, but the "
             "split lives inside one process and advances the full state — the "
@@ -165,7 +159,6 @@ _RUBRIC = {
         coupling_readiness=Level.HIGH,
         multiscale_fit=Level.HIGH,
         accuracy_exempt=False,
-        accuracy=None,
         rationale=(
             "Biological modular seam: separate named SubmodelProcess nodes at the "
             "aldolase seam, each independently replaceable, sharing one species "
@@ -179,7 +172,6 @@ _RUBRIC = {
         coupling_readiness=Level.HIGH,
         multiscale_fit=Level.MAX,
         accuracy_exempt=False,
-        accuracy=None,
         rationale=(
             "Fully native PBG process: a named, replaceable node sharing the species "
             "store (high substitutability + coupling-readiness), AND a "
@@ -193,7 +185,6 @@ _RUBRIC = {
         coupling_readiness=Level.HIGH,
         multiscale_fit=Level.HIGH,
         accuracy_exempt=False,
-        accuracy=None,
         rationale=(
             "Ensemble & multi-rate: N monolithic instances orchestrated as independent nodes on "
             "a real parallel backend — each instance is a swappable node and the "
@@ -207,7 +198,6 @@ _RUBRIC = {
         coupling_readiness=Level.MAX,
         multiscale_fit=Level.MAX,
         accuracy_exempt=True,
-        accuracy=None,
         rationale=(
             "Cross-engine coupling: one submodel node is actually swapped for a "
             "different engine (native pbg) while the other stays Tellurium, and the "

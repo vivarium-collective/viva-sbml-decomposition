@@ -69,15 +69,15 @@ class NonRecoverabilityEvidence(PlotlyVisualization):
     @staticmethod
     def generate_state(config=None):
         import numpy as np
-        import tellurium as te
 
+        from .._tellurium import load
         from ..models.recovery_targets import RECOVERY_TARGETS
 
         entry = RECOVERY_TARGETS[_TARGET]
         truth, meta = entry["antimony"], entry["meta"]
         observed = list(meta["species"])
 
-        rr = te.loada(truth)
+        rr = load(truth)
         rr.reset()
         rr.setIntegrator("gillespie")
         try:

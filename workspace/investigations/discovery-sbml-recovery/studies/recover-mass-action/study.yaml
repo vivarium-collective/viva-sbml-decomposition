@@ -30,8 +30,9 @@ description: |
 parent_studies: []
 baseline:
 - name: baseline
-  composite: viva_sbml_decomposition.composites.recovery.recover_mass_action
-  params: {}
+  composite: viva_sbml_decomposition.composites.recovery.recover_candidate
+  params:
+    target: recover-mass-action
 variants: []
 interventions: []
 expected_behavior:
@@ -173,7 +174,7 @@ runs:
 simulation_set:
 - name: baseline-baseline
   kind: single
-  base_model: viva_sbml_decomposition.composites.recovery.recover_mass_action
+  base_model: viva_sbml_decomposition.composites.recovery.recover_candidate
   is_baseline: true
   status: ran
 pipeline_gate:

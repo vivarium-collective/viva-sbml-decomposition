@@ -23,9 +23,9 @@ RELATIVE_TOLERANCE = 1e-8
 
 
 def _load(model_antimony):
-    import tellurium as te
+    from .._tellurium import load
 
-    return te.loada(model_antimony)
+    return load(model_antimony)
 
 
 def _species_metadata(rr):
