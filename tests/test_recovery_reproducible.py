@@ -40,13 +40,29 @@ def _study_path(slug):
     return pathlib.Path(f"workspace/investigations/{INV}/studies/{slug}/study.yaml")
 
 
+# The fields of a computed outcome that form the reproducibility contract: the
+# verdict-determining decision. Excluded on purpose are the per-grade `_grader`
+# bookkeeping block (a wall-clock timestamp), and the derived-float fields
+# `detail` (embeds the raw fit nrmse / parameter errors) and `measured_value`
+# (the raw metric). The optimiser converges to the same answer to ~8 significant
+# figures — far inside every threshold, so the PASS/FAIL result is identical —
+# but those last digits wobble across BLAS/LAPACK builds and platforms, so they
+# are not bit-reproducible and are not part of the contract.
+_STABLE_FIELDS = ("result", "operator", "evaluated_by", "reconcile")
+
+
 def _grades(slug):
-    """Computed grades per run, with the volatile `_grader` block removed."""
+    """The machine-stable graded decision per run (verdict-determining fields)."""
     runs = yaml.safe_load(_study_path(slug).read_text()).get("runs", []) or []
     out = []
     for r in runs:
         co = r.get("computed_outcomes") or {}
-        out.append({name: grade for name, grade in co.items() if name != "_grader"})
+        stable = {
+            name: {k: grade.get(k) for k in _STABLE_FIELDS}
+            for name, grade in co.items()
+            if name != "_grader" and isinstance(grade, dict)
+        }
+        out.append(stable)
     return out
 
 
