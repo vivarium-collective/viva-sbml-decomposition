@@ -17,6 +17,7 @@ FIGS = [
     ("decision_table", "DecisionTable"),
     ("abm_meanfield", "ABMMeanField"),
     ("cross_engine_agreement", "CrossEngineAgreement"),
+    ("scaling_benchmarks", "ScalingBenchmarks"),
 ]
 
 
@@ -139,6 +140,20 @@ def test_cross_engine_figure_degrades_when_copasi_aborts():
              "aborted": ["copasi"],
              "convergence": {"arm2": [[0.1, 0.857], [0.0125, 0.112]]}}
     spec = mod.CrossEngineAgreement(config={}, core=allocate_core()).figure(state)
+    assert spec["data"] and "layout" in spec
+    import plotly.graph_objects as go
+    go.Figure(spec)
+
+
+def test_scaling_figure_degrades_when_serial():
+    import importlib
+    mod = importlib.import_module("viva_sbml_decomposition.visualizations.scaling_benchmarks")
+    state = {"model_size": [{"species": 7, "mono_total_s": 0.1, "decomp_total_s": 0.3},
+                            {"species": 25, "mono_total_s": 0.2, "decomp_total_s": 0.9}],
+             "build_exponent": 0.92,
+             "ensemble": {"instances": [1, 4], "speedup": [1.0, 1.0], "backend": "serial"},
+             "machine": "test"}
+    spec = mod.ScalingBenchmarks(config={}, core=allocate_core()).figure(state)
     assert spec["data"] and "layout" in spec
     import plotly.graph_objects as go
     go.Figure(spec)
