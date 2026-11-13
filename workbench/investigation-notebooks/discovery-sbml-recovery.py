@@ -17,7 +17,7 @@ if _os.environ.get("PYTHONUTF8") != "1":
     _os.execv(_sys.executable, [_sys.executable, *_sys.argv])
 
 
-# # Discovery-engine SBML recovery — can the cycle build faithful flat SBML models from data?
+# # Model Recovery from Data — The Recoverability Frontier
 #
 # _Investigation `discovery-sbml-recovery` — coder reproduction notebook._
 #
@@ -27,6 +27,8 @@ if _os.environ.get("PYTHONUTF8") != "1":
 # enzyme kinetics -> gene switch -> oscillator), and what modular, vivarium-style
 # capabilities must be built to close the gaps where it can't?
 #
+# The backward direction — recover model structure from data, the inverse of
+# the sibling decomposition investigation.
 # A recovery benchmark: synthetic data from known SBML models across four
 # biological scenarios, with the discovery-engine cycle driving a closed
 # build -> simulate -> compare -> refine loop to rebuild flat SBML — plus a

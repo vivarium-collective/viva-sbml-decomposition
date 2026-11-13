@@ -17,13 +17,13 @@ if _os.environ.get("PYTHONUTF8") != "1":
     _os.execv(_sys.executable, [_sys.executable, *_sys.argv])
 
 
-# # SBML in Tellurium vs process-bigraph decomposition — speed × accuracy × composability, and the limits of SBML itself
+# # Decomposition Tradeoffs — When to Split an SBML Model
 #
 # _Investigation `sbml-decomposition` — coder reproduction notebook._
 #
 # **Question.** When you have a biochemical model, when should you run it monolithically in Tellurium (libroadrunner/CVODE) and when is it worth decomposing it into vivarium / process-bigraph sub-processes — and what does each point on that spectrum cost in performance and accuracy, buy in composability, and where does Tellurium (and SBML itself) stop being the right tool as models get larger or stop being reaction networks at all?
 #
-# A head-to-head of ways to run the same model — from a single libroadrunner/CVODE call to a fully hand-written process-bigraph network — plus two boundary probes: scaling a model until Tellurium's build strains, and asking whether an agent-based model can even be an SBML model. Seven member studies, measured on speed × accuracy × composability.
+# The forward direction — run known SBML models decomposed across coupled process-bigraph engines and measure what each split costs. A head-to-head of ways to run the same model — from a single libroadrunner/CVODE call to a fully hand-written process-bigraph network — plus two boundary probes: scaling a model until Tellurium's build strains, and asking whether an agent-based model can even be an SBML model. Seven member studies, measured on speed × accuracy × composability.
 #
 # ---
 #
