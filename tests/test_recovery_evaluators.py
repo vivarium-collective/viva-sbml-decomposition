@@ -19,6 +19,7 @@ def test_all_kinds_registered(evaluators):
         "recovery_trajectory", "recovery_structure", "recovery_parsimony",
         "recovery_bistability", "recovery_limit_cycle", "recovery_non_recoverable",
         "cross_engine_agreement",
+        "scaling_ensemble_speedup", "scaling_model_size_cost",
     }
 
 

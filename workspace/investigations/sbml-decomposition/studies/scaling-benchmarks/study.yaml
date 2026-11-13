@@ -1,0 +1,126 @@
+schema_version: 3
+name: scaling-benchmarks
+investigation: sbml-decomposition
+status: ran
+title: 'Scaling benchmarks: how decomposition scales with model size and instance count'
+question: |
+  How does the decomposition cost scale with model size, and how much parallel
+  speedup does the same-rate ensemble buy as instance count grows — and what is
+  the committed performance baseline the Rust-engine spike (Phase 6) is measured
+  against?
+hypothesis: |
+  The same-rate ensemble gives a real wall-clock speedup that grows with instance
+  count (a parallel win). Decomposition is NOT a free win on model size: its
+  per-tick orchestration makes it slower end-to-end than the monolith at the sizes
+  an affordable sweep reaches; the monolithic libroadrunner BUILD only strains
+  superlinearly at large N (established separately). These numbers, on this
+  machine, are the Phase-6 baseline.
+objective: |
+  Run a bounded systematic sweep — monolithic vs decomposed wall-clock vs species
+  count (multiorgan_scaling) and ensemble serial-vs-parallel speedup vs instance
+  count (ensemble_speedup) — record it as a machine-tagged baseline, and grade the
+  robust, machine-independent properties.
+description: |
+  Performance study for the SBML-decomposition investigation. The scaling harness
+  (viva_sbml_decomposition.harness.scaling) reuses `multiorgan_scaling` (model-size
+  curve) and `ensemble_speedup` (instance scaling, Ray with serial fallback).
+
+  Wall-clock is NOT reproducible across machines/BLAS/load, so the verdict grades
+  only robust properties: the ensemble gives a parallel speedup > 1 (measured up to
+  ~7.5x at P=8 on this machine, matching ensemble-and-multirate), and decomposition
+  is slower end-to-end than the monolith at the measured sizes (the investigation's
+  honest "decomposition is not free"). The monolithic-build exponent is RECORDED as
+  the baseline (~0.9 over a small species range; the superlinear O(N^1.64) strain is
+  a large-N regime measured in bigger-models-and-abm-limit, cited not re-proved).
+  The committed baseline (visualizations/scaling_benchmarks.json) is this machine's
+  numbers and is the reference Phase 6 compares viva-core against.
+parent_studies:
+- study: ensemble-and-multirate
+  relation: builds-on
+- study: bigger-models-and-abm-limit
+  relation: builds-on
+baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.engine_monolithic.engine_monolithic
+  params:
+    model: glycolysis
+    engine: tellurium
+variants: []
+interventions: []
+expected_behavior:
+- name: ensemble-parallel-speedup
+  observable: same-rate ensemble serial vs parallel (Ray) wall-clock speedup vs instance count
+  condition: parallel speedup > 1 when a parallel backend runs (serial fallback is caveated, not a failure)
+  rationale: independent instances are embarrassingly parallel, so a real OS-process parallel backend must beat serial.
+- name: decomposition-cost-characterized
+  observable: monolithic vs decomposed end-to-end wall-clock vs species count, and the monolithic-build exponent
+  condition: decomposition is slower end-to-end than the monolith at the measured sizes (not a free win); the build exponent is recorded as the baseline
+  rationale: decomposition buys composability, not speed, at affordable sizes; the superlinear build strain is a large-N regime established elsewhere.
+readouts:
+- name: scaling_baseline
+  description: Machine-tagged scaling baseline — model-size curve, build exponent, ensemble speedup vs instance count.
+  identifier: scaling_baseline
+  units: seconds / dimensionless
+visualizations:
+- name: scaling_benchmarks
+  address: local:ScalingBenchmarks
+  config: {}
+  covers:
+  - scaling_baseline
+behavior_tests:
+- name: ensemble-parallel-speedup
+  classification: performance
+  measure:
+    kind: scaling_ensemble_speedup
+    model_sizes: [2, 8, 32]
+    instance_counts: [1, 4, 8]
+    repeats: 2
+  pass_if:
+    op: threshold
+    detail: parallel speedup > 1 (or serial fallback, caveated)
+  units: dimensionless
+  description: 'Same-rate ensemble speedup vs instance count (Ray; serial fallback caveated). Measured up to ~7.5x at P=8 on this machine. Wall-clock is machine-specific.'
+  requires_simulation: true
+- name: decomposition-cost-characterized
+  classification: performance
+  measure:
+    kind: scaling_model_size_cost
+    model_sizes: [2, 8, 32]
+    instance_counts: [1, 4, 8]
+    repeats: 2
+  pass_if:
+    op: threshold
+    detail: decomposition slower end-to-end at the measured sizes; build exponent recorded
+  units: dimensionless
+  description: 'Monolithic vs decomposed end-to-end wall-clock vs species count + the recorded build exponent. Decomposition is slower end-to-end at affordable sizes (not a free win); superlinear build strain is a large-N regime (bigger-models-and-abm-limit).'
+  requires_simulation: true
+runs:
+- name: scaling:1794605311
+  status: completed
+  canonical: true
+  computed_outcomes:
+    ensemble-parallel-speedup:
+      result: PASS
+      measured_value: 7.346
+      evaluated_by: code
+      operator: scaling_ensemble/parallel
+      detail: same-rate ensemble parallel speedup up to 7.35x over P=[1, 4, 8] (ray); wall-clock machine-specific
+      reconcile: no_authored
+    decomposition-cost-characterized:
+      result: PASS
+      measured_value: 0.922
+      evaluated_by: code
+      operator: scaling_model_size/cost
+      detail: decomposition slower end-to-end at all 3 measured sizes (not a free win); monolith build exponent 0.92 over species [7, 25, 97] (superlinear O(N^1.6) at large N — see bigger-models-and-abm-limit); machine-specific
+      reconcile: no_authored
+    _grader:
+      version: 3-freshness
+      graded_at: '2026-11-13T21:28:55.462050+00:00'
+      inputs_hash: bdad3e03c3d777bc
+      store: store_less
+pipeline_gate:
+  gate_evaluator:
+    result: passed
+    blocked_by: []
+    evaluated_by: code
+    diverges_from_authored: false

@@ -29,3 +29,20 @@ def test_scaling_harness_tolerates_serial(monkeypatch):
     r = scaling_benchmarks(model_sizes=(1, 2), instance_counts=(1, 2), repeats=1, seed=0)
     assert r["ensemble"]["backend"] == "serial"
     assert all(s is not None for s in r["ensemble"]["speedup"])
+
+
+def test_scaling_study_is_code_graded_and_passes():
+    import pathlib
+    import yaml
+    sd = pathlib.Path(
+        "workspace/investigations/sbml-decomposition/studies/scaling-benchmarks/study.yaml")
+    d = yaml.safe_load(sd.read_text())
+    assert d["investigation"] == "sbml-decomposition"
+    canonical = next((r for r in (d.get("runs") or []) if r.get("canonical")), None)
+    assert canonical is not None, "study has no canonical run"
+    co = canonical.get("computed_outcomes") or {}
+    for name in ("ensemble-parallel-speedup", "decomposition-cost-characterized"):
+        grade = co.get(name) or {}
+        assert grade.get("result") == "PASS", f"{name}: {grade.get('result')}"
+        assert grade.get("evaluated_by") == "code"
+        assert grade.get("reconcile") == "no_authored"
