@@ -1,6 +1,6 @@
 schema_version: 2
 name: discovery-sbml-recovery
-title: Discovery-engine SBML recovery — can the cycle build faithful flat SBML models from data?
+title: Model Recovery from Data — The Recoverability Frontier
 created: '2026-10-31'
 status: closed
 runtime:
@@ -30,6 +30,8 @@ lead: |
   vivarium-style toolkit, not just a verdict.
 executive:
   what_is_this: |
+    The backward direction — recover model structure from data, the inverse of
+    the sibling decomposition investigation.
     A recovery benchmark: synthetic data from known SBML models across four
     biological scenarios, with the discovery-engine cycle driving a closed
     build -> simulate -> compare -> refine loop to rebuild flat SBML — plus a

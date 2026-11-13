@@ -66,6 +66,8 @@ composites and investigations; regenerate any time with
 | `predator_prey_abm` | Agent-based model: a well-mixed stochastic Lotka-Volterra predator-prey model as a population of DISCRETE individuals with stochastic birth/predation/death events, advanced by the exact Gillespie SSA… |
 | `predator_prey_meanfield` | Mean-field reduction: the deterministic Lotka-Volterra ODE as Antimony integrated by libroadrunner/CVODE in a TelluriumProcess — the SBML reduction of the stochastic ABM. Faithful only in the large-p… |
 | `reaction_split` | Generic reaction split: a model's reactions partitioned by `seam` (aldolase \| mechanical \| explicit upper/lower lists) into two process nodes, each in its own engine (tellurium \| copasi \| native), co… |
+| `recover_candidate` | Generic candidate-model run for any recovery-ladder study: integrates the candidate flat-SBML monolithically in tellurium and emits its species trajectories. `target` selects the ground-truth oracle… |
+| `recover_mass_action` | Candidate-model run for the recover-mass-action study: a flat SBML/Antimony candidate integrated monolithically in tellurium (libroadrunner), emitting A/B/C trajectories to compare against the hidden… |
 <!-- END:composites -->
 
 > **COPASI engine caveat (`engine_monolithic` / `reaction_split` with
@@ -90,7 +92,8 @@ composites and investigations; regenerate any time with
 
 | Investigation | Research question |
 |---|---|
-| [SBML in Tellurium vs process-bigraph decomposition — speed × accuracy × composability, and the limits of SBML itself _(complete)_](https://vivarium-collective.github.io/viva-sbml-decomposition/investigations/sbml-decomposition.html) | When you have a biochemical model, when should you run it monolithically in Tellurium (libroadrunner/CVODE) and when is it worth decomposing it into vivarium / process-bigraph sub-processes — and wha… |
+| [Model Recovery from Data — The Recoverability Frontier _(closed)_](https://vivarium-collective.github.io/viva-sbml-decomposition/workbench/reports/investigation-discovery-sbml-recovery.html) | Run as a closed build -> simulate -> compare -> refine loop, can the discovery-engine cycle recover faithful FLAT SBML models from synthetic time-series targets across a ladder of biological scenario… |
+| [Decomposition Tradeoffs — When to Split an SBML Model _(complete)_](https://vivarium-collective.github.io/viva-sbml-decomposition/workbench/reports/investigation-sbml-decomposition.html) | When you have a biochemical model, when should you run it monolithically in Tellurium (libroadrunner/CVODE) and when is it worth decomposing it into vivarium / process-bigraph sub-processes — and wha… |
 <!-- END:investigations -->
 
 ## Layout
