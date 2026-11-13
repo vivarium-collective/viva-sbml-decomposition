@@ -36,9 +36,9 @@ DEFAULT_COUPLING_INTERVAL = 0.05
 
 
 def _load(antimony):
-    import tellurium as te
+    from .._tellurium import load
 
-    rr = te.loada(antimony)
+    rr = load(antimony)
     rr.integrator.absolute_tolerance = ABSOLUTE_TOLERANCE
     rr.integrator.relative_tolerance = RELATIVE_TOLERANCE
     return rr
@@ -241,6 +241,9 @@ def multiorgan_scaling(ns: Sequence[int] = (2, 8, 32), *,
     until very large ``N`` and its per-tick RUN overhead makes it SLOWER end-to-end
     at the moderate ``N`` a test/affordable measurement can reach. Re-run to refresh.
     """
+    # Timing baseline: this harness MEASURES raw `te.loada` build time as the
+    # monolithic-build benchmark, so these two call sites intentionally bypass the
+    # `_tellurium.load` seam (routing them through a wrapper would skew the number).
     import tellurium as te
 
     out: List[dict] = []

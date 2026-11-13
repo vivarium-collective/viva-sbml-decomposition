@@ -23,6 +23,7 @@ try:  # engine ≥ nested study.* layout (viva-discovery-engine)
     from discovery_engine.study.verdict import roll_up_verdict, write_gate_evaluator
 except ImportError:  # older engine: flat module layout
     from discovery_engine.study_verdict import roll_up_verdict, write_gate_evaluator
+from viva_sbml_decomposition._tellurium import load
 from viva_sbml_decomposition.core import build_core
 from viva_sbml_decomposition.models.recovery_targets import RECOVERY_TARGETS
 from viva_sbml_decomposition.processes.recovery import RateLawFitter
@@ -44,7 +45,7 @@ def recover(study_slug: str = "recover-mass-action") -> dict:
     truth = RECOVERY_TARGETS[study_slug]["antimony"]
 
     # Wrong candidate: the oracle structure with every rate constant doubled.
-    rr = te.loada(truth)
+    rr = load(truth)
     for p in rr.getGlobalParameterIds():
         rr[p] = float(rr[p]) * 2.0
     wrong = te.sbmlToAntimony(rr.getCurrentSBML())

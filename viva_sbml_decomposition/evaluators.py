@@ -177,7 +177,8 @@ def _parsimony(test, reader, ws_root):
 def _bistability(test, reader, ws_root):
     """Does the candidate reproduce the ground-truth switch — two stable states?"""
     import numpy as np
-    import tellurium as te
+
+    from ._tellurium import load
 
     m = test.get("measure") or {}
     _, candidate, meta = _resolve_models(m)
@@ -185,7 +186,7 @@ def _bistability(test, reader, ws_root):
     if len(sp) < 2:
         return _code_outcome("FAIL", 0.0, "recovery_bistability/threshold", "need >= 2 species")
     t_end = max(meta["t_end"], 40.0)
-    rr = te.loada(candidate)
+    rr = load(candidate)
     states = []
     for hi in sp[:2]:  # seed each of the two species dominant -> its basin
         rr.reset()
@@ -205,13 +206,14 @@ def _bistability(test, reader, ws_root):
 def _limit_cycle(test, reader, ws_root):
     """Does the candidate sustain an oscillation (non-decaying late-window amplitude)?"""
     import numpy as np
-    import tellurium as te
+
+    from ._tellurium import load
 
     m = test.get("measure") or {}
     _, candidate, meta = _resolve_models(m)
     sp = meta["species"]
     t_end = max(meta["t_end"], 40.0)
-    rr = te.loada(candidate)
+    rr = load(candidate)
     rr.reset()
     res = np.asarray(rr.simulate(0.0, t_end, 400, selections=sp))
     half = res[200:, :]
