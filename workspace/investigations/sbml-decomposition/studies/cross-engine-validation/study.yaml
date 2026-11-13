@@ -1,0 +1,99 @@
+schema_version: 3
+name: cross-engine-validation
+investigation: sbml-decomposition
+status: ran
+title: 'Cross-engine validation: do tellurium, COPASI and the native process agree?'
+question: |
+  Run the same model (Teusink glycolysis, BIOMD0000000064) monolithically in all
+  three engines this investigation uses — tellurium (libroadrunner/CVODE), COPASI,
+  and the hand-ported native process — and ask: do they agree on the trajectory,
+  and how does that engine-agreement compare to the error the decomposition
+  *split* itself introduces?
+hypothesis: |
+  The three engines solve the same ODEs, so their monolithic trajectories should
+  agree to numerical tolerance (far below any decomposition splitting error). If
+  so, cross-engine disagreement is NOT a source of the decomposition cost — the
+  additive split is — which is the point a reviewer needs to trust the other
+  decomposition studies. COPASI is not bit-reproducible, so its agreement is a
+  tolerance, not an identity.
+objective: |
+  Measure, per engine, the max relative error of its monolithic glycolysis run
+  against the tellurium reference, graded against a tolerance; and report the
+  decomposition additive-split error as a first-class metric alongside it, so the
+  two sources of error (engine vs split) are directly comparable.
+description: |
+  Validation study for the SBML-decomposition investigation on Teusink glycolysis
+  (17 floating species). The cross-engine agreement harness
+  (viva_sbml_decomposition.harness.cross_engine) runs the model in each engine —
+  COPASI through the retrying subprocess that survives its ~1-in-6 loader abort,
+  the native process being a glycolysis-specific hand-ported RHS — and compares
+  each trajectory to the tellurium reference with the accuracy harness.
+
+  First-class splitting-error context: the additive (Jacobi) decomposition split
+  measured in `mechanical-split-cost` costs a first-order error that shrinks with
+  the coupling interval (max relative error 0.857 at interval 0.1 -> 0.112 at
+  0.0125 -> 0.0066 at 0.001). Cross-engine disagreement, by contrast, is ~1e-7 —
+  four to six orders of magnitude smaller. The engines agree; the split is the
+  cost. This study makes that comparison explicit for the reviewer.
+parent_studies:
+- study: sbml-in-tellurium
+  relation: builds-on
+- study: mechanical-split-cost
+  relation: builds-on
+baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.engine_monolithic.engine_monolithic
+  params:
+    model: glycolysis
+    engine: tellurium
+variants: []
+interventions: []
+expected_behavior:
+- name: engines-agree-on-the-same-model
+  observable: max relative error of each engine's monolithic glycolysis run vs the tellurium reference
+  condition: every engine that runs agrees with tellurium to < 1e-3 (measured ~1e-7); COPASI not bit-reproducible, aborts tolerated
+  rationale: the three engines solve the same ODEs, so monolithic disagreement must be numerical-tolerance small — otherwise the other studies' engine choices would be confounded.
+readouts:
+- name: cross_engine_max_rel_err
+  description: Per-engine max relative error of the monolithic glycolysis trajectory vs the tellurium reference.
+  identifier: cross_engine_max_rel_err
+  units: relative error
+behavior_tests:
+- name: engines-agree-on-the-same-model
+  classification: accuracy
+  measure:
+    kind: cross_engine_agreement
+    model: glycolysis
+    engines: [tellurium, copasi, native]
+    t_end: 30.0
+    n_points: 301
+    tol: 0.001
+  pass_if:
+    op: threshold
+    detail: max relative error vs tellurium < 1e-3 for every engine that runs
+  units: relative error
+  description: 'Monolithic glycolysis in tellurium vs COPASI vs the native process, compared on the shared grid. Measured ~1e-7 for both COPASI and native against tellurium (far below the 0.857->0.0066 additive-split error of mechanical-split-cost). COPASI is not bit-reproducible and may abort (~1-in-6), which is tolerated and reported, not a pass.'
+  requires_simulation: true
+runs:
+- name: cross-engine:1794599385
+  status: completed
+  canonical: true
+  computed_outcomes:
+    engines-agree-on-the-same-model:
+      result: PASS
+      measured_value: 1.29361e-07
+      evaluated_by: code
+      operator: cross_engine_agreement/threshold
+      detail: 'max rel err vs tellurium: copasi 1.29e-07, native 1.06e-07, tellurium 0.00e+00 (tol 0.001); COPASI is not bit-reproducible'
+      reconcile: no_authored
+    _grader:
+      version: 3-freshness
+      graded_at: '2026-11-13T19:49:53.262125+00:00'
+      inputs_hash: 54698229634c4104
+      store: store_less
+pipeline_gate:
+  gate_evaluator:
+    result: passed
+    blocked_by: []
+    evaluated_by: code
+    diverges_from_authored: false

@@ -37,3 +37,21 @@ def test_unsupported_engine_model_aborts_not_raises():
     assert res["agreement"]["tellurium"] == 0.0
     assert "native" in res["aborted"]
     assert res["agreement"]["native"] is None
+
+
+def test_cross_engine_validation_study_is_code_graded_and_passes():
+    import pathlib
+    import yaml
+    sd = pathlib.Path(
+        "workspace/investigations/sbml-decomposition/studies/cross-engine-validation/study.yaml")
+    d = yaml.safe_load(sd.read_text())
+    assert d["investigation"] == "sbml-decomposition"
+    canonical = next((r for r in (d.get("runs") or []) if r.get("canonical")), None)
+    assert canonical is not None, "study has no canonical run"
+    co = canonical.get("computed_outcomes") or {}
+    agree = co.get("engines-agree-on-the-same-model") or {}
+    # Code-graded (no emitter): computed_outcomes carry the grade, reconcile no_authored.
+    assert agree.get("result") == "PASS"
+    assert agree.get("evaluated_by") == "code"
+    assert agree.get("reconcile") == "no_authored"
+    assert agree.get("measured_value") is not None and agree["measured_value"] < 1e-3
