@@ -37,6 +37,9 @@ executive:
     - study: cross-engine-validation
       behavior: engines-agree-on-the-same-model
       result: passing
+    - study: scaling-benchmarks
+      behavior: ensemble-parallel-speedup
+      result: passing
     - study: ensemble-and-multirate
       behavior: ray-ensemble-real-parallel-speedup
       result: passing
@@ -97,6 +100,8 @@ at_a_glance:
   role: 'ADVERSARIAL: scale a model until Tellurium strains (monolithic BUILD ~O(N^1.6); decomposition is not a free win) and ask whether an ABM can be SBML (only in the large-population limit)'
 - study: cross-engine-validation
   role: validation — the three engines (tellurium, COPASI, native) agree on the same monolithic model to ~1e-7, four-to-six orders below the additive-split error; engine choice is not the decomposition cost, the split is.
+- study: scaling-benchmarks
+  role: 'performance — systematic scaling: the same-rate ensemble wins ~7.5x in parallel while decomposition is slower end-to-end at affordable model sizes; the machine-tagged baseline is the Phase-6 (Rust engine) reference.'
 - study: decomposition-synthesis
   role: Synthesis — builds-on all seven arms; the cross-arm speed x accuracy x composability landscape + decision guide.
 how_to_read: 'Start with sbml-in-tellurium (the reference), read mechanical-split-cost -> biological-modular-seam -> fully-native-pbg as increasing decomposition (accuracy falls, composability rises), then cross-engine-coupling (the capability proof) and ensemble-and-multirate (the parallel and scheduler wins). bigger-models-and-abm-limit holds the two boundary probes: where the monolith strains at scale and where SBML stops applying (the adversarial case). The 3-way tradeoff map and the decision table are the deliverable.'
@@ -128,6 +133,7 @@ studies:
 - ensemble-and-multirate
 - bigger-models-and-abm-limit
 - cross-engine-validation
+- scaling-benchmarks
 - decomposition-synthesis
 expert_docs: []
 acceptance_criteria:
@@ -143,6 +149,8 @@ acceptance_criteria:
   behavior: cross-engine-composition-runs
 - study: cross-engine-validation
   behavior: engines-agree-on-the-same-model
+- study: scaling-benchmarks
+  behavior: ensemble-parallel-speedup
 - study: ensemble-and-multirate
   behavior: ray-ensemble-real-parallel-speedup
 - study: ensemble-and-multirate
