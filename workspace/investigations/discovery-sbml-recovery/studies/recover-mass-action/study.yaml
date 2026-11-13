@@ -1,7 +1,7 @@
 schema_version: 3
 name: recover-mass-action
 investigation: discovery-sbml-recovery
-status: complete
+status: ran
 title: Recover mass-action kinetics
 confidence: Accepted
 question: |
@@ -36,17 +36,24 @@ variants: []
 interventions: []
 expected_behavior:
 - name: mass-action-trajectory-recovered
-  observable: recovered-model simulation vs synthetic target trajectory (per species, shared time grid)
+  observable: recovered-model simulation vs synthetic target trajectory (per 
+    species, shared time grid)
   condition: normalized RMSE < 0.05 across all observed species
-  rationale: the recovered model must reproduce the data it was fit to before any structural claim is meaningful.
+  rationale: the recovered model must reproduce the data it was fit to before 
+    any structural claim is meaningful.
 - name: mass-action-structure-recovered
   observable: recovered reaction set + rate constants vs the ground-truth SBML
-  condition: every ground-truth reaction is present and each rate constant is within 10% of truth
-  rationale: mass-action is fully identifiable from clean data, so genuine recovery means getting the actual mechanism, not just a fit.
+  condition: every ground-truth reaction is present and each rate constant is 
+    within 10% of truth
+  rationale: mass-action is fully identifiable from clean data, so genuine 
+    recovery means getting the actual mechanism, not just a fit.
 - name: mass-action-parsimonious
-  observable: number of reactions / parameters in the recovered model vs ground truth
-  condition: recovered reaction count <= ground-truth count (no spurious reactions)
-  rationale: a correct recovery introduces no extra machinery; parsimony separates recovery from overfitting.
+  observable: number of reactions / parameters in the recovered model vs ground 
+    truth
+  condition: recovered reaction count <= ground-truth count (no spurious 
+    reactions)
+  rationale: a correct recovery introduces no extra machinery; parsimony 
+    separates recovery from overfitting.
 readouts:
 - name: A
   description: Species A trajectory from the candidate run.
@@ -73,7 +80,9 @@ behavior_tests:
     detail: normalized RMSE < 0.05
   units: normalized RMSE
   requires_simulation: true
-  description: The recovered model's simulation must reproduce the oracle target within tolerance. Graded by viva_sbml_decomposition.evaluators (TrajectoryComparator).
+  description: The recovered model's simulation must reproduce the oracle target
+    within tolerance. Graded by viva_sbml_decomposition.evaluators 
+    (TrajectoryComparator).
 - name: mass-action-structure-recovered
   classification: correctness
   measure:
@@ -83,10 +92,12 @@ behavior_tests:
     candidate_model: '@recovered'
   pass_if:
     op: threshold
-    detail: all ground-truth reactions matched, rate constants within 10%, no spurious reactions
+    detail: all ground-truth reactions matched, rate constants within 10%, no 
+      spurious reactions
   units: fraction of reactions recovered
   requires_simulation: true
-  description: Recovered reactions + rate constants must match the ground truth. Graded by viva_sbml_decomposition.evaluators (StructuralScorer).
+  description: Recovered reactions + rate constants must match the ground truth.
+    Graded by viva_sbml_decomposition.evaluators (StructuralScorer).
 - name: mass-action-parsimonious
   classification: correctness
   measure:
@@ -98,12 +109,24 @@ behavior_tests:
     detail: no more reactions than the ground truth (no spurious reactions)
   units: spurious reaction count
   requires_simulation: true
-  description: No spurious reactions beyond the ground truth. Graded by viva_sbml_decomposition.evaluators (StructuralScorer).
+  description: No spurious reactions beyond the ground truth. Graded by 
+    viva_sbml_decomposition.evaluators (StructuralScorer).
 findings: []
 visualizations: []
 runs:
-- name: recovery-fit:recover-mass-action:1793473950
+- name: recovery-fit:recover-mass-action:1794589312
   status: completed
+  outcomes:
+    mass-action-trajectory-recovered:
+      result: ok
+      detail: nrmse 1.492e-09 vs tol 0.05 (code-graded)
+    mass-action-structure-recovered:
+      result: ok
+      detail: reactions_recovered 1.00, param_max_rel_err 8.217e-09, spurious 0 
+        (code-graded)
+    mass-action-parsimonious:
+      result: ok
+      detail: parsimonious=True, spurious 0 (code-graded)
   canonical: true
   computed_outcomes:
     mass-action-trajectory-recovered:
@@ -112,27 +135,28 @@ runs:
       evaluated_by: code
       operator: recovery_trajectory/threshold
       detail: nrmse 1.492e-09 vs tol 0.05
-      reconcile: no_authored
+      reconcile: divergent
     mass-action-structure-recovered:
       result: PASS
       measured_value: 1.0
       evaluated_by: code
       operator: recovery_structure/threshold
       detail: reactions_recovered 1.00, param_max_rel_err 8.217e-09, spurious 0
-      reconcile: no_authored
+      reconcile: divergent
     mass-action-parsimonious:
       result: PASS
       measured_value: 0.0
       evaluated_by: code
       operator: recovery_parsimony/threshold
       detail: parsimonious=True, spurious 0
-      reconcile: no_authored
+      reconcile: divergent
     _grader:
       version: 3-freshness
-      graded_at: '2026-11-01T19:41:09.039479+00:00'
-      inputs_hash: 6607f7824c7342bd
+      graded_at: '2026-11-13T17:01:55.236049+00:00'
+      inputs_hash: bd8cad5111a480bf
       store: store_less
-- name: viva_sbml_decomposition.composites.recovery.recover_mass_action__1793470642__a94aec
+- name: 
+    viva_sbml_decomposition.composites.recovery.recover_mass_action__1793470642__a94aec
   status: completed
   timestamp: 1793470645.9383218
   emitter:
@@ -182,4 +206,6 @@ pipeline_gate:
     blocked_by: []
     evaluated_by: code
     diverges_from_authored: false
-claim: 'Recovered faithfully from data: SINDy discovers the 3-reaction network and the fit reproduces the trajectories (nrmse ~1e-9). The cycle rebuilds this flat mass-action SBML from data alone.'
+claim: 'Recovered faithfully from data: SINDy discovers the 3-reaction network and
+  the fit reproduces the trajectories (nrmse ~1e-9). The cycle rebuilds this flat
+  mass-action SBML from data alone.'

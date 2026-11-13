@@ -1,10 +1,14 @@
 schema_version: 3
 name: recover-stochastic-abm
 investigation: discovery-sbml-recovery
-status: complete
+status: ran
 kind: adversarial
 title: Reject a stochastic system (no flat-SBML form)
-claim: 'Correctly rejected as non-recoverable: the detector flags the single low-copy stochastic trajectory (best polynomial-RHS worst-species R^2 = 0.05, well below the 0.9 tol) -- no deterministic flat SBML fits single-path shot noise. The network IS flat mass-action only in the large-population mean-field limit; the adversarial passes by refusing to overfit noise (the ABM/stochastic boundary).'
+claim: 'Correctly rejected as non-recoverable: the detector flags the single low-copy
+  stochastic trajectory (best polynomial-RHS worst-species R^2 = 0.05, well below
+  the 0.9 tol) -- no deterministic flat SBML fits single-path shot noise. The network
+  IS flat mass-action only in the large-population mean-field limit; the adversarial
+  passes by refusing to overfit noise (the ABM/stochastic boundary).'
 confidence: Accepted
 question: |
   Does the recovery pipeline correctly REFUSE to recover a flat SBML from a single
@@ -42,9 +46,12 @@ variants: []
 interventions: []
 expected_behavior:
 - name: correctly-flagged-non-recoverable
-  observable: non-recoverability detector verdict on a single stochastic trajectory
-  condition: flagged non_recoverable (worst-species polynomial-RHS R^2 below threshold)
-  rationale: a flat-SBML recovery method must refuse systems with no faithful flat form, not overfit noise.
+  observable: non-recoverability detector verdict on a single stochastic 
+    trajectory
+  condition: flagged non_recoverable (worst-species polynomial-RHS R^2 below 
+    threshold)
+  rationale: a flat-SBML recovery method must refuse systems with no faithful 
+    flat form, not overfit noise.
 readouts:
 - name: A
   description: Species A trajectory (stochastic).
@@ -67,9 +74,11 @@ behavior_tests:
     r2_threshold: 0.9
   pass_if:
     op: threshold
-    detail: detector flags non_recoverable (graded by viva_sbml_decomposition.evaluators)
+    detail: detector flags non_recoverable (graded by 
+      viva_sbml_decomposition.evaluators)
   requires_simulation: true
-  description: Passes by correctly REJECTING the system as not recoverable as a flat SBML. Graded by the NonRecoverabilityDetector.
+  description: Passes by correctly REJECTING the system as not recoverable as a 
+    flat SBML. Graded by the NonRecoverabilityDetector.
 findings: []
 visualizations:
 - name: non_recoverability_evidence
@@ -87,7 +96,29 @@ pipeline_gate:
     evaluated_by: code
     diverges_from_authored: false
 runs:
-- name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793476030__730600
+- name: recovery-fit:recover-stochastic-abm:1794589334
+  status: completed
+  outcomes:
+    correctly-flagged-non-recoverable:
+      result: ok
+      detail: best polynomial-RHS min R^2 0.0534 vs 0.9 (stochastic) 
+        (code-graded)
+  canonical: true
+  computed_outcomes:
+    correctly-flagged-non-recoverable:
+      result: PASS
+      measured_value: 0.0534
+      evaluated_by: code
+      operator: recovery_non_recoverable/threshold
+      detail: best polynomial-RHS min R^2 0.0534 vs 0.9 (stochastic)
+      reconcile: divergent
+    _grader:
+      version: 3-freshness
+      graded_at: '2026-11-13T17:02:17.064702+00:00'
+      inputs_hash: 8d2d1d31c706b3be
+      store: store_less
+- name: 
+    viva_sbml_decomposition.composites.recovery.recover_candidate__1793476030__730600
   status: completed
   timestamp: 1793476033.9370408
   emitter:

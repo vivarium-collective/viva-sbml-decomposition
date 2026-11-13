@@ -1,7 +1,7 @@
 schema_version: 3
 name: recover-enzyme-kinetics
 investigation: discovery-sbml-recovery
-status: complete
+status: ran
 title: Recover enzyme kinetics (Michaelis-Menten)
 confidence: Refuted
 question: |
@@ -105,8 +105,18 @@ behavior_tests:
 findings: []
 visualizations: []
 runs:
-- name: recovery-fit:recover-enzyme-kinetics:1793473953
+- name: recovery-fit:recover-enzyme-kinetics:1794589318
   status: completed
+  outcomes:
+    enzyme-trajectory-recovered:
+      result: fail
+      detail: nrmse 0.1142 vs tol 0.05 (code-graded)
+    enzyme-structure-recovered:
+      result: fail
+      detail: reactions_recovered 1.00, param_max_rel_err 1, spurious 31 (code-graded)
+    enzyme-parsimonious:
+      result: fail
+      detail: parsimonious=False, spurious 31 (code-graded)
   canonical: true
   computed_outcomes:
     enzyme-trajectory-recovered:
@@ -115,25 +125,25 @@ runs:
       evaluated_by: code
       operator: recovery_trajectory/threshold
       detail: nrmse 0.1142 vs tol 0.05
-      reconcile: no_authored
+      reconcile: divergent
     enzyme-structure-recovered:
       result: FAIL
       measured_value: 1.0
       evaluated_by: code
       operator: recovery_structure/threshold
       detail: reactions_recovered 1.00, param_max_rel_err 1, spurious 31
-      reconcile: no_authored
+      reconcile: divergent
     enzyme-parsimonious:
       result: FAIL
       measured_value: 31.0
       evaluated_by: code
       operator: recovery_parsimony/threshold
       detail: parsimonious=False, spurious 31
-      reconcile: no_authored
+      reconcile: divergent
     _grader:
       version: 3-freshness
-      graded_at: '2026-11-01T19:41:08.417188+00:00'
-      inputs_hash: 75ab23b6e1fe6256
+      graded_at: '2026-11-13T17:02:00.961466+00:00'
+      inputs_hash: 73f0a76e5522bc48
       store: store_less
 - name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793472471__bb7110
   status: completed

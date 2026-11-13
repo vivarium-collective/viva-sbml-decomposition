@@ -1,7 +1,7 @@
 schema_version: 3
 name: recover-oscillator
 investigation: discovery-sbml-recovery
-status: complete
+status: ran
 title: Recover an oscillator
 confidence: Refuted
 question: |
@@ -99,8 +99,18 @@ behavior_tests:
 findings: []
 visualizations: []
 runs:
-- name: recovery-fit:recover-oscillator:1793473958
+- name: recovery-fit:recover-oscillator:1794589329
   status: completed
+  outcomes:
+    oscillator-trajectory-recovered:
+      result: fail
+      detail: nrmse 0.4443 vs tol 0.08 (code-graded)
+    oscillator-structure-recovered:
+      result: fail
+      detail: reactions_recovered 0.25, param_max_rel_err 1, spurious 1 (code-graded)
+    oscillator-limit-cycle-reproduced:
+      result: fail
+      detail: late-window amplitude 0 vs 0.2 (code-graded)
   canonical: true
   computed_outcomes:
     oscillator-trajectory-recovered:
@@ -109,25 +119,25 @@ runs:
       evaluated_by: code
       operator: recovery_trajectory/threshold
       detail: nrmse 0.4443 vs tol 0.08
-      reconcile: no_authored
+      reconcile: divergent
     oscillator-structure-recovered:
       result: FAIL
       measured_value: 0.25
       evaluated_by: code
       operator: recovery_structure/threshold
       detail: reactions_recovered 0.25, param_max_rel_err 1, spurious 1
-      reconcile: no_authored
+      reconcile: divergent
     oscillator-limit-cycle-reproduced:
       result: FAIL
       measured_value: 0.0
       evaluated_by: code
       operator: recovery_limit_cycle/threshold
       detail: late-window amplitude 0 vs 0.2
-      reconcile: no_authored
+      reconcile: divergent
     _grader:
       version: 3-freshness
-      graded_at: '2026-11-01T19:41:09.253453+00:00'
-      inputs_hash: bf15594389c06e20
+      graded_at: '2026-11-13T17:02:11.816347+00:00'
+      inputs_hash: 904b84435c195afc
       store: store_less
 - name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793472486__12ee42
   status: completed
