@@ -59,3 +59,11 @@ def test_no_verdict_overclaim(name, spec):
     assert _FAVOR.get(authored, 3) <= _FAVOR[computed], (
         f"{name}: authored '{authored}' is more favorable than computed '{computed}'"
     )
+
+
+def test_both_investigations_have_reports():
+    for slug in ("sbml-decomposition", "discovery-sbml-recovery"):
+        rpt = INV / slug / "report.html"
+        assert rpt.exists() and rpt.stat().st_size >= 20000, (
+            f"{slug}: missing or empty report.html"
+        )
