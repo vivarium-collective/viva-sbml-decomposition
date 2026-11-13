@@ -60,8 +60,9 @@ readouts:
   units: relative error
 visualizations:
 - name: cross_engine_agreement
-  title: Engines agree (~1e-7); the decomposition split is the cost (~1e-1)
-  readouts:
+  address: local:CrossEngineAgreement
+  config: {}
+  covers:
   - cross_engine_max_rel_err
 behavior_tests:
 - name: engines-agree-on-the-same-model

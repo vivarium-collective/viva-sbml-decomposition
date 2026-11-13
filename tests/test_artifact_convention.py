@@ -3,26 +3,30 @@
 Every study commits a reproducible, seeded artifact, of one of two classes by how
 it is graded:
 
-- **Emitter-backed studies** run real simulations through an emitter and commit a
-  seeded ``runs.db`` (the decomposition investigation's norm).
-- **Code-graded studies** are graded by the evaluators with no emitter (recovery,
-  and the cross-engine-validation study), so their reproducible artifact is the
-  seeded ``computed_outcomes`` on the canonical run.
+- **Code-graded studies** — all of whose behavior tests use this workspace's
+  registered custom evaluators (``recovery_*``, ``cross_engine_agreement``) — are
+  graded with no emitter, so their reproducible artifact is the seeded
+  ``computed_outcomes`` on the canonical run (recovery, and cross-engine-validation).
+- **Emitter-backed studies** — anything else (engine-native ``accuracy`` /
+  ``composability`` tests that run real simulations) — commit a seeded ``runs.db``.
 
-The invariant: every non-synthesis study that has a run commits at least one of
-those artifacts, so a committed artifact cannot silently vanish. Synthesis
-studies aggregate their siblings and run no simulation of their own — their
-artifact is the rendered synthesis — so they are exempt, and the exemption is
-verified (the study must genuinely have no own graded/emitted run), so a real
+The class is derived from the study's ``behavior_tests[].measure.kind`` against
+the evaluator registry, so the ``runs.db`` guard stays specific to emitter-backed
+studies while code-graded studies are correctly checked for ``computed_outcomes``.
+Synthesis studies aggregate siblings and run no simulation of their own, so they
+are exempt — and the exemption is verified (no own graded/emitted run), so a real
 study cannot hide a missing artifact by being named a synthesis.
 """
 import pathlib
 
 import yaml
 
+from viva_sbml_decomposition.evaluators import register_evaluators
+
 INV = pathlib.Path("workspace/investigations")
 INVESTIGATIONS = ("sbml-decomposition", "discovery-sbml-recovery")
 SYNTHESIS_STUDIES = {"decomposition-synthesis", "recoverability-frontier"}
+CODE_GRADED_KINDS = set(register_evaluators({}))
 
 
 def _canonical(spec):
@@ -30,7 +34,16 @@ def _canonical(spec):
     return next((r for r in runs if r.get("canonical")), runs[0] if runs else None)
 
 
-def test_every_study_commits_a_reproducible_artifact():
+def _is_code_graded(spec):
+    kinds = {
+        (bt.get("measure") or {}).get("kind")
+        for bt in (spec.get("behavior_tests") or [])
+    }
+    kinds.discard(None)
+    return bool(kinds) and kinds <= CODE_GRADED_KINDS
+
+
+def test_every_study_commits_its_reproducible_artifact():
     offenders = []
     for inv in INVESTIGATIONS:
         for d in sorted((INV / inv / "studies").iterdir()):
@@ -40,15 +53,13 @@ def test_every_study_commits_a_reproducible_artifact():
             canonical = _canonical(spec)
             if canonical is None:
                 continue  # scaffolded study with no run yet
-            has_runs_db = (d / "runs.db").exists()
-            has_computed = bool(canonical.get("computed_outcomes"))
-            if has_runs_db or has_computed:
-                continue
-            # No artifact: allowed only for a synthesis study that genuinely ran
-            # no own graded/emitted simulation (it aggregates siblings).
-            if d.name in SYNTHESIS_STUDIES:
-                continue
-            offenders.append(f"{inv}/{d.name}")
-    assert not offenders, (
-        f"studies with neither runs.db nor computed_outcomes: {offenders}"
-    )
+            if d.name in SYNTHESIS_STUDIES and not canonical.get("computed_outcomes") \
+                    and not (d / "runs.db").exists():
+                continue  # synthesis: aggregates siblings, no own artifact
+            if _is_code_graded(spec):
+                if not canonical.get("computed_outcomes"):
+                    offenders.append(f"{inv}/{d.name}: code-graded, missing computed_outcomes")
+            else:
+                if not (d / "runs.db").exists():
+                    offenders.append(f"{inv}/{d.name}: emitter-backed, missing runs.db")
+    assert not offenders, f"studies missing their reproducible artifact: {offenders}"
