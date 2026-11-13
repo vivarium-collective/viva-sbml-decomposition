@@ -38,7 +38,6 @@ executive:
     capability ledger that turns each gap into a modular vivarium process.
   verdict: |
     CLOSED -- the cycle did not 'recover everything'; it MAPPED A RECOVERABILITY FRONTIER, which is the result. Grading the real recovery search (not the identity baseline): mass-action is genuinely recovered from data (nrmse ~1e-9) and the stochastic control is correctly rejected as non-recoverable, while the other three rungs delimit the frontier's far side -- each a specific, mechanistically-named capability gap, not a hollow failure: enzyme-kinetics (conserved-moiety ill-conditioning; a method gap), the oscillator (single-trajectory under-determination; a data gap), and the Hill gene-switch (non-polynomial kinetics; flat-mass-action recovery REFUTED). The investigation's two deliverables are met: a characterized recoverability frontier (relative to rate-law class, data richness, and determinism) and a capability ledger that spawns three concrete future directions (recover-enzyme-moiety-aware, recover-gene-switch-rational-laws, recover-oscillator-data-richness) plus the recoverability-frontier synthesis.
-  verdict_status: complete
   decisions_needed: []
   computed_verdict_status: failing
   computed_acceptance:
@@ -89,7 +88,7 @@ executive:
     - study: recover-oscillator
       behavior: oscillator-structure-recovered
       result: failing
-    diverges_from_authored: true
+    diverges_from_authored: false
 scientific_argument:
   main_claim: |-
     A closed build->simulate->compare->refine cycle does not 'recover everything' -- it MAPS A RECOVERABILITY FRONTIER. Faithful flat-SBML recovery from data is relative to the rate-law class (mass-action yes; Hill no, without rational laws), the data richness (one limit-cycle trajectory under-determines structure), and determinism (stochastic/low-copy systems have no flat form). Discovering and delimiting that frontier -- with refutations that open new directions -- is the result.

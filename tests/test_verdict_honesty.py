@@ -39,3 +39,23 @@ def test_investigation_titles_state_direction():
     rec = yaml.safe_load((INV / "discovery-sbml-recovery/investigation.yaml").read_text())
     assert "Decomposition" in dec["title"]
     assert "Recovery" in rec["title"] and "Recover" not in dec["title"]
+
+
+@pytest.mark.parametrize("name,spec", list(_invs()))
+def test_no_verdict_overclaim(name, spec):
+    """No authored verdict may be more favorable than the computed one.
+
+    Derive-first: an investigation with no authored verdict cannot overclaim.
+    Where an authored value remains, it must be no more favorable than the
+    discovery-engine's `computed_verdict_status`. A conservative authored
+    verdict (e.g. passing-with-caveats over computed passing) is allowed.
+    """
+    ex = spec.get("executive", {}) or {}
+    authored = (ex.get("verdict_status") or "").strip().lower()
+    computed = (ex.get("computed_verdict_status") or "").strip().lower()
+    if not authored:
+        return
+    assert computed, f"{name}: authored verdict but no computed_verdict_status"
+    assert _FAVOR.get(authored, 3) <= _FAVOR[computed], (
+        f"{name}: authored '{authored}' is more favorable than computed '{computed}'"
+    )
