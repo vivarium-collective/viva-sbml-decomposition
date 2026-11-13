@@ -278,6 +278,10 @@ def _render_one(address, config, runs_db, study_yaml, overrides=None):
 #
 # _study.yaml not found — skipped._
 
+# ## Study: `cross-engine-validation`
+#
+# _study.yaml not found — skipped._
+
 # ## Study: `decomposition-synthesis`
 #
 # _study.yaml not found — skipped._
