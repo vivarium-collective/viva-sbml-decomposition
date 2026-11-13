@@ -99,18 +99,8 @@ behavior_tests:
 findings: []
 visualizations: []
 runs:
-- name: recovery-fit:recover-oscillator:1794589329
+- name: recovery-fit:recover-oscillator:1794591301
   status: completed
-  outcomes:
-    oscillator-trajectory-recovered:
-      result: fail
-      detail: nrmse 0.4443 vs tol 0.08 (code-graded)
-    oscillator-structure-recovered:
-      result: fail
-      detail: reactions_recovered 0.25, param_max_rel_err 1, spurious 1 (code-graded)
-    oscillator-limit-cycle-reproduced:
-      result: fail
-      detail: late-window amplitude 0 vs 0.2 (code-graded)
   canonical: true
   computed_outcomes:
     oscillator-trajectory-recovered:
@@ -119,25 +109,25 @@ runs:
       evaluated_by: code
       operator: recovery_trajectory/threshold
       detail: nrmse 0.4443 vs tol 0.08
-      reconcile: divergent
+      reconcile: no_authored
     oscillator-structure-recovered:
       result: FAIL
       measured_value: 0.25
       evaluated_by: code
       operator: recovery_structure/threshold
       detail: reactions_recovered 0.25, param_max_rel_err 1, spurious 1
-      reconcile: divergent
+      reconcile: no_authored
     oscillator-limit-cycle-reproduced:
       result: FAIL
       measured_value: 0.0
       evaluated_by: code
       operator: recovery_limit_cycle/threshold
       detail: late-window amplitude 0 vs 0.2
-      reconcile: divergent
+      reconcile: no_authored
     _grader:
       version: 3-freshness
-      graded_at: '2026-11-13T17:02:11.816347+00:00'
-      inputs_hash: 904b84435c195afc
+      graded_at: '2026-11-13T17:35:03.757529+00:00'
+      inputs_hash: 6967d2a426ab8593
       store: store_less
 - name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793472486__12ee42
   status: completed

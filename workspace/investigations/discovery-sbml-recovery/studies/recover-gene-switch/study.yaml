@@ -98,18 +98,8 @@ behavior_tests:
 findings: []
 visualizations: []
 runs:
-- name: recovery-fit:recover-gene-switch:1794589323
+- name: recovery-fit:recover-gene-switch:1794591296
   status: completed
-  outcomes:
-    gene-switch-trajectory-recovered:
-      result: fail
-      detail: nrmse 0.5804 vs tol 0.05 (code-graded)
-    gene-switch-structure-recovered:
-      result: fail
-      detail: reactions_recovered 0.00, param_max_rel_err 0, spurious 2 (code-graded)
-    gene-switch-bistability-reproduced:
-      result: ok
-      detail: steady-state separation 0.801 vs 0.5 (code-graded)
   canonical: true
   computed_outcomes:
     gene-switch-trajectory-recovered:
@@ -118,25 +108,25 @@ runs:
       evaluated_by: code
       operator: recovery_trajectory/threshold
       detail: nrmse 0.5804 vs tol 0.05
-      reconcile: divergent
+      reconcile: no_authored
     gene-switch-structure-recovered:
       result: FAIL
       measured_value: 0.0
       evaluated_by: code
       operator: recovery_structure/threshold
       detail: reactions_recovered 0.00, param_max_rel_err 0, spurious 2
-      reconcile: divergent
+      reconcile: no_authored
     gene-switch-bistability-reproduced:
       result: PASS
       measured_value: 0.8012
       evaluated_by: code
       operator: recovery_bistability/threshold
       detail: steady-state separation 0.801 vs 0.5
-      reconcile: divergent
+      reconcile: no_authored
     _grader:
       version: 3-freshness
-      graded_at: '2026-11-13T17:02:06.425196+00:00'
-      inputs_hash: '54143662e7914443'
+      graded_at: '2026-11-13T17:34:58.519941+00:00'
+      inputs_hash: 9cf0380b6da634f2
       store: store_less
 - name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793472479__93a6c0
   status: completed

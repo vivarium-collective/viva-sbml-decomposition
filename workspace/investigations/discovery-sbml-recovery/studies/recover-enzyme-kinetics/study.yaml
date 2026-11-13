@@ -105,18 +105,8 @@ behavior_tests:
 findings: []
 visualizations: []
 runs:
-- name: recovery-fit:recover-enzyme-kinetics:1794589318
+- name: recovery-fit:recover-enzyme-kinetics:1794591290
   status: completed
-  outcomes:
-    enzyme-trajectory-recovered:
-      result: fail
-      detail: nrmse 0.1142 vs tol 0.05 (code-graded)
-    enzyme-structure-recovered:
-      result: fail
-      detail: reactions_recovered 1.00, param_max_rel_err 1, spurious 31 (code-graded)
-    enzyme-parsimonious:
-      result: fail
-      detail: parsimonious=False, spurious 31 (code-graded)
   canonical: true
   computed_outcomes:
     enzyme-trajectory-recovered:
@@ -125,25 +115,25 @@ runs:
       evaluated_by: code
       operator: recovery_trajectory/threshold
       detail: nrmse 0.1142 vs tol 0.05
-      reconcile: divergent
+      reconcile: no_authored
     enzyme-structure-recovered:
       result: FAIL
       measured_value: 1.0
       evaluated_by: code
       operator: recovery_structure/threshold
       detail: reactions_recovered 1.00, param_max_rel_err 1, spurious 31
-      reconcile: divergent
+      reconcile: no_authored
     enzyme-parsimonious:
       result: FAIL
       measured_value: 31.0
       evaluated_by: code
       operator: recovery_parsimony/threshold
       detail: parsimonious=False, spurious 31
-      reconcile: divergent
+      reconcile: no_authored
     _grader:
       version: 3-freshness
-      graded_at: '2026-11-13T17:02:00.961466+00:00'
-      inputs_hash: 73f0a76e5522bc48
+      graded_at: '2026-11-13T17:34:53.164991+00:00'
+      inputs_hash: 8ab1bad3ffa2bc51
       store: store_less
 - name: viva_sbml_decomposition.composites.recovery.recover_candidate__1793472471__bb7110
   status: completed

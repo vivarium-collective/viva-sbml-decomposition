@@ -21,7 +21,6 @@ from ruamel.yaml.comments import CommentedMap
 
 from discovery_engine.study_verdict import roll_up_verdict, write_gate_evaluator
 from viva_sbml_decomposition.core import build_core
-from viva_sbml_decomposition.evaluators import register_evaluators
 from viva_sbml_decomposition.models.recovery_targets import RECOVERY_TARGETS
 from viva_sbml_decomposition.processes.recovery import RateLawFitter
 
@@ -48,31 +47,23 @@ def recover(study_slug: str = "recover-mass-action") -> dict:
     wrong = te.sbmlToAntimony(rr.getCurrentSBML())
 
     fit = RateLawFitter(config={"candidate_antimony": wrong, "target": study_slug, "max_iter": 800}, core=core).update({})
-    fitted = fit["fitted_antimony"]
     print(f"{study_slug}: fit nrmse {fit['nrmse']:.4g}; fitted params {fit['fitted_params']}")
 
-    # Grade the FITTED (non-identity) candidate.
-    reg: dict = {}
-    register_evaluators(reg)
+    # Record the fit as the canonical run. Grading is NOT authored here: recovery
+    # is code-authoritative. grade_recovery.py's compute_outcomes independently
+    # re-derives the recovered candidate (the @recovered evaluator) and writes the
+    # computed grades, which the verdict reads computed-first. Writing an authored
+    # ok/fail copy here only produced a spurious `reconcile: divergent` in the
+    # rendered report (the engine compares authored ok/fail to computed PASS/FAIL
+    # by ==), so we omit it — the honest flag is `no_authored`.
     y = ruamel.yaml.YAML()
     y.preserve_quotes = True
     p = sd / "study.yaml"
     d = y.load(p.read_text())
-    outcomes = CommentedMap()
-    for t in d.get("behavior_tests") or []:
-        kind = (t.get("measure") or {}).get("kind")
-        fn = reg.get(kind)
-        if not fn:
-            continue
-        test = {"measure": {**(t.get("measure") or {}), "candidate_model": fitted}}
-        o = fn(test, None, str(ws))
-        outcomes[t["name"]] = {"result": "ok" if o["result"] == "PASS" else "fail",
-                               "detail": o["detail"] + " (recovered candidate, 2x-param start)"}
 
     run = CommentedMap()
     run["name"] = f"recovery-fit:{study_slug}:{int(time.time())}"
     run["status"] = "completed"
-    run["outcomes"] = outcomes
     run["canonical"] = True
     runs = d.setdefault("runs", [])
     # Replace any prior recovery-fit run for this study and clear other canonical
