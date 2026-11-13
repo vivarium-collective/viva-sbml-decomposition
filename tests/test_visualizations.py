@@ -16,6 +16,7 @@ FIGS = [
     ("species_dynamics", "SpeciesDynamics"),
     ("decision_table", "DecisionTable"),
     ("abm_meanfield", "ABMMeanField"),
+    ("cross_engine_agreement", "CrossEngineAgreement"),
 ]
 
 
@@ -127,3 +128,17 @@ def test_per_study_reports_embed_hero_figures():
         html = open(p).read()
         assert "Plotly.newPlot" in html          # at least one interactive figure
         assert "Antimony" in html and "Findings" in html
+
+
+def test_cross_engine_figure_degrades_when_copasi_aborts():
+    # The figure must still build when an engine arm is missing (COPASI abort).
+    import importlib
+    mod = importlib.import_module("viva_sbml_decomposition.visualizations.cross_engine_agreement")
+    state = {"reference": "tellurium",
+             "agreement": {"tellurium": 0.0, "copasi": None, "native": 1.1e-07},
+             "aborted": ["copasi"],
+             "convergence": {"arm2": [[0.1, 0.857], [0.0125, 0.112]]}}
+    spec = mod.CrossEngineAgreement(config={}, core=allocate_core()).figure(state)
+    assert spec["data"] and "layout" in spec
+    import plotly.graph_objects as go
+    go.Figure(spec)

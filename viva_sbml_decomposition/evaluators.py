@@ -243,8 +243,46 @@ def _non_recoverable(test, reader, ws_root):
     )
 
 
+@storeless
+def _cross_engine_agreement(test, reader, ws_root):
+    """Do the engines agree on the same model? Max rel err of each engine's
+    monolithic run vs the tellurium reference, graded against a tolerance.
+
+    Code-authoritative and store-less: re-runs the agreement harness internally.
+    PASS when at least one non-reference engine ran and every engine that ran
+    agrees within tolerance; an engine that aborts (COPASI's ~1-in-6 loader abort,
+    or native on a non-glycolysis model) is reported as an honest caveat, not a
+    silent pass. Only glycolysis supports all three engines (native is a hand-
+    ported Teusink RHS), so the measure defaults to it.
+    """
+    from .harness.cross_engine import cross_engine_agreement
+    from .models.glycolysis import GLYCOLYSIS_ANTIMONY, GLYCOLYSIS_META
+
+    m = test.get("measure") or {}
+    antimony = GLYCOLYSIS_ANTIMONY  # the one model all three engines support
+    engines = tuple(m.get("engines") or ("tellurium", "copasi", "native"))
+    t_end = float(m.get("t_end", GLYCOLYSIS_META["t_end"]))
+    n_points = int(m.get("n_points", 301))
+    tol = float(m.get("tol", 1e-3))
+
+    res = cross_engine_agreement(antimony, engines=engines, t_end=t_end, n_points=n_points)
+    ran = {e: v for e, v in res["agreement"].items() if v is not None and e != res["reference"]}
+    worst = max(ran.values()) if ran else float("inf")
+    passed = bool(ran) and worst < tol
+
+    shown = ", ".join(f"{e} {v:.2e}" for e, v in sorted(res["agreement"].items()) if v is not None)
+    aborted = f"; aborted: {res['aborted']}" if res["aborted"] else ""
+    caveat = "; COPASI is not bit-reproducible" if "copasi" in engines else ""
+    detail = f"max rel err vs {res['reference']}: {shown} (tol {tol}){aborted}{caveat}"
+    return _code_outcome(
+        "PASS" if passed else "FAIL",
+        round(worst, 12) if worst != float("inf") else worst,
+        "cross_engine_agreement/threshold", detail)
+
+
 def register_evaluators(registry: dict) -> dict:
     """discovery_engine hook: map our custom measure kinds to their evaluators."""
+    registry["cross_engine_agreement"] = _cross_engine_agreement
     registry["recovery_trajectory"] = _trajectory
     registry["recovery_structure"] = _structure
     registry["recovery_parsimony"] = _parsimony

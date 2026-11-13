@@ -1,0 +1,11 @@
+{
+  "model": "glycolysis",
+  "reference": "tellurium",
+  "agreement": {
+    "tellurium": 0.0,
+    "copasi": 1.293226295799441e-07,
+    "native": 1.0648853847474125e-07
+  },
+  "aborted": [],
+  "note": "max relative error of each engine's monolithic run vs tellurium; COPASI not bit-reproducible"
+}
