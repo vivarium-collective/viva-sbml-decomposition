@@ -67,12 +67,23 @@ def test_every_arm_scores_on_the_documented_scale():
 
 
 def test_arm6_excluded_from_accuracy_axis():
-    # The arm-6 record flags itself off the accuracy axis (accuracy None /
-    # accuracy_exempt True) — the flag the Task-12 viz assembler will consume.
+    # The arm-6 record flags itself off the accuracy axis (accuracy_exempt True)
+    # — the flag the Task-12 viz assembler will consume.
     s6 = score_arm("arm6")
     assert s6.accuracy_exempt is True
-    assert s6.accuracy is None
 
     # Every other arm HAS a monolithic reference, so it is NOT exempt.
     for aid in ["arm1", "arm2", "arm3", "arm4", "arm5"]:
         assert score_arm(aid).accuracy_exempt is False
+
+
+def test_composability_score_has_no_accuracy_placeholder():
+    # The always-None `accuracy` field was a vestigial placeholder: real per-arm
+    # accuracy comes from the accuracy harness (load_metrics), not this rubric.
+    # The distinguishing `accuracy_exempt` flag stays.
+    from dataclasses import fields
+
+    from viva_sbml_decomposition.harness.composability import ComposabilityScore
+    names = {f.name for f in fields(ComposabilityScore)}
+    assert "accuracy" not in names
+    assert "accuracy_exempt" in names
