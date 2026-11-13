@@ -16,9 +16,14 @@ from pathlib import Path
 
 import ruamel.yaml
 
-from discovery_engine.study_evaluator import clear_workspace_evaluator_cache, compute_outcomes
-from discovery_engine.study_outcomes import canonical_run
-from discovery_engine.study_verdict import roll_up_verdict, write_gate_evaluator
+try:  # engine ≥ nested study.* layout (viva-discovery-engine)
+    from discovery_engine.study.evaluator import clear_workspace_evaluator_cache, compute_outcomes
+    from discovery_engine.study.outcomes import canonical_run
+    from discovery_engine.study.verdict import roll_up_verdict, write_gate_evaluator
+except ImportError:  # older engine: flat module layout
+    from discovery_engine.study_evaluator import clear_workspace_evaluator_cache, compute_outcomes
+    from discovery_engine.study_outcomes import canonical_run
+    from discovery_engine.study_verdict import roll_up_verdict, write_gate_evaluator
 
 
 def _ws_root() -> Path:

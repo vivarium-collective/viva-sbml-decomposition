@@ -19,7 +19,10 @@ import ruamel.yaml
 import tellurium as te
 from ruamel.yaml.comments import CommentedMap
 
-from discovery_engine.study_verdict import roll_up_verdict, write_gate_evaluator
+try:  # engine ≥ nested study.* layout (viva-discovery-engine)
+    from discovery_engine.study.verdict import roll_up_verdict, write_gate_evaluator
+except ImportError:  # older engine: flat module layout
+    from discovery_engine.study_verdict import roll_up_verdict, write_gate_evaluator
 from viva_sbml_decomposition.core import build_core
 from viva_sbml_decomposition.models.recovery_targets import RECOVERY_TARGETS
 from viva_sbml_decomposition.processes.recovery import RateLawFitter
