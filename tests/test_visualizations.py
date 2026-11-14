@@ -18,6 +18,7 @@ FIGS = [
     ("abm_meanfield", "ABMMeanField"),
     ("cross_engine_agreement", "CrossEngineAgreement"),
     ("scaling_benchmarks", "ScalingBenchmarks"),
+    ("sensitivity_indices", "SensitivityIndices"),
 ]
 
 
@@ -157,3 +158,18 @@ def test_scaling_figure_degrades_when_serial():
     assert spec["data"] and "layout" in spec
     import plotly.graph_objects as go
     go.Figure(spec)
+
+
+def test_sensitivity_figure_degrades_on_empty():
+    import importlib
+    mod = importlib.import_module("viva_sbml_decomposition.visualizations.sensitivity_indices")
+    # non-empty builds
+    state = {"params": ["a", "b", "c"], "mu_star": [1.5, 0.3, 0.05],
+             "sigma": [0.4, 0.1, 0.02], "ranking": ["a", "b", "c"], "qoi": "ATP", "machine": "test"}
+    spec = mod.SensitivityIndices(config={}, core=allocate_core()).figure(state)
+    assert spec["data"] and "layout" in spec
+    import plotly.graph_objects as go
+    go.Figure(spec)
+    # empty degrades, no raise
+    empty = {"params": [], "mu_star": [], "sigma": [], "ranking": [], "qoi": "ATP", "machine": ""}
+    go.Figure(mod.SensitivityIndices(config={}, core=allocate_core()).figure(empty))

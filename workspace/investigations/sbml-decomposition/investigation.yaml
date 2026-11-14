@@ -40,6 +40,9 @@ executive:
     - study: scaling-benchmarks
       behavior: ensemble-parallel-speedup
       result: passing
+    - study: sensitivity-uq
+      behavior: sensitivity-ranking-discriminates
+      result: passing
     - study: ensemble-and-multirate
       behavior: ray-ensemble-real-parallel-speedup
       result: passing
@@ -102,6 +105,8 @@ at_a_glance:
   role: validation — the three engines (tellurium, COPASI, native) agree on the same monolithic model to ~1e-7, four-to-six orders below the additive-split error; engine choice is not the decomposition cost, the split is.
 - study: scaling-benchmarks
   role: 'performance — systematic scaling: the same-rate ensemble wins ~7.5x in parallel while decomposition is slower end-to-end at affordable model sizes; the machine-tagged baseline is the Phase-6 (Rust engine) reference.'
+- study: sensitivity-uq
+  role: 'sensitivity — a seeded Morris screen over the Vmax enzyme capacities ranks which parameters drive steady-state ATP; glucose transport (vGLT) dominates, then vG3PDH and hexokinase (vGLK) — the classical flux-controlling steps, strongly discriminating (~95x top/median).'
 - study: decomposition-synthesis
   role: Synthesis — builds-on all seven arms; the cross-arm speed x accuracy x composability landscape + decision guide.
 how_to_read: 'Start with sbml-in-tellurium (the reference), read mechanical-split-cost -> biological-modular-seam -> fully-native-pbg as increasing decomposition (accuracy falls, composability rises), then cross-engine-coupling (the capability proof) and ensemble-and-multirate (the parallel and scheduler wins). bigger-models-and-abm-limit holds the two boundary probes: where the monolith strains at scale and where SBML stops applying (the adversarial case). The 3-way tradeoff map and the decision table are the deliverable.'
@@ -134,6 +139,7 @@ studies:
 - bigger-models-and-abm-limit
 - cross-engine-validation
 - scaling-benchmarks
+- sensitivity-uq
 - decomposition-synthesis
 expert_docs: []
 acceptance_criteria:
@@ -151,6 +157,8 @@ acceptance_criteria:
   behavior: engines-agree-on-the-same-model
 - study: scaling-benchmarks
   behavior: ensemble-parallel-speedup
+- study: sensitivity-uq
+  behavior: sensitivity-ranking-discriminates
 - study: ensemble-and-multirate
   behavior: ray-ensemble-real-parallel-speedup
 - study: ensemble-and-multirate
