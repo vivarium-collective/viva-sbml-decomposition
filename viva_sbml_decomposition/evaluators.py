@@ -334,11 +334,41 @@ def _scaling_model_size_cost(test, reader, ws_root):
                          f"bigger-models-and-abm-limit); machine-specific")
 
 
+@storeless
+def _sensitivity_ranking(test, reader, ws_root):
+    """The global sensitivity analysis DISCRIMINATES parameters: the most
+    important parameter's Morris mu* is clearly above the median (a degenerate QoI
+    that barely responds would give a near-flat ranking ~1x). Morris on the
+    deterministic ODE is reproducible given the seed; only raw magnitudes vary
+    across BLAS/platforms, so the graded property is the ranking's discrimination,
+    not an absolute mu*."""
+    import numpy as np
+
+    from .harness.sensitivity import morris_sensitivity
+
+    m = test.get("measure") or {}
+    res = morris_sensitivity(
+        r=int(m.get("r", 6)), levels=int(m.get("levels", 4)),
+        span=float(m.get("span", 0.2)), seed=int(m.get("seed", 0)),
+        qoi=m.get("qoi", "ATP"))
+    ms = np.asarray(res["mu_star"], dtype=float)
+    median = float(np.median(ms)) or 1e-12
+    discrimination = float(ms.max() / median)
+    threshold = float(m.get("discrimination", 3.0))
+    passed = bool(np.all(np.isfinite(ms))) and discrimination >= threshold
+    top3 = res["ranking"][:3]
+    detail = (f"Morris ranking discriminates {discrimination:.1f}x (top/median, >= {threshold}); "
+              f"top: {', '.join(top3)} (QoI {res['qoi']}); mu* magnitudes machine-specific")
+    return _code_outcome("PASS" if passed else "FAIL", round(discrimination, 2),
+                         "sensitivity_ranking/discrimination", detail)
+
+
 def register_evaluators(registry: dict) -> dict:
     """discovery_engine hook: map our custom measure kinds to their evaluators."""
     registry["cross_engine_agreement"] = _cross_engine_agreement
     registry["scaling_ensemble_speedup"] = _scaling_ensemble_speedup
     registry["scaling_model_size_cost"] = _scaling_model_size_cost
+    registry["sensitivity_ranking"] = _sensitivity_ranking
     registry["recovery_trajectory"] = _trajectory
     registry["recovery_structure"] = _structure
     registry["recovery_parsimony"] = _parsimony

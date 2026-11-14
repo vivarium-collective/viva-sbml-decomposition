@@ -1,0 +1,102 @@
+schema_version: 3
+name: sensitivity-uq
+investigation: sbml-decomposition
+status: ran
+title: 'Global sensitivity: which enzyme capacities drive the glycolysis model?'
+question: |
+  Across the glycolysis model's enzyme-capacity (Vmax) parameters, which ones
+  actually drive the output (steady-state ATP), and by how much — a global
+  sensitivity screen rather than a one-at-a-time local derivative?
+hypothesis: |
+  A small number of parameters dominate the flux: classical control analysis puts
+  glucose transport and hexokinase near the top. A Morris elementary-effects screen
+  over all Vmax parameters should produce a sharply discriminating importance
+  ranking (one or two parameters far above the median), not a flat one.
+objective: |
+  Run a seeded Morris elementary-effects screen (r trajectories, ±20% around each
+  nominal Vmax) over the glycolysis Vmax parameters on the Ray ensemble, with
+  steady-state ATP as the quantity of interest; report mu* (importance) and sigma
+  (interaction / nonlinearity) and the ranking; grade that the ranking discriminates.
+description: |
+  Sensitivity / UQ study for the SBML-decomposition investigation. The sensitivity
+  harness (viva_sbml_decomposition.harness.sensitivity) builds a seeded Morris
+  design over the 14 Vmax parameters (±20% around nominal, a biologically
+  reasonable and numerically stable range — wider ranges push glycolysis out of its
+  stable regime) and evaluates the samples in parallel through the ensemble
+  (run_ensemble; serial fallback). The quantity of interest is steady-state ATP,
+  which responds clearly to the Vmax sweep.
+
+  Morris on the deterministic ODE is REPRODUCIBLE given the seed, so the verdict
+  grades the ranking's discrimination (top mu* vs median), not raw magnitudes
+  (which vary in their last digits across BLAS/platforms). The committed baseline
+  (visualizations/sensitivity_indices.json) is this machine's mu*/sigma. The
+  measured ranking is strongly discriminating — glucose transport (vGLT) dominates,
+  then glyceraldehyde-3-phosphate dehydrogenase (vG3PDH) and hexokinase (vGLK) —
+  the classical flux-controlling steps, consistent with the hypothesis.
+parent_studies:
+- study: ensemble-and-multirate
+  relation: builds-on
+baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.engine_monolithic.engine_monolithic
+  params:
+    model: glycolysis
+    engine: tellurium
+variants: []
+interventions: []
+expected_behavior:
+- name: sensitivity-ranking-discriminates
+  observable: Morris mu* (importance) per Vmax parameter for steady-state ATP, and the top/median ratio
+  condition: the ranking discriminates — the most important parameter's mu* is at least 3x the median (a degenerate, unresponsive QoI would be ~1x); indices finite and reproducible given the seed
+  rationale: a useful global sensitivity analysis must separate the flux-controlling parameters from the rest; a flat ranking means the QoI or range was poorly chosen.
+readouts:
+- name: sensitivity_indices
+  description: Machine-tagged Morris indices — mu* (importance) and sigma (interaction/nonlinearity) per Vmax parameter, and the ranking.
+  identifier: sensitivity_indices
+  units: dimensionless
+visualizations:
+- name: sensitivity_indices
+  address: local:SensitivityIndices
+  config: {}
+  covers:
+  - sensitivity_indices
+behavior_tests:
+- name: sensitivity-ranking-discriminates
+  classification: correctness
+  measure:
+    kind: sensitivity_ranking
+    r: 6
+    levels: 4
+    span: 0.2
+    seed: 0
+    qoi: ATP
+    discrimination: 3.0
+  pass_if:
+    op: threshold
+    detail: top mu* >= 3x median mu* (ranking discriminates), indices finite
+  units: dimensionless
+  description: 'Seeded Morris screen over 14 Vmax params (±20%), QoI steady-state ATP. Measured top/median ~89x (glucose transport vGLT dominant). Reproducible given the seed; mu* magnitudes machine-specific.'
+  requires_simulation: true
+runs:
+- name: sensitivity:1794663972
+  status: completed
+  canonical: true
+  computed_outcomes:
+    sensitivity-ranking-discriminates:
+      result: PASS
+      measured_value: 95.16
+      evaluated_by: code
+      operator: sensitivity_ranking/discrimination
+      detail: 'Morris ranking discriminates 95.2x (top/median, >= 3.0); top: vGLT_VmGLT, vG3PDH_VmG3PDH, vGLK_VmGLK (QoI ATP); mu* magnitudes machine-specific'
+      reconcile: no_authored
+    _grader:
+      version: 3-freshness
+      graded_at: '2026-11-14T13:46:22.742009+00:00'
+      inputs_hash: b21b832f59053cfc
+      store: store_less
+pipeline_gate:
+  gate_evaluator:
+    result: passed
+    blocked_by: []
+    evaluated_by: code
+    diverges_from_authored: false

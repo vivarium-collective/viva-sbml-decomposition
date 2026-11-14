@@ -32,3 +32,19 @@ def test_morris_serial_matches_on_indices(monkeypatch):
     serial_run = morris_sensitivity(r=2, levels=4, span=0.2, seed=1)
     assert serial_run["backend"] == "serial"
     assert serial_run["mu_star"] == ray_run["mu_star"]
+
+
+def test_sensitivity_study_is_code_graded_and_passes():
+    import pathlib
+    import yaml
+    sd = pathlib.Path(
+        "workspace/investigations/sbml-decomposition/studies/sensitivity-uq/study.yaml")
+    d = yaml.safe_load(sd.read_text())
+    assert d["investigation"] == "sbml-decomposition"
+    canonical = next((r for r in (d.get("runs") or []) if r.get("canonical")), None)
+    assert canonical is not None, "study has no canonical run"
+    grade = (canonical.get("computed_outcomes") or {}).get("sensitivity-ranking-discriminates") or {}
+    assert grade.get("result") == "PASS"
+    assert grade.get("evaluated_by") == "code"
+    assert grade.get("reconcile") == "no_authored"
+    assert grade.get("measured_value") is not None and grade["measured_value"] >= 3.0
