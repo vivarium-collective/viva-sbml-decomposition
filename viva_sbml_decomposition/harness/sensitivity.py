@@ -17,15 +17,15 @@ from __future__ import annotations
 import platform
 
 import numpy as np
-import tellurium as te
 
+from viva_sbml_decomposition._tellurium import load
 from viva_sbml_decomposition.composites.ensemble import run_ensemble
 from viva_sbml_decomposition.models.glycolysis import GLYCOLYSIS_ANTIMONY
 
 
 def _vmax_nominal() -> dict:
     """The Vmax (enzyme-capacity) parameters and their nominal values."""
-    rr = te.loada(GLYCOLYSIS_ANTIMONY)
+    rr = load(GLYCOLYSIS_ANTIMONY)
     return {p: float(rr[p]) for p in rr.getGlobalParameterIds() if "Vm" in p}
 
 
