@@ -1,0 +1,40 @@
+{
+  "model_size": [
+    {
+      "n": 2,
+      "species": 7,
+      "mono_total_s": 0.01918972935527563,
+      "decomp_total_s": 0.04903858341276646,
+      "accuracy": 0.0019884053787214678
+    },
+    {
+      "n": 8,
+      "species": 25,
+      "mono_total_s": 0.04505831282585859,
+      "decomp_total_s": 0.1943259162362665,
+      "accuracy": 0.012338692620567908
+    },
+    {
+      "n": 32,
+      "species": 97,
+      "mono_total_s": 0.21536781243048608,
+      "decomp_total_s": 0.6096629165112972,
+      "accuracy": 0.05238371117968429
+    }
+  ],
+  "build_exponent": 0.9206671230007684,
+  "ensemble": {
+    "instances": [
+      1,
+      4,
+      8
+    ],
+    "speedup": [
+      1.0032004097114626,
+      3.7804571829907583,
+      7.7109728226631065
+    ],
+    "backend": "ray"
+  },
+  "machine": "macOS-15.2-arm64-arm-64bit"
+}

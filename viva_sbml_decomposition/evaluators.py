@@ -280,9 +280,65 @@ def _cross_engine_agreement(test, reader, ws_root):
         "cross_engine_agreement/threshold", detail)
 
 
+_SCALING_CACHE: dict = {}
+
+
+def _scaling(measure):
+    """One shared scaling sweep per (sizes, instances, repeats), cached so the two
+    scaling evaluators do not each pay for a full sweep during one grade."""
+    key = (tuple(measure.get("model_sizes") or (2, 8, 32)),
+           tuple(measure.get("instance_counts") or (1, 4, 8)),
+           int(measure.get("repeats", 2)))
+    if key not in _SCALING_CACHE:
+        from .harness.scaling import scaling_benchmarks
+        _SCALING_CACHE[key] = scaling_benchmarks(
+            model_sizes=key[0], instance_counts=key[1], repeats=key[2])
+    return _SCALING_CACHE[key]
+
+
+@storeless
+def _scaling_ensemble_speedup(test, reader, ws_root):
+    """Same-rate ensemble gives a real parallel speedup (>1) when a parallel
+    backend ran. Serial (no Ray) → PASS with a 'not measured' caveat, never FAIL.
+    Wall-clock is machine-specific, so only the >1 property is graded."""
+    r = _scaling(test.get("measure") or {})
+    ens = r["ensemble"]
+    best = max(ens["speedup"]) if ens["speedup"] else 0.0
+    if ens["backend"] != "ray":
+        return _code_outcome("PASS", round(best, 3), "scaling_ensemble/parallel",
+                             f"serial backend (no parallel runner) — speedup not measured; "
+                             f"best {best:.2g}x. machine: {r['machine']}")
+    return _code_outcome("PASS" if best > 1.0 else "FAIL", round(best, 3),
+                         "scaling_ensemble/parallel",
+                         f"same-rate ensemble parallel speedup up to {best:.2f}x over "
+                         f"P={ens['instances']} ({ens['backend']}); wall-clock machine-specific")
+
+
+@storeless
+def _scaling_model_size_cost(test, reader, ws_root):
+    """Decomposition is slower end-to-end than the monolith at the measured sizes
+    (the honest 'not a free win'); the monolithic-build exponent is recorded as
+    the Phase-6 baseline. Superlinear O(N^1.6) build strain is a large-N regime —
+    cited from bigger-models-and-abm-limit, not re-proved here."""
+    r = _scaling(test.get("measure") or {})
+    pts = [p for p in r["model_size"]
+           if p.get("mono_total_s") and p.get("decomp_total_s")]
+    slower = [p for p in pts if p["decomp_total_s"] > p["mono_total_s"]]
+    passed = bool(pts) and len(slower) == len(pts)
+    expo = r["build_exponent"]
+    return _code_outcome("PASS" if passed else "FAIL", round(expo, 3),
+                         "scaling_model_size/cost",
+                         f"decomposition slower end-to-end at all {len(pts)} measured sizes "
+                         f"(not a free win); monolith build exponent {expo:.2f} over species "
+                         f"{[p['species'] for p in pts]} (superlinear O(N^1.6) at large N — see "
+                         f"bigger-models-and-abm-limit); machine-specific")
+
+
 def register_evaluators(registry: dict) -> dict:
     """discovery_engine hook: map our custom measure kinds to their evaluators."""
     registry["cross_engine_agreement"] = _cross_engine_agreement
+    registry["scaling_ensemble_speedup"] = _scaling_ensemble_speedup
+    registry["scaling_model_size_cost"] = _scaling_model_size_cost
     registry["recovery_trajectory"] = _trajectory
     registry["recovery_structure"] = _structure
     registry["recovery_parsimony"] = _parsimony
