@@ -1,0 +1,104 @@
+schema_version: 3
+name: bayesian-calibration
+investigation: discovery-sbml-recovery
+status: ran
+title: 'Bayesian calibration: rate constants with honest uncertainty, not just a point estimate'
+question: |
+  The recovery ladder fits a point estimate of the mass-action rate constants. Can
+  we instead recover a full posterior — the rate constants WITH calibrated
+  uncertainty — from noisy data, and is that posterior honest (does its 95%
+  credible interval actually contain the truth, and is it informative)?
+hypothesis: |
+  Mass-action is fully identifiable (recover-mass-action recovers it to nrmse ~1e-9),
+  so with a modest amount of noisy data the posterior over (k1, k2, k2r) should be
+  tight and centered on the truth: the 95% credible intervals should cover the true
+  values while being far narrower than the prior.
+objective: |
+  Generate noisy synthetic data from the known mass-action model, evaluate the
+  Gaussian likelihood on a grid over the three rate constants (an exact posterior,
+  no MCMC), and report the marginal posteriors, MAP, 95% credible intervals, and a
+  posterior-predictive check — graded on coverage and informativeness.
+description: |
+  A Bayesian extension of the recovery pipeline for the SBML-recovery investigation.
+  The calibration harness (viva_sbml_decomposition.harness.calibration) draws noisy
+  synthetic data from the mass-action oracle (A->B; A+B<->C; relative Gaussian
+  observation noise) and computes the EXACT posterior over (k1, k2, k2r) on a grid
+  under a uniform prior — no MCMC convergence to validate, fully deterministic given
+  the data seed. It reports the three marginal posteriors, the MAP, 95% credible
+  intervals, the prior widths, and a posterior-predictive band in observation space.
+
+  Wall-clock plays no role; the graded properties are reproducible: the 95% credible
+  intervals cover all three true rate constants (honest coverage), and each interval
+  is far narrower than the prior (the data is informative — a flat posterior that
+  trivially covers the truth would fail). Measured: MAP equals the truth to grid
+  resolution, every CI covers its true value, and each CI is ~10% of the prior
+  width. The committed baseline (visualizations/calibration_posterior.json) is this
+  machine's posterior. This turns recover-mass-action's point estimate into a
+  calibrated posterior — the recovery pipeline from estimate to uncertainty.
+parent_studies:
+- study: recover-mass-action
+  relation: builds-on
+baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.recovery.recover_candidate
+  params:
+    target: recover-mass-action
+    baseline: true
+variants: []
+interventions: []
+expected_behavior:
+- name: posterior-covers-and-is-informative
+  observable: 95% credible intervals for (k1, k2, k2r) from the grid posterior, vs the true values and the prior width
+  condition: every true rate constant lies inside its 95% credible interval (coverage), and each interval is clearly narrower than the prior (informative — worst CI/prior width < 0.8)
+  rationale: an honest Bayesian calibration must both contain the truth and be constrained by the data; a posterior that equals the prior would trivially "cover" the truth without learning anything.
+readouts:
+- name: calibration_posterior
+  description: Machine-tagged grid posterior — marginals, MAP, 95% credible intervals, prior widths, and the posterior-predictive band.
+  identifier: calibration_posterior
+  units: dimensionless
+visualizations:
+- name: calibration_posterior
+  address: local:CalibrationPosterior
+  config: {}
+  covers:
+  - calibration_posterior
+behavior_tests:
+- name: posterior-covers-and-is-informative
+  classification: correctness
+  measure:
+    kind: calibration_coverage
+    grid_points: 11
+    span: 0.5
+    sigma: 0.05
+    n_points: 40
+    seed: 0
+    informative_ratio: 0.8
+  pass_if:
+    op: threshold
+    detail: all true rate constants inside their 95% CI, each CI far narrower than the prior (worst CI/prior width < 0.8)
+  units: dimensionless
+  description: 'Exact grid posterior over (k1, k2, k2r) from noisy mass-action data (sigma 0.05). Measured: MAP = truth to grid resolution, every 95% CI covers its true value, each CI ~10% of prior width. Reproducible given the seed; magnitudes machine-specific.'
+  requires_simulation: true
+runs:
+- name: calibration:1794698879
+  status: completed
+  canonical: true
+  computed_outcomes:
+    posterior-covers-and-is-informative:
+      result: PASS
+      measured_value: 0.1
+      evaluated_by: code
+      operator: calibration_coverage/credible_interval
+      detail: '95% CIs cover all true rate constants: True; informative (worst CI/prior width 0.10 < 0.8); MAP ~ truth; k1 [0.475,0.525], k2 [0.285,0.315], k2r [0.095,0.105]; magnitudes machine-specific'
+      reconcile: no_authored
+    _grader:
+      version: 3-freshness
+      graded_at: '2026-11-14T23:28:18.321227+00:00'
+      inputs_hash: c1876b4cb1407397
+      store: store_less
+pipeline_gate:
+  gate_evaluator:
+    result: passed
+    blocked_by: []
+    evaluated_by: code
+    diverges_from_authored: false
