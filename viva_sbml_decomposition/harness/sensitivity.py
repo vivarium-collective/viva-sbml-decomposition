@@ -64,8 +64,12 @@ def morris_sensitivity(params=None, *, r: int = 4, levels: int = 4, span: float 
             stepped_param.append(int(pi))
 
     # Denormalize to parameter-override draws and evaluate the QoI in parallel.
+    # Use the registry id "glycolysis" (not the raw Antimony) so the run honors the
+    # model's declared horizon t_end=30 — the same the rest of the investigation
+    # uses. ATP reaches steady state well before t=5 here, so the final value is a
+    # genuine steady-state QoI (and is bit-identical from t=5 through t=30).
     draws = [{p: float(v) for p, v in zip(params, lo + x * (hi - lo))} for x in norm_samples]
-    results = run_ensemble(model=GLYCOLYSIS_ANTIMONY, engine="tellurium",
+    results = run_ensemble(model="glycolysis", engine="tellurium",
                            n_instances=len(draws), param_draws=draws, full=False)
     outs = [float(d[qoi]) for d in results]
 

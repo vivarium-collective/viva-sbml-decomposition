@@ -75,24 +75,24 @@ behavior_tests:
     op: threshold
     detail: top mu* >= 3x median mu* (ranking discriminates), indices finite
   units: dimensionless
-  description: 'Seeded Morris screen over 14 Vmax params (±20%), QoI steady-state ATP. Measured top/median ~89x (glucose transport vGLT dominant). Reproducible given the seed; mu* magnitudes machine-specific.'
+  description: 'Seeded Morris screen over 14 Vmax params (±20%), QoI steady-state ATP. Measured top/median ~95x (glucose transport vGLT dominant). Reproducible given the seed; mu* magnitudes machine-specific.'
   requires_simulation: true
 runs:
-- name: sensitivity:1794663972
+- name: sensitivity:1794665984
   status: completed
   canonical: true
   computed_outcomes:
     sensitivity-ranking-discriminates:
       result: PASS
-      measured_value: 95.16
+      measured_value: 94.73
       evaluated_by: code
       operator: sensitivity_ranking/discrimination
-      detail: 'Morris ranking discriminates 95.2x (top/median, >= 3.0); top: vGLT_VmGLT, vG3PDH_VmG3PDH, vGLK_VmGLK (QoI ATP); mu* magnitudes machine-specific'
+      detail: 'Morris ranking discriminates 94.7x (top/median, >= 3.0); top: vGLT_VmGLT, vG3PDH_VmG3PDH, vGLK_VmGLK (QoI ATP); mu* magnitudes machine-specific'
       reconcile: no_authored
     _grader:
       version: 3-freshness
-      graded_at: '2026-11-14T13:46:22.742009+00:00'
-      inputs_hash: b21b832f59053cfc
+      graded_at: '2026-11-14T14:20:00.732144+00:00'
+      inputs_hash: 46c10b6709f2dc33
       store: store_less
 pipeline_gate:
   gate_evaluator:
