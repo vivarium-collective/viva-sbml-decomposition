@@ -19,6 +19,7 @@ FIGS = [
     ("cross_engine_agreement", "CrossEngineAgreement"),
     ("scaling_benchmarks", "ScalingBenchmarks"),
     ("sensitivity_indices", "SensitivityIndices"),
+    ("calibration_posterior", "CalibrationPosterior"),
 ]
 
 
@@ -173,3 +174,20 @@ def test_sensitivity_figure_degrades_on_empty():
     # empty degrades, no raise
     empty = {"params": [], "mu_star": [], "sigma": [], "ranking": [], "qoi": "ATP", "machine": ""}
     go.Figure(mod.SensitivityIndices(config={}, core=allocate_core()).figure(empty))
+
+
+def test_calibration_figure_degrades_on_empty():
+    import importlib
+    mod = importlib.import_module("viva_sbml_decomposition.visualizations.calibration_posterior")
+    state = {"params": ["k1"], "true": {"k1": 0.5}, "grid": {"k1": [0.3, 0.5, 0.7]},
+             "marginals": {"k1": [0.1, 0.8, 0.1]}, "ci95": {"k1": [0.4, 0.6]},
+             "predictive": {"time": [0.0, 1.0],
+                            "observed": {"A": {"data": [1.0, 0.5], "lo": [0.9, 0.4], "hi": [1.1, 0.6]}}},
+             "machine": "test"}
+    spec = mod.CalibrationPosterior(config={}, core=allocate_core()).figure(state)
+    assert spec["data"] and "layout" in spec
+    import plotly.graph_objects as go
+    go.Figure(spec)
+    empty = {"params": [], "true": {}, "grid": {}, "marginals": {}, "ci95": {},
+             "predictive": {"time": [], "observed": {}}, "machine": ""}
+    go.Figure(mod.CalibrationPosterior(config={}, core=allocate_core()).figure(empty))
