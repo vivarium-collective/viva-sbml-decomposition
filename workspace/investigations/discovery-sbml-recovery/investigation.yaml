@@ -69,6 +69,9 @@ executive:
     - study: recover-stochastic-abm
       behavior: correctly-flagged-non-recoverable
       result: passing
+    - study: bayesian-calibration
+      behavior: posterior-covers-and-is-informative
+      result: passing
     unmet:
     - study: recover-enzyme-kinetics
       behavior: enzyme-trajectory-recovered
@@ -143,6 +146,8 @@ at_a_glance:
   role: Follow-up (acquire_data + develop_method) -- ensemble/weak-form; builds-on the oscillator data gap.
 - study: recover-gene-switch-rational-laws
   role: Follow-up (develop_method | request_expert) -- rational rate laws; builds-on the gene-switch REFUTATION.
+- study: bayesian-calibration
+  role: 'Bayesian extension -- turns recover-mass-action''s point estimate into a calibrated posterior: a grid posterior whose 95% credible intervals cover all three true rate constants and are ~10x narrower than the prior (honest, informative uncertainty).'
 - study: recoverability-frontier
   role: 'Synthesis -- the reframed claim: recoverability is rate-law-class-, data-richness-, and determinism-relative; builds-on all rungs.'
 competing_frameworks:
@@ -164,6 +169,7 @@ studies:
 - recover-enzyme-moiety-aware
 - recover-oscillator-data-richness
 - recover-gene-switch-rational-laws
+- bayesian-calibration
 - recoverability-frontier
 expert_docs: []
 acceptance_criteria:
@@ -185,6 +191,8 @@ acceptance_criteria:
   behavior: oscillator-structure-recovered
 - study: recover-stochastic-abm
   behavior: correctly-flagged-non-recoverable
+- study: bayesian-calibration
+  behavior: posterior-covers-and-is-informative
 resolutions:
 - kind: unaddressed_criterion
   target: recover-enzyme-kinetics
