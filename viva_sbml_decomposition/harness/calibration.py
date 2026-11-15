@@ -22,6 +22,7 @@ from viva_sbml_decomposition._tellurium import load
 from viva_sbml_decomposition.models.recovery_targets import MASS_ACTION_ANTIMONY, MASS_ACTION_META
 
 _TRUE = {"k1": 0.5, "k2": 0.3, "k2r": 0.1}
+_Z95 = 1.959963984540054  # 97.5th percentile of the standard normal
 
 
 def _simulate(k: dict, t_end: float, n_points: int) -> dict:
@@ -33,15 +34,6 @@ def _simulate(k: dict, t_end: float, n_points: int) -> dict:
     species = MASS_ACTION_META["species"]
     out = rr.simulate(0, t_end, n_points, selections=["time"] + species)
     return {sp: np.asarray(out[:, i + 1], dtype=float) for i, sp in enumerate(species)}
-
-
-def _weighted_pct(values: np.ndarray, weights: np.ndarray, pct: float) -> float:
-    order = np.argsort(values)
-    v, w = values[order], weights[order]
-    cdf = np.cumsum(w)
-    cdf = cdf / cdf[-1]
-    idx = int(np.searchsorted(cdf, pct / 100.0, side="left"))
-    return float(v[min(idx, len(v) - 1)])
 
 
 def grid_calibration(*, params=("k1", "k2", "k2r"), grid_points: int = 11, span: float = 0.5,
@@ -95,22 +87,25 @@ def grid_calibration(*, params=("k1", "k2", "k2r"), grid_points: int = 11, span:
         ci95[p] = [float(axes[p][lo_i]) - step / 2.0, float(axes[p][hi_i]) + step / 2.0]
         prior_width[p] = float(axes[p][-1] - axes[p][0])
 
-    # Posterior-predictive band: the top cells covering ~95% of posterior mass,
-    # weighted percentiles per time, in OBSERVATION space over the data.
+    # Posterior-predictive band in OBSERVATION space: the distribution of a NEW
+    # observation, so it combines parameter uncertainty with the observation noise.
+    # Parameter spread alone collapses to ~zero width for a peaked posterior and
+    # would exclude the noisy data; the predictive adds the relative-noise variance
+    # the data was drawn with. Gaussian approximation per time:
+    # mean ± 1.96·sqrt(param_var + E[(sigma·|model|)^2]), over the full posterior.
     w = post.ravel()
-    order = np.argsort(w)[::-1]
-    cum = np.cumsum(w[order])
-    keep = order[: max(1, int(np.searchsorted(cum, 0.95)) + 1)]
-    keep_idx = [np.unravel_index(int(c), shape) for c in keep]
-    keep_w = w[keep]
-    keep_w = keep_w / keep_w.sum()
+    all_idx = [np.unravel_index(int(c), shape) for c in range(w.size)]
     predictive = {"time": [float(t) for t in times], "observed": {}}
     for sp in species:
-        stacked = np.array([sims[idx][sp] for idx in keep_idx])   # (ncells, ntime)
-        lo = [_weighted_pct(stacked[:, t], keep_w, 2.5) for t in range(len(times))]
-        hi = [_weighted_pct(stacked[:, t], keep_w, 97.5) for t in range(len(times))]
+        stacked = np.array([sims[idx][sp] for idx in all_idx])     # (ncells, ntime)
+        mean = np.average(stacked, axis=0, weights=w)
+        param_var = np.average((stacked - mean) ** 2, axis=0, weights=w)
+        obs_var = np.average((sigma * np.abs(stacked)) ** 2, axis=0, weights=w)
+        sd = np.sqrt(param_var + obs_var)
         predictive["observed"][sp] = {
-            "data": [float(x) for x in data_traj[sp]], "lo": lo, "hi": hi}
+            "data": [float(x) for x in data_traj[sp]],
+            "lo": [float(x) for x in (mean - _Z95 * sd)],
+            "hi": [float(x) for x in (mean + _Z95 * sd)]}
 
     return {"params": list(params), "true": {p: _TRUE[p] for p in params},
             "grid": {p: [float(x) for x in axes[p]] for p in params},

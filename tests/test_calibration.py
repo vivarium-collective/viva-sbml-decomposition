@@ -31,6 +31,15 @@ def test_predictive_band_is_in_observation_space():
     one = pc["observed"]["A"]
     assert len(one["lo"]) == len(one["hi"]) == len(pc["time"])
     assert all(lo <= hi for lo, hi in zip(one["lo"], one["hi"]))
+    # A posterior-predictive band must include observation noise, not just parameter
+    # spread: it is non-degenerate (non-zero width) and actually covers the data it
+    # overlays (a zero-width line through the mean would exclude the noisy points).
+    for sp in ("A", "B", "C"):
+        band = pc["observed"][sp]
+        widths = [hi - lo for lo, hi in zip(band["lo"], band["hi"])]
+        assert max(widths) > 0.0, f"{sp} predictive band is degenerate (zero width)"
+        inside = sum(lo <= d <= hi for d, lo, hi in zip(band["data"], band["lo"], band["hi"]))
+        assert inside >= 0.8 * len(band["data"]), f"{sp} band covers only {inside}/{len(band['data'])} points"
 
 
 def test_calibration_study_is_code_graded_and_passes():
