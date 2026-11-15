@@ -33,3 +33,33 @@ def test_committed_baseline_is_well_formed():
     assert isinstance(r["requires_port"], bool)
     assert isinstance(r["caveat"], str) and r["caveat"]
     assert isinstance(r["machine"], str) and r["machine"]
+
+
+def test_honesty_grade_passes_on_honest_json():
+    from viva_sbml_decomposition.evaluators import _rust_frontier_verdict
+    honest = json.loads(_BASELINE.read_text())           # requires_port=True, ode_speedup=None
+    passed, measured, _ = _rust_frontier_verdict(honest)
+    assert passed is True
+
+
+def test_honesty_grade_fails_on_false_ode_win():
+    from viva_sbml_decomposition.evaluators import _rust_frontier_verdict
+    false_win = {"requires_port": False, "native_composite_runs": True, "ode_speedup": 6.0,
+                 "dispatch_note": "x", "ode_note": "x"}
+    passed, measured, _ = _rust_frontier_verdict(false_win)
+    assert passed is False
+    assert measured == 6.0
+
+
+def test_rust_frontier_study_is_code_graded_and_passes():
+    import yaml
+    sd = pathlib.Path(
+        "workspace/investigations/sbml-decomposition/studies/rust-engine-frontier/study.yaml")
+    d = yaml.safe_load(sd.read_text())
+    assert d["investigation"] == "sbml-decomposition"
+    canonical = next((r for r in (d.get("runs") or []) if r.get("canonical")), None)
+    assert canonical is not None, "no canonical run"
+    grade = (canonical.get("computed_outcomes") or {}).get("rust-frontier-characterized-honestly") or {}
+    assert grade.get("result") == "PASS"
+    assert grade.get("evaluated_by") == "code"
+    assert grade.get("reconcile") == "no_authored"

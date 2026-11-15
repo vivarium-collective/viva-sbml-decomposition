@@ -20,6 +20,7 @@ FIGS = [
     ("scaling_benchmarks", "ScalingBenchmarks"),
     ("sensitivity_indices", "SensitivityIndices"),
     ("calibration_posterior", "CalibrationPosterior"),
+    ("rust_frontier", "RustEngineFrontier"),
 ]
 
 
@@ -191,3 +192,19 @@ def test_calibration_figure_degrades_on_empty():
     empty = {"params": [], "true": {}, "grid": {}, "marginals": {}, "ci95": {},
              "predictive": {"time": [], "observed": {}}, "machine": ""}
     go.Figure(mod.CalibrationPosterior(config={}, core=allocate_core()).figure(empty))
+
+
+def test_rust_frontier_figure_degrades_on_empty():
+    import importlib
+    mod = importlib.import_module("viva_sbml_decomposition.visualizations.rust_frontier")
+    import plotly.graph_objects as go
+    # honest "requires port" state (ode_speedup null) builds a valid spec
+    honest = {"viva_core_available": True, "native_composite_runs": False,
+              "ode_speedup": None, "dispatch_speedup": 1.27, "requires_port": True,
+              "dispatch_note": "d", "ode_note": "o", "viva_hybrid_note": "h",
+              "caveat": "c", "machine": "test"}
+    spec = mod.RustEngineFrontier(config={}, core=allocate_core()).figure(honest)
+    assert spec["data"] and "layout" in spec
+    go.Figure(spec)
+    # empty state degrades, no raise
+    go.Figure(mod.RustEngineFrontier(config={}, core=allocate_core()).figure({}))

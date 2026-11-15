@@ -55,6 +55,9 @@ executive:
     - study: bigger-models-and-abm-limit
       behavior: meanfield-valid-only-at-large-N
       result: passing
+    - study: rust-engine-frontier
+      behavior: rust-frontier-characterized-honestly
+      result: passing
     unmet: []
     diverges_from_authored: true
 scientific_argument:
@@ -107,6 +110,8 @@ at_a_glance:
   role: 'performance — systematic scaling: the same-rate ensemble wins ~7.5x in parallel while decomposition is slower end-to-end at affordable model sizes; the machine-tagged baseline is the Phase-6 (Rust engine) reference.'
 - study: sensitivity-uq
   role: 'sensitivity — a seeded Morris screen over the Vmax enzyme capacities ranks which parameters drive steady-state ATP; glucose transport (vGLT) dominates, then vG3PDH and hexokinase (vGLK) — the classical flux-controlling steps, strongly discriminating (~95x top/median).'
+- study: rust-engine-frontier
+  role: 'Rust frontier — best-effort viva-core spike: the Rust engine rejects our native composite without a Rust-side process port, so a Rust path accelerates bigraph dispatch (~1.27x cited), not ODE integration; viva-hybrid cited as a rigorous negative result. The honest ceiling, not a speedup.'
 - study: decomposition-synthesis
   role: Synthesis — builds-on all seven arms; the cross-arm speed x accuracy x composability landscape + decision guide.
 how_to_read: 'Start with sbml-in-tellurium (the reference), read mechanical-split-cost -> biological-modular-seam -> fully-native-pbg as increasing decomposition (accuracy falls, composability rises), then cross-engine-coupling (the capability proof) and ensemble-and-multirate (the parallel and scheduler wins). bigger-models-and-abm-limit holds the two boundary probes: where the monolith strains at scale and where SBML stops applying (the adversarial case). The 3-way tradeoff map and the decision table are the deliverable.'
@@ -140,6 +145,7 @@ studies:
 - cross-engine-validation
 - scaling-benchmarks
 - sensitivity-uq
+- rust-engine-frontier
 - decomposition-synthesis
 expert_docs: []
 acceptance_criteria:
@@ -167,3 +173,5 @@ acceptance_criteria:
   behavior: monolith-build-strains-superlinearly
 - study: bigger-models-and-abm-limit
   behavior: meanfield-valid-only-at-large-N
+- study: rust-engine-frontier
+  behavior: rust-frontier-characterized-honestly
