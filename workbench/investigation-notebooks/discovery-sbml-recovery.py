@@ -291,6 +291,10 @@ def _render_one(address, config, runs_db, study_yaml, overrides=None):
 #
 # _study.yaml not found — skipped._
 
+# ## Study: `bayesian-calibration`
+#
+# _study.yaml not found — skipped._
+
 # ## Study: `recoverability-frontier`
 #
 # _study.yaml not found — skipped._
