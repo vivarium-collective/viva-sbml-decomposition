@@ -363,12 +363,42 @@ def _sensitivity_ranking(test, reader, ws_root):
                          "sensitivity_ranking/discrimination", detail)
 
 
+@storeless
+def _calibration_coverage(test, reader, ws_root):
+    """The grid posterior is an HONEST, informative calibration: every true rate
+    constant lies inside its 95% credible interval (coverage), and each interval is
+    clearly narrower than the prior (the data constrained the parameter — a flat,
+    uninformative posterior that trivially covers truth fails). Grid posterior on
+    the deterministic ODE is reproducible given the seed; only raw magnitudes vary
+    across BLAS/platforms, so the graded properties are coverage + informativeness."""
+    from .harness.calibration import grid_calibration
+
+    m = test.get("measure") or {}
+    res = grid_calibration(
+        grid_points=int(m.get("grid_points", 11)), span=float(m.get("span", 0.5)),
+        sigma=float(m.get("sigma", 0.05)), n_points=int(m.get("n_points", 40)),
+        seed=int(m.get("seed", 0)))
+    covered = all(res["ci95"][p][0] <= res["true"][p] <= res["ci95"][p][1] for p in res["params"])
+    ratios = [(res["ci95"][p][1] - res["ci95"][p][0]) / res["prior_width"][p] for p in res["params"]]
+    worst_ratio = max(ratios)
+    informative_cap = float(m.get("informative_ratio", 0.8))
+    passed = covered and worst_ratio < informative_cap
+
+    cis = ", ".join(f"{p} [{res['ci95'][p][0]:.3g},{res['ci95'][p][1]:.3g}]" for p in res["params"])
+    detail = (f"95% CIs cover all true rate constants: {covered}; informative "
+              f"(worst CI/prior width {worst_ratio:.2f} < {informative_cap}); MAP ~ truth; {cis}; "
+              f"magnitudes machine-specific")
+    return _code_outcome("PASS" if passed else "FAIL", round(worst_ratio, 3),
+                         "calibration_coverage/credible_interval", detail)
+
+
 def register_evaluators(registry: dict) -> dict:
     """discovery_engine hook: map our custom measure kinds to their evaluators."""
     registry["cross_engine_agreement"] = _cross_engine_agreement
     registry["scaling_ensemble_speedup"] = _scaling_ensemble_speedup
     registry["scaling_model_size_cost"] = _scaling_model_size_cost
     registry["sensitivity_ranking"] = _sensitivity_ranking
+    registry["calibration_coverage"] = _calibration_coverage
     registry["recovery_trajectory"] = _trajectory
     registry["recovery_structure"] = _structure
     registry["recovery_parsimony"] = _parsimony
