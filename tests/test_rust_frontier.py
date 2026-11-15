@@ -51,6 +51,17 @@ def test_honesty_grade_fails_on_false_ode_win():
     assert measured == 6.0
 
 
+def test_honesty_grade_fails_on_contradictory_port_and_win():
+    # A doctored result claiming a large ODE win WHILE requiring a port is still a
+    # false win: the grade must not let requires_port whitewash an unearned speedup.
+    from viva_sbml_decomposition.evaluators import _rust_frontier_verdict
+    contradictory = {"requires_port": True, "native_composite_runs": True,
+                     "ode_speedup": 100.0, "dispatch_note": "x", "ode_note": "x"}
+    passed, measured, _ = _rust_frontier_verdict(contradictory)
+    assert passed is False
+    assert measured == 100.0
+
+
 def test_rust_frontier_study_is_code_graded_and_passes():
     import yaml
     sd = pathlib.Path(

@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 """Run + grade the rust-engine-frontier study (code-authoritative).
 
-Creates one canonical run, grades its behavior test through this workspace's
-`calibration_coverage` evaluator (which runs the grid posterior), and commits the
-machine-tagged posterior baseline the figure reads. Grid posterior on the
-deterministic ODE is reproducible given the seed; the graded properties are
-coverage + informativeness.
+Creates one canonical run and grades its behavior test through this workspace's
+`rust_frontier_honesty` evaluator, which reads the committed viva-core spike result
+(visualizations/rust_frontier.json, written by scripts/probe_rust_frontier.py) and
+PASSES on an honest characterization — no unearned Rust ODE-acceleration win. No
+Rust toolchain is imported here; the probe owns the baseline JSON.
 
-Usage:  python scripts/grade_calibration.py
+Usage:  PYTHONPATH=. python scripts/grade_rust_frontier.py
 """
 from __future__ import annotations
 

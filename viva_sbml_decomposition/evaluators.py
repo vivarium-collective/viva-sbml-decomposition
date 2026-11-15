@@ -403,7 +403,11 @@ def _rust_frontier_verdict(data: dict):
     requires_port = bool(data.get("requires_port"))
     ode = data.get("ode_speedup")
     measured = float(ode) if isinstance(ode, (int, float)) else 0.0
-    honest = requires_port or ode is None or measured < 5.0
+    # Grade the ODE speedup directly: a modest-or-absent speedup is honest. We do NOT
+    # let requires_port whitewash a large ode_speedup — a result asserting both is
+    # self-contradictory and must fail, not pass. (When a port is genuinely required
+    # the probe leaves ode_speedup None, which PASSES here anyway.)
+    honest = ode is None or measured < 5.0
     documented = bool(data.get("ode_note")) and bool(data.get("dispatch_note"))
     passed = honest and documented
     if requires_port:
