@@ -1,0 +1,101 @@
+schema_version: 3
+name: rust-engine-frontier
+investigation: sbml-decomposition
+status: ran
+title: 'Rust-engine frontier: where a Rust path pays off (dispatch) and where it does not (ODE integration)'
+question: |
+  The Rust engines (viva-core, viva-hybrid) are often assumed to be a drop-in
+  speedup. Where on the performance frontier do they actually sit relative to the
+  tellurium+vivarium baseline this workspace benchmarks — and can viva-core even
+  run our decomposed composites today?
+hypothesis: |
+  A Rust path accelerates bigraph *dispatch* (scheduling process updates), not ODE
+  *integration*. viva-core runs only processes registered in its native Rust
+  registry, so our Python/tellurium/COPASI composites cannot run there without a
+  Rust-side port; and viva-hybrid, the strongest Rust SSA attempt, is a rigorous
+  negative result (no regime both >=5x faster and faithful to exact SSA).
+objective: |
+  Attempt, best-effort, to run the one portable arm (the native glycolysis
+  composite) through viva-core's engine; record either the measured ODE speedup or
+  the honest "requires a Rust-side process port" finding; and situate it against
+  viva-core's cited ~1.27x scalar-dispatch benchmark and viva-hybrid's ~2x negative
+  result. Grade the honest characterization, not a Rust win.
+description: |
+  Phase 6 of the clarity + capabilities program (G6). The spike
+  (viva_sbml_decomposition.harness.rust_frontier) feeds the native composite
+  document to viva_core.run(). The measured outcome on this machine: viva-core
+  imports and runs, but REJECTS the native composite —
+  `address "local:NativeGlycolysisProcess" is not module.Class` — because the
+  process is not in viva-core's native Rust registry. So the engine cannot run our
+  composites without a Rust-side port, which is itself the honest frontier finding;
+  no ODE speedup is claimed.
+
+  The committed machine-tagged baseline (visualizations/rust_frontier.json) records
+  this, plus the attributed context — viva-core accelerates dispatch (~1.27x scalar,
+  cited from its own benchmark, regresses on array-heavy state) and viva-hybrid's
+  rigorous ~2x-over-numba negative result. The grade is code-authoritative and reads
+  only that committed JSON (no Rust toolchain in CI): it PASSES on an honest
+  characterization and FAILS any result that would assert a >=5x ODE-acceleration win
+  the engine did not earn. This is explicitly NOT a Rust ODE kernel or a
+  native-process registration — it frames where a Rust path would and would not pay
+  off for this workspace.
+parent_studies:
+- study: fully-native-pbg
+  relation: builds-on
+baseline:
+- name: baseline
+  composite: viva_sbml_decomposition.composites.engine_monolithic.native_composite
+  params:
+    model: glycolysis
+variants: []
+interventions: []
+expected_behavior:
+- name: rust-frontier-characterized-honestly
+  observable: the committed viva-core spike result (requires_port / ode_speedup) and its dispatch-vs-ODE characterization
+  condition: the result asserts no unearned Rust ODE-acceleration win — either the composite requires a Rust-side port, or no ODE speedup was measured, or any measured ODE speedup is modest (< 5x) — and the dispatch-vs-ODE distinction is documented
+  rationale: the point of the phase is an honest frontier, not a manufactured speedup; a result claiming a large ODE win viva-core did not earn would defeat it.
+readouts:
+- name: rust_frontier
+  description: Machine-tagged viva-core spike result — availability, whether the native composite runs, ODE speedup (or null + requires_port), and cited dispatch / viva-hybrid context.
+  identifier: rust_frontier
+  units: dimensionless
+visualizations:
+- name: rust_frontier
+  address: local:RustEngineFrontier
+  config: {}
+  covers:
+  - rust_frontier
+behavior_tests:
+- name: rust-frontier-characterized-honestly
+  classification: correctness
+  measure:
+    kind: rust_frontier_honesty
+  pass_if:
+    op: threshold
+    detail: 'no unearned Rust ODE-acceleration win: requires_port, or ode_speedup null, or ode_speedup < 5x; dispatch-vs-ODE documented'
+  units: dimensionless
+  description: 'Code-authoritative grade over the committed viva-core spike JSON. Measured on this machine: viva-core rejects the native composite (requires a Rust-side process port) -> honest PASS, no ODE speedup claimed. Not CI-gated for the Rust build; the grade reads the committed baseline.'
+  requires_simulation: false
+runs:
+- name: rustfrontier:1794714010
+  status: completed
+  canonical: true
+  computed_outcomes:
+    rust-frontier-characterized-honestly:
+      result: PASS
+      measured_value: 0.0
+      evaluated_by: code
+      operator: rust_frontier_honesty/no_false_ode_win
+      detail: viva-core cannot run the native composite without a Rust-side process port (honest frontier finding); accelerates dispatch, not ODE integration
+      reconcile: no_authored
+    _grader:
+      version: 3-freshness
+      graded_at: '2026-11-15T03:40:11.373062+00:00'
+      inputs_hash: 95fa72d86d526139
+      store: store_less
+pipeline_gate:
+  gate_evaluator:
+    result: passed
+    blocked_by: []
+    evaluated_by: code
+    diverges_from_authored: false

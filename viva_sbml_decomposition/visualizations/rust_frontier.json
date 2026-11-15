@@ -1,0 +1,12 @@
+{
+  "viva_core_available": true,
+  "native_composite_runs": false,
+  "ode_speedup": null,
+  "dispatch_speedup": 1.27,
+  "dispatch_note": "viva-core accelerates bigraph *dispatch* ~1.27x on scalar state (viva-core's reported benchmark; cited, not re-measured here) and regresses on array-heavy state today",
+  "ode_note": "viva-core does not accelerate ODE integration: it runs only processes in its native Rust registry, so a tellurium/COPASI/Python composite needs a Rust-side process port before it can run at all (viva_core.run rejected the composite: ValueError: building engine: process error: address \"local:NativeGlycolysisProcess\" is not module.Class)",
+  "viva_hybrid_note": "viva-hybrid is a rigorous negative result: ~2x over numba, with no regime that is both >=5x and faithful to exact SSA",
+  "requires_port": true,
+  "caveat": "Best-effort spike, not CI-gated (no Rust toolchain in the pipeline). The dispatch (~1.27x) and viva-hybrid (~2x) figures are cited from those projects' own benchmarks; only the native-composite ODE attempt is measured in this workspace.",
+  "machine": "macOS-15.2-arm64-arm-64bit"
+}

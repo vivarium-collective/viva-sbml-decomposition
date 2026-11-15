@@ -392,6 +392,49 @@ def _calibration_coverage(test, reader, ws_root):
                          "calibration_coverage/credible_interval", detail)
 
 
+def _rust_frontier_verdict(data: dict):
+    """Pure honest-characterization check over the committed probe result.
+
+    PASS iff the result does NOT assert a Rust ODE-acceleration win it did not
+    earn: either the composite could not run in viva-core without a port
+    (requires_port), or no ODE speedup was measured, or the measured ODE speedup
+    is modest (< 5x). A doctored result claiming a >=5x ODE win while the arm
+    actually ran FAILS. Returns (passed, measured_value, detail)."""
+    requires_port = bool(data.get("requires_port"))
+    ode = data.get("ode_speedup")
+    measured = float(ode) if isinstance(ode, (int, float)) else 0.0
+    # Grade the ODE speedup directly: a modest-or-absent speedup is honest. We do NOT
+    # let requires_port whitewash a large ode_speedup — a result asserting both is
+    # self-contradictory and must fail, not pass. (When a port is genuinely required
+    # the probe leaves ode_speedup None, which PASSES here anyway.)
+    honest = ode is None or measured < 5.0
+    documented = bool(data.get("ode_note")) and bool(data.get("dispatch_note"))
+    passed = honest and documented
+    if requires_port:
+        detail = ("viva-core cannot run the native composite without a Rust-side process "
+                  "port (honest frontier finding); accelerates dispatch, not ODE integration")
+    elif ode is None:
+        detail = "native composite ran but no ODE speedup recorded; dispatch-not-ODE characterization"
+    else:
+        detail = (f"measured ODE speedup {measured:.2f}x "
+                  f"({'honest modest' if honest else 'OVERCLAIMED >=5x'})")
+    return passed, measured, detail
+
+
+@storeless
+def _rust_frontier_honesty(test, reader, ws_root):
+    """Grade the committed viva-core spike for an HONEST frontier characterization
+    (reads the committed JSON; never imports Rust, so CI needs no toolchain)."""
+    import json as _json
+    from pathlib import Path as _Path
+
+    data_path = _Path(__file__).parent / "visualizations" / "rust_frontier.json"
+    data = _json.loads(data_path.read_text())
+    passed, measured, detail = _rust_frontier_verdict(data)
+    return _code_outcome("PASS" if passed else "FAIL", measured,
+                         "rust_frontier_honesty/no_false_ode_win", detail)
+
+
 def register_evaluators(registry: dict) -> dict:
     """discovery_engine hook: map our custom measure kinds to their evaluators."""
     registry["cross_engine_agreement"] = _cross_engine_agreement
@@ -399,6 +442,7 @@ def register_evaluators(registry: dict) -> dict:
     registry["scaling_model_size_cost"] = _scaling_model_size_cost
     registry["sensitivity_ranking"] = _sensitivity_ranking
     registry["calibration_coverage"] = _calibration_coverage
+    registry["rust_frontier_honesty"] = _rust_frontier_honesty
     registry["recovery_trajectory"] = _trajectory
     registry["recovery_structure"] = _structure
     registry["recovery_parsimony"] = _parsimony
