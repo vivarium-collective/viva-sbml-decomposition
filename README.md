@@ -35,15 +35,15 @@ See `NEXT_STEPS.md` for the full tour.
 The [viva-superpowers](https://github.com/vivarium-collective/viva-superpowers)
 Claude Code plugin provides skills that drive the canonical PR flow:
 
-- `/viva-study <slug>` — start a study (8-section spec, `phase: Design|Build|Simulate|Evaluate|Decide`).
-- `/viva-investigation <slug>` — group related studies into an investigation (DAG via `pipeline_gate.prerequisites`).
-- `/viva-expert <tool>` — wrap a simulator as a process-bigraph Process or Step (sibling repo + tests + report). Pass `--lightweight` to write in-workspace instead.
-- `/viva-expert <name> <tools…>` — wire wrapped simulators into a composite (sibling repo, or `--lightweight` for in-workspace).
-- `/viva-viz` — generate a Visualization from a natural-language description.
-- `/viva-report` — regenerate `workspace/reports/index.html`.
+- `/viva:study <slug>` — start a study (8-section spec, `phase: Design|Build|Simulate|Evaluate|Decide`).
+- `/viva:investigate <slug>` — group related studies into an investigation (DAG via `pipeline_gate.prerequisites`).
+- `/viva:model <tool>` — wrap a simulator as a process-bigraph Process or Step (sibling repo + tests + report). Pass `--lightweight` to write in-workspace instead.
+- `/viva:model <name> <tools…>` — wire wrapped simulators into a composite (sibling repo, or `--lightweight` for in-workspace).
+- `/viva:viz` — generate a Visualization from a natural-language description.
+- `/viva:report` — regenerate `workspace/reports/index.html`.
 
 Decide-phase studies can record `followup_proposals[]`; seed a child study
-from any proposal with `/viva-study seed-from-followup <parent>/<proposal_id>`.
+from any proposal with `/viva:study seed-from-followup <parent>/<proposal_id>`.
 
 ## Composites & investigations
 

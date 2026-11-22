@@ -35,18 +35,18 @@
 ## Task 1: Scaffold the workspace + bring up the workbench
 
 **Files:**
-- Create: repo `viva-sbml-decomposition` via `/viva-workspace` (standalone); package `viva_sbml_decomposition/` with `build_core()`.
+- Create: repo `viva-sbml-decomposition` via `/viva:workspace` (standalone); package `viva_sbml_decomposition/` with `build_core()`.
 - Create: `docs/superpowers/specs/2026-10-25-sbml-decomposition-design.md` (copy of approved design).
 - Create: `docs/superpowers/plans/2026-10-25-sbml-decomposition-plan.md` (this plan).
 
 **Interfaces:**
 - Produces: a workspace root with `workspace.yaml`, an importable `viva_sbml_decomposition` package, `build_core()`; the workbench server reachable (URL under `.pbg/server/`).
 
-- [ ] **Step 1:** Invoke `/viva-workspace` in standalone mode to create `viva-sbml-decomposition` (package `viva_sbml_decomposition`). Rename the scaffold default if it prefixes differently.
+- [ ] **Step 1:** Invoke `/viva:workspace` in standalone mode to create `viva-sbml-decomposition` (package `viva_sbml_decomposition`). Rename the scaffold default if it prefixes differently.
 - [ ] **Step 2:** Move into a dedicated worktree for all subsequent commits (per global constraint). Set `runtime.max_generations: 1` in `workspace.yaml`.
-- [ ] **Step 3:** Install `viva-tellurium` into the workspace venv (`/viva-catalog install viva-tellurium` or editable), and `ray` + `plotly`.
+- [ ] **Step 3:** Install `viva-tellurium` into the workspace venv (`/viva:catalog install viva-tellurium` or editable), and `ray` + `plotly`.
 - [ ] **Step 4:** Copy the design doc and this plan into `docs/superpowers/`.
-- [ ] **Step 5:** Start the workbench (`/viva-workbench start`); confirm it serves the workspace (`/viva-status`).
+- [ ] **Step 5:** Start the workbench (`/viva:workbench start`); confirm it serves the workspace (`/viva-status`).
 - [ ] **Step 6: Commit** the scaffold + docs.
 
 **Deliverable test:** `/viva-status` reports a live workbench over this workspace; `python -c "import viva_sbml_decomposition; viva_sbml_decomposition.build_core()"` succeeds.
@@ -246,18 +246,18 @@
 ## Task 11: Investigation + studies, wired for the discovery engine
 
 **Files:**
-- Workspace data: one investigation + six studies (model × arm) authored via `/viva-investigation` and `/viva-study`.
+- Workspace data: one investigation + six studies (model × arm) authored via `/viva:investigate` and `/viva:study`.
 
 **Interfaces:**
 - Consumes: all arm composites (Tasks 5–10).
 - Produces: `investigations/sbml-decomposition/` with acceptance criteria (the tradeoff questions) and per-study canonical verdicts set so the discovery-engine roll-up is real.
 
-- [ ] **Step 1:** `/viva-investigation new sbml-decomposition` with the overview/question from the spec.
-- [ ] **Step 2:** For each arm, `/viva-study` a member study: baseline composite = that arm's composite, `runtime.default_emitter: xarray`, the arm's acceptance criteria (accuracy within `T`, overhead ratio bound, **framework `overhead_fraction` from Task 10b**, composability target; arm 6's accuracy criterion marked N/A). Record the Task-10b `RunTiming` (total/process/framework/overhead_fraction + top per-process) as a reported metric on each study.
-- [ ] **Step 3:** Run each study (`/viva-run` or the study's Simulate phase); confirm each emits the expected observables.
+- [ ] **Step 1:** `/viva:investigate new sbml-decomposition` with the overview/question from the spec.
+- [ ] **Step 2:** For each arm, `/viva:study` a member study: baseline composite = that arm's composite, `runtime.default_emitter: xarray`, the arm's acceptance criteria (accuracy within `T`, overhead ratio bound, **framework `overhead_fraction` from Task 10b**, composability target; arm 6's accuracy criterion marked N/A). Record the Task-10b `RunTiming` (total/process/framework/overhead_fraction + top per-process) as a reported metric on each study.
+- [ ] **Step 3:** Run each study (`/viva:run` or the study's Simulate phase); confirm each emits the expected observables.
 - [ ] **Step 4:** Set each study's canonical verdict from its run (`/viva-biology-forward` / `viva-study` decide phase) so the roll-up is populated.
 - [ ] **Step 5: Wire each study's own visualizations** (from Task 12's suite) so EACH arm's study page shows ITS metrics — the species trajectory + that arm's performance panel (runtime, process-vs-framework overhead split, accuracy divergence, and the arm-specific figure: convergence-vs-interval for arm2/arm3, serial-vs-Ray speedup+scaling for arm5, scalar-vs-array overhead for arm4, coupling/composability callout for arm6). Metrics are visualized IN the studies, not just recorded as numbers.
-- [ ] **Step 6: Verify** via `/viva-navigate decisions sbml-decomposition` that the discovery-engine frontier is non-empty and names a next action (proves the crank is wired).
+- [ ] **Step 6: Verify** via `/viva:explore decisions sbml-decomposition` that the discovery-engine frontier is non-empty and names a next action (proves the crank is wired).
 - [ ] **Step 7: Commit** (dashboard authoring commits to the workspace branch).
 
 ---
@@ -284,7 +284,7 @@
 
 - [ ] **Step 1: Write failing tests**: `test_tradeoff_data_excludes_arm6_from_accuracy` (assembler keys off `accuracy_exempt`: arms 1–5 on the accuracy axis, arm 6 only in callout/table); `test_runtime_comparison_has_all_arms`; `test_overhead_breakdown_sums_to_total` (process_s + framework_s ≈ total_s per arm).
 - [ ] **Step 2:** Run; expect FAIL.
-- [ ] **Step 3:** Implement each figure via `/viva-viz` (v2 Visualizations) against the real xarray/zarr runs (mosaic-compose foundations pattern). Push for informative, interactive figures — not default line/scatter. Register them in `workspace.yaml` `visualizations` and wire the per-arm ones to their study (Task 11 Step 5).
+- [ ] **Step 3:** Implement each figure via `/viva:viz` (v2 Visualizations) against the real xarray/zarr runs (mosaic-compose foundations pattern). Push for informative, interactive figures — not default line/scatter. Register them in `workspace.yaml` `visualizations` and wire the per-arm ones to their study (Task 11 Step 5).
 - [ ] **Step 4:** Run; expect PASS; confirm every figure renders in the dashboard (study pages show their per-arm figures; investigation report shows the comparative ones).
 - [ ] **Step 5: Commit.**
 
@@ -295,8 +295,8 @@
 **Files:**
 - Workspace data: updated verdicts, narrative, decision table.
 
-- [ ] **Step 1:** Run `/viva-navigate decisions sbml-decomposition`; resolve each frontier item (set verdicts, adjudicate open challenges, fill narrative gaps) until `closure` reports settled (every acceptance criterion met, no open narrative gap).
-- [ ] **Step 2:** `/viva-report` (Pass A reviewer-readiness + Pass B lint) to regenerate the investigation report; fix anything it flags.
+- [ ] **Step 1:** Run `/viva:explore decisions sbml-decomposition`; resolve each frontier item (set verdicts, adjudicate open challenges, fill narrative gaps) until `closure` reports settled (every acceptance criterion met, no open narrative gap).
+- [ ] **Step 2:** `/viva:report` (Pass A reviewer-readiness + Pass B lint) to regenerate the investigation report; fix anything it flags.
 - [ ] **Step 3:** Confirm the report states the decision guide (use / avoid / why) grounded in the 3-way figure — the spec's core deliverable (and its anti-goal: no recommendation = failure).
 - [ ] **Step 4: Commit.** Optionally publish the read-only workbench to gh-pages (on request).
 
@@ -304,4 +304,4 @@
 
 ## Next increment (not this plan)
 
-Models 2 (oscillator) and 3 (signaling cascade) reuse Tasks 3/4 harness + the arm patterns (Tasks 5–10). They are authored study-by-study as the discovery-engine frontier calls for them (`/viva-navigate decisions`), each a new model module + its arms + member studies under the same investigation — no new harness. Plan them lightly (or just execute) once Task 13 proves the slice.
+Models 2 (oscillator) and 3 (signaling cascade) reuse Tasks 3/4 harness + the arm patterns (Tasks 5–10). They are authored study-by-study as the discovery-engine frontier calls for them (`/viva:explore decisions`), each a new model module + its arms + member studies under the same investigation — no new harness. Plan them lightly (or just execute) once Task 13 proves the slice.
