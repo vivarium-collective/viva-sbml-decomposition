@@ -8,7 +8,7 @@ implements each one.
 **How this is used.** The discovery-engine cycle drives a closed
 `build -> simulate -> compare -> refine` loop per study. When the cycle's frontier
 surfaces something no existing process can do, that's a **capability gap**: record
-it here, build it as a process-bigraph process (`/viva-expert --lightweight` ->
+it here, build it as a process-bigraph process (`/viva:model --lightweight` ->
 `viva_sbml_decomposition/<...>` process + test), wire it into the loop, and flip
 its status. Capabilities are built **frontier-driven** — only when a study
 actually needs one — so this grows from real gaps, not speculation.

@@ -3394,7 +3394,7 @@ dependencies = [
 [[package]]
 name = "viva-workspace"
 version = "0.1.0"
-source = { git = "https://github.com/vivarium-collective/viva-workspace.git?branch=main#0dfd8d426963c5ee2705b25e572b50026d2eb70d" }
+source = { git = "https://github.com/vivarium-collective/viva:workspace.git?branch=main#0dfd8d426963c5ee2705b25e572b50026d2eb70d" }
 dependencies = [
     { name = "jsonschema" },
     { name = "pyyaml" },

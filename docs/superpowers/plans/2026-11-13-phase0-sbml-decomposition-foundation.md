@@ -177,7 +177,7 @@ def test_both_investigations_have_reports():
 ```
 
 - [ ] **Step 2: Run it, verify it fails** — `pytest tests/test_verdict_honesty.py::test_both_investigations_have_reports -v` → FAIL (recovery report absent).
-- [ ] **Step 3: Render + place the report** — `.../.venv/bin/python scripts/publish_investigation_reports.py --workspace . --only discovery-sbml-recovery --out "$TMPDIR/rpt"`, then copy `"$TMPDIR/rpt/investigations/discovery-sbml-recovery.html"` → `workspace/investigations/discovery-sbml-recovery/report.html` (mirrors `/viva-investigation close`).
+- [ ] **Step 3: Render + place the report** — `.../.venv/bin/python scripts/publish_investigation_reports.py --workspace . --only discovery-sbml-recovery --out "$TMPDIR/rpt"`, then copy `"$TMPDIR/rpt/investigations/discovery-sbml-recovery.html"` → `workspace/investigations/discovery-sbml-recovery/report.html` (mirrors `/viva:investigate close`).
 - [ ] **Step 4: Regenerate README/dashboard** — `.../.venv/bin/vivarium-workbench gen-readme --workspace .`
 - [ ] **Step 5: Verify** — `pytest tests/test_verdict_honesty.py::test_both_investigations_have_reports -v` → PASS; `.../.venv/bin/vivarium-workbench-publish --workspace . --out "$TMPDIR/render-check"` → exit 0; `gen-readme --workspace . --check` → exit 0; both investigations appear in the README table.
 - [ ] **Step 6: Commit** — `git add workspace/investigations/discovery-sbml-recovery/report.html README.md tests/test_verdict_honesty.py && git commit -m "docs(recovery): render+commit report.html; list both investigations"`

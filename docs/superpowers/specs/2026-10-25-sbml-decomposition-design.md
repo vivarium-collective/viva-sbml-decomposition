@@ -161,7 +161,7 @@ recorded in the study.
   acceptance criteria are the tradeoff questions; per-study canonical verdicts set
   so the discovery-engine roll-up is real.
 - **Driving loop:** author a study → run it → turn the crank
-  (`/viva-navigate decisions <inv>`) → frontier names the next study → repeat to
+  (`/viva:explore decisions <inv>`) → frontier names the next study → repeat to
   closure.
 - **Ensemble backend:** a real parallel executor (Ray preferred, matching the
   ecosystem's mini Ray-sweep pattern; multiprocessing fallback) so arm 5's
