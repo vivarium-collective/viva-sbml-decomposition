@@ -1,6 +1,5 @@
 {
   "mode": "snapshot",
-  "smsApiBase": "",
   "repo": "https://github.com/vivarium-collective/viva-sbml-decomposition",
   "commit": "015e3d4d044079054543625fec3fa671e7309698",
   "generated_from_ref": "main"
